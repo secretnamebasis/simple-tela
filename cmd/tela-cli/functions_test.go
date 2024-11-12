@@ -159,26 +159,47 @@ func TestCLIFunctions(t *testing.T) {
 			_, err = file.Write([]byte(content))
 			assert.NoError(t, err, "Writing original file should not error: %s", err)
 
-			err = tela.CreateShardFiles(shardFile.Path)
+			// Do compressed and raw
+			err = tela.CreateShardFiles(shardFile.Path, "", nil)
 			assert.NoError(t, err, "Sharding original file should not error: %s", err)
+			err = tela.CreateShardFiles(shardFile.Path, tela.COMPRESSION_GZIP, nil)
+			assert.NoError(t, err, "Sharding compressed original file should not error: %s", err)
 
 			shardEntrypoint := filepath.Join(moveTo, strings.ReplaceAll(shardFile.Name, ".go", "-1.go"))
-			docShards, recreate, err := findDocShardFiles(shardEntrypoint)
+			docShards, recreate, _, err := findDocShardFiles(shardEntrypoint)
 			assert.NoError(t, err, "Finding shard files should not error: %s", err)
 			assert.Equal(t, shardFile.Name, recreate, "Recreated file name should be the same")
 
-			err = os.RemoveAll(filepath.Join(moveTo, shardFile.Name))
+			err = os.RemoveAll(shardFile.Path)
 			assert.NoError(t, err, "Removing original file should not error: %s", err)
 
-			err = tela.ConstructFromShards(docShards, recreate, moveTo)
+			err = tela.ConstructFromShards(docShards, recreate, moveTo, "")
 			assert.NoError(t, err, "Recreating original file should not error: %s", err)
 
-			newContent, err := readFile(shardFile.Source)
+			movePath := filepath.Join("cli_tests", "datashards", "clone", "shard", shardFile.Name)
+
+			newContent, err := readFile(movePath)
 			assert.NoError(t, err, "Reading the recreated file should not error: %s", err)
 			assert.Equal(t, content, newContent, "Recreated content should match original")
+
+			// Remove and recreate the compressed version
+			err = os.RemoveAll(shardFile.Path)
+			assert.NoError(t, err, "Removing original file should not error: %s", err)
+
+			shardEntrypoint = filepath.Join(moveTo, strings.ReplaceAll(shardFile.Name, ".go", "-1.go"+tela.COMPRESSION_GZIP))
+			docShards, recreate, compression, err := findDocShardFiles(shardEntrypoint)
+			assert.NoError(t, err, "Finding compressed shard files should not error: %s", err)
+			assert.Equal(t, shardFile.Name, recreate, "Recreated compressed file name should be the same")
+
+			err = tela.ConstructFromShards(docShards, recreate, moveTo, compression)
+			assert.NoError(t, err, "Recreating compressed original file should not error: %s", err)
+
+			newContent, err = readFile(movePath)
+			assert.NoError(t, err, "Reading the decompressed recreated file should not error: %s", err)
+			assert.Equal(t, content, newContent, "Recreated decompressed content should match original")
 		}
 
-		_, _, err = findDocShardFiles("main.go")
+		_, _, _, err = findDocShardFiles("main.go")
 		assert.Error(t, err, "findDocShardFiles should error with non shard file")
 	})
 

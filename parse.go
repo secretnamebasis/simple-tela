@@ -18,6 +18,7 @@ const (
 	DVM_FUNC_INIT_PRIVATE = "InitializePrivate"
 	DVM_FUNC_INIT         = "Initialize"
 
+	SHARD_SIZE             = int64(17500)   // Defines the docCode size of a DocShard
 	MAX_DOC_CODE_SIZE      = float64(18)    // DOC SC template file size is +1.2KB with headers
 	MAX_DOC_INSTALL_SIZE   = float64(19.2)  // DOC SC total file size (including docCode) should be below this
 	MAX_INDEX_INSTALL_SIZE = float64(11.64) // INDEX SC file size should be below this
@@ -93,7 +94,7 @@ func GetCodeSizeInKB(code string) float64 {
 
 // Parse a file for its TELA docType language
 func ParseDocType(fileName string) (language string) {
-	ext := filepath.Ext(strings.ToLower(fileName))
+	ext := filepath.Ext(TrimCompressedExt(strings.ToLower(fileName)))
 	switch ext {
 	case ".html":
 		language = DOC_HTML
@@ -198,11 +199,11 @@ func parseAndCloneINDEXForDOCs(sc dvm.SmartContract, height int64, basePath, end
 							var dURL string
 							dURL, err = getContractVar(scid, HEADER_DURL.Trim(), endpoint)
 							if err != nil {
-								err = fmt.Errorf("could not verify TELA-INDEX dURL for library embed: %s", err)
+								err = fmt.Errorf("could not verify TELA-INDEX dURL: %s", err)
 								return
 							}
 
-							if !strings.HasSuffix(dURL, TAG_LIBRARY) && !strings.Contains(dURL, TAG_DOC_SHARDS) {
+							if !strings.HasSuffix(dURL, TAG_LIBRARY) && !strings.HasSuffix(dURL, TAG_DOC_SHARDS) {
 								err = fmt.Errorf("cannot embed TELA-INDEX without %q or %q tag", TAG_LIBRARY, TAG_DOC_SHARDS)
 								return
 							}
@@ -229,7 +230,7 @@ func parseAndCloneINDEXForDOCs(sc dvm.SmartContract, height int64, basePath, end
 }
 
 // Parse a TELA-INDEX for DOCs and prepare its content as DocShards to be recreated by ConstructFromShards
-func parseDocShards(sc dvm.SmartContract, path, endpoint string) (docShards [][]byte, recreate string, err error) {
+func parseDocShards(sc dvm.SmartContract, path, endpoint string) (docShards [][]byte, recreate, compression string, err error) {
 	scids := parseINDEXForDOCs(sc)
 	for i, scid := range scids {
 		if len(scid) != 64 {
@@ -265,7 +266,12 @@ func parseDocShards(sc dvm.SmartContract, path, endpoint string) (docShards [][]
 		}
 
 		if i == 0 {
-			recreate = strings.ReplaceAll(fileName, "-1.", ".")
+			ext := filepath.Ext(fileName)
+			if IsCompressedExt(ext) {
+				compression = ext
+			}
+
+			recreate = strings.ReplaceAll(strings.TrimSuffix(fileName, compression), "-1.", ".")
 			filePath := filepath.Join(path, recreate)
 			if _, err = os.Stat(filePath); !os.IsNotExist(err) {
 				err = fmt.Errorf("file %s already exists", filePath)
@@ -859,7 +865,7 @@ func createContractVersions(isDOC bool, modTag string) (versions []Version, scCo
 		code = TELA_DOC_1
 		versions = tela.version.docs
 		versionLine = LINE_DOC_VERSION
-		modTag = "" // 1.0.0 DOCs are not MOD enabled
+		modTag = "" // DOCs are not MOD enabled
 	} else {
 		code = TELA_INDEX_1
 		versions = tela.version.index
@@ -881,11 +887,16 @@ func createContractVersions(isDOC bool, modTag string) (versions []Version, scCo
 		}
 
 		// Create version specific SCs
-		switch i {
-		case 0: // 1.0.0 SCs
-			if isDOC {
+		if isDOC {
+			// switch versions[i] {
+			// case Version{1, 0, 0}:
 
-			} else {
+			// default:
+			// 	continue
+			// }
+		} else {
+			switch versions[i] {
+			case Version{1, 0, 0}:
 				// UpdateCode was changed in INDEX 1.1.0
 				updateFunc := sc.Functions["UpdateCode"]
 				// Replace mod param and remove its store line from UpdateCode
@@ -894,16 +905,16 @@ func createContractVersions(isDOC bool, modTag string) (versions []Version, scCo
 				delete(updateFunc.Lines, 70)
 				delete(updateFunc.LinesNumberIndex, 70)
 				sc.Functions["UpdateCode"] = updateFunc
+			default:
+				continue
 			}
-		default:
-			// nothing, use latest
-		}
 
-		// TELA-MODs introduced in INDEX 1.1.0
-		if i > 0 {
-			if modSC, modCode, err := Mods.InjectMODs(modTag, newCode); err == nil {
-				sc = modSC
-				newCode = modCode
+			// TELA-MODs introduced in INDEX 1.1.0
+			if !versions[i].LessThan(Version{1, 1, 0}) {
+				if modSC, modCode, err := Mods.InjectMODs(modTag, newCode); err == nil {
+					sc = modSC
+					newCode = modCode
+				}
 			}
 		}
 

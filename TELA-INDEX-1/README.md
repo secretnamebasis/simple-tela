@@ -39,7 +39,7 @@ Function InitializePrivate() Uint64
 1000 RETURN 0
 End Function
 ```
-It is recommended to keep `TELA-INDEX-1` contracts below 9KB total file size if updating is to be required at any point in the future. If staying within the 9KB size limit, developers are able to embed ~90 (<i>may vary slightly depending on header values</i>) `TELA-DOC-1` SCIDs into a single `TELA-INDEX-1` and maintain its ability to be updated with more DOCs than it was originally installed with. Current test show the maximum limit of DOCs that a `TELA-INDEX-1` can be successfully installed with is ~120 (<i>may vary slightly depending on header values</i>). Library usage details are documented within the `TELA-DOC-1` section and can increase the total capacity beyond these figures. 
+It is recommended to keep `TELA-INDEX-1` contracts below 9KB total file size if updating is to be required at any point in the future. If staying within the 9KB size limit, developers are able to embed ~90 (<i>may vary slightly depending on header values</i>) `TELA-DOC-1` SCIDs into a single `TELA-INDEX-1` and maintain its ability to be updated with more DOCs than it was originally installed with. Current test show the maximum limit of DOCs that a `TELA-INDEX-1` can be successfully installed with is ~120 (<i>may vary slightly depending on header values</i>). Library usage and DocShard creation are documented within the `TELA-DOC-1` section and can increase the total capacity beyond these figures. 
 
 ### TELA-INDEX-1 Template
 * [TELA-INDEX-1](TELA-INDEX-1.bas)

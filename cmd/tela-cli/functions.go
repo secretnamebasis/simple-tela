@@ -50,8 +50,6 @@ type shardKeys struct {
 
 var keys shardKeys
 
-const CHUNK_SIZE = 17500
-
 const printDivider = "------------------------------"
 
 // Initialize TELA-CLI
@@ -354,6 +352,7 @@ func completerDocType() (options []readline.PrefixCompleterInterface) {
 	options = append(options, readline.PcItem("tela-css-1"))
 	options = append(options, readline.PcItem("tela-js-1"))
 	options = append(options, readline.PcItem("tela-md-1"))
+	options = append(options, readline.PcItem("tela-go-1"))
 
 	return
 }
@@ -829,7 +828,7 @@ func (t *tela_cli) indexPrompt(nameHdr string, previousIndex *tela.INDEX) (index
 				continue
 			}
 
-			if !strings.HasSuffix(ind.DURL, tela.TAG_LIBRARY) && !strings.Contains(ind.DURL, tela.TAG_DOC_SHARDS) {
+			if !strings.HasSuffix(ind.DURL, tela.TAG_LIBRARY) && !strings.HasSuffix(ind.DURL, tela.TAG_DOC_SHARDS) {
 				logger.Errorf("[%s] INDEX %s is not a library or shards\n", appName, ind.DURL)
 				continue
 			}
@@ -844,7 +843,7 @@ func (t *tela_cli) indexPrompt(nameHdr string, previousIndex *tela.INDEX) (index
 					break
 				}
 
-				filePath := filepath.Join(doc.SubDir, doc.NameHdr)
+				filePath := strings.TrimSuffix(filepath.Join(doc.SubDir, doc.NameHdr), doc.Compression)
 				for _, p := range paths {
 					if p == filePath {
 						indexErr = fmt.Sprintf("Import from %s INDEX already contains a DOC with path %q", d, filePath)
@@ -856,7 +855,7 @@ func (t *tela_cli) indexPrompt(nameHdr string, previousIndex *tela.INDEX) (index
 					break
 				}
 
-				logger.Printf("[%s] File: %s\n", appName, filePath)
+				logger.Printf("[%s] File: %s\n", appName, doc.NameHdr)
 				logger.Printf("[%s] Author: %s\n", appName, doc.Author)
 				paths = append(paths, filePath)
 			}
@@ -868,7 +867,7 @@ func (t *tela_cli) indexPrompt(nameHdr string, previousIndex *tela.INDEX) (index
 		} else {
 			// Ensure DOC path does not exists already in this INDEX
 			var have bool
-			filePath := filepath.Join(doc.SubDir, doc.NameHdr)
+			filePath := strings.TrimSuffix(filepath.Join(doc.SubDir, doc.NameHdr), doc.Compression)
 			for _, p := range paths {
 				if p == filePath {
 					have = true
@@ -1680,8 +1679,13 @@ func printFileInfo(info fs.FileInfo) {
 	fmt.Printf("%sDirectory:%s %t\n", logger.Color.Cyan(), logger.Color.End(), info.IsDir())
 }
 
+// Printed formatted gas fees
+func printGasEstimate(gasFees uint64) {
+	logger.Printf("[%s] Estimated fees: %s %sDERO%s\n", appName, globals.FormatMoney(gasFees), logger.Color.Magenta(), logger.Color.End())
+}
+
 // Find all DocShard files associated with the given filePath
-func findDocShardFiles(filePath string) (docShards [][]byte, recreate string, err error) {
+func findDocShardFiles(filePath string) (docShards [][]byte, recreate, compression string, err error) {
 	fileName := filepath.Base(filePath)
 	split := strings.Split(fileName, "-")
 	if len(split) < 2 {
@@ -1715,6 +1719,12 @@ func findDocShardFiles(filePath string) (docShards [][]byte, recreate string, er
 
 			docShards = append(docShards, shard)
 		}
+	}
+
+	if tela.IsCompressedExt(ext) {
+		// Recreate the original file if shards are compressed
+		compression = ext
+		ext = filepath.Ext(strings.TrimSuffix(fileName, compression))
 	}
 
 	recreate = fmt.Sprintf("%s%s", split[0], ext)

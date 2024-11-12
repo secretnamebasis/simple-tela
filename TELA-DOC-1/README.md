@@ -22,6 +22,7 @@ This portion of the documentation will focus on `TELA-DOC-1`.
 - [DocShards](#docshards)
     - [DocShard Usage](#docshard-usage)
     - [DocShard Creation](#docshard-creation)
+- [Compression](#compression)
 - [TELA-DOC-1 Template](#tela-doc-1-template)
 - [Utilization](#utilization)
     - [Install TELA-DOC-1](#install-tela-doc-1)
@@ -39,10 +40,11 @@ Prepare all the code (or text) that will be required for the document. Ensure yo
 
 #### Guidelines
 - One `TELA-DOC-1` cannot exceed 20KB in total size.
-- Do not use any `/* */` multiline comments within any document or smart contract code as it may cause errors during contract installation.
+- If `/* */` multiline comments or non ASCII characters are used in the document code it should be encoded to avoid errors during contract installation. See [compression](#compression) for more details.
 - Example application code can be found in [tela_tests](../tela_tests/).
 - The dURL can be used to help indexers query details beyond the defined contract stores, examples:
     - Appending `.lib` to a dURL will mark it as a library for indexes such as in [TELA-CLI](../cmd/tela-cli/README.md).
+    - DocShards append `.shard` and `.shards` to their DOC and INDEX dURLs respectively to indicate it is a shard or requires reconstruction.
 
 ##### JavaScript
 - Accurate origin URLs for web socket connections can be generated using:
@@ -60,6 +62,7 @@ const applicationData = {
 "TELA-CSS-1"
 "TELA-JS-1"
 "TELA-MD-1"
+"TELA-GO-1"
 ```
 
 ### Initialization
@@ -135,8 +138,17 @@ To avoid formatting errors during the cloning or serving of content, it is recom
 To create a DocShard:
 - Write the docType code that will be recreated as a single source file. 
 - Using the appropriate tools, create the DocShard smart contracts from the source file. 
-- Install the `TELA-DOC-1` DocShard contracts. The `.shard` tag can be contained within the DOC dURL's to signify they are DocShards.
-- Embed all installed `TELA-DOC-1` DocShard contracts into a `TELA-INDEX-1` and include `.shards` in its dURL to signify it requires reconstruction.
+- Install the `TELA-DOC-1` DocShard contracts. The `.shard` tag should be appended to the DOC dURL's to indicate they are DocShards.
+- Embed all installed `TELA-DOC-1` DocShard contracts into a `TELA-INDEX-1` and append `.shards` to its dURL to signify it requires reconstruction.
+
+#### Compression
+Document code can be compressed and encoded to maximize the storage capacity of a single DOC. Additionally, applying compression when creating DocShards can reduce the number of shards needed for large files. Adding the compression extension to the end of the nameHdr will signal that the content is compressed, ensuring it is processed appropriately when served.
+
+For optimal results, it is recommended to use a host application such as `TELA-CLI`, which automates the compression process during DOC installation. The `civilware/tela` package currently supports the following compression formats:
+
+| Format       | Extension |
+|--------------|-----------|
+| gzip         | `.gz`     |
 
 ### TELA-DOC-1 Template
 * [TELA-DOC-1](TELA-DOC-1.bas)

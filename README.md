@@ -392,12 +392,12 @@ func main() {
 	formattedCode, _ := tela.FormatSmartContract(dvmCode, scCode)
 
 	// Create DocShard files from a source file
-	tela.CreateShardFiles(fileName)
+	tela.CreateShardFiles(fileName, "", nil)
 
 	// Recreate a file in path from its DocShards
 	path := "dir1/"
 	docShards := [][]byte{}
-	tela.ConstructFromShards(docShards, fileName, path)
+	tela.ConstructFromShards(docShards, fileName, path, "")
 
 	// Parse and inject headers into a DERO smart contract
 	headers1 := &tela.Headers{

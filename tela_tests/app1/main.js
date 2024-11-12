@@ -253,6 +253,9 @@ function requestParams() {
             container.appendChild(newInput("blid")); break;
         case "AttemptEPOCH":
             container.appendChild(newInput("hashes", true)); break;
+        case "AttemptEPOCHWithAddr":
+            container.appendChild(newInput("address"));
+            container.appendChild(newInput("hashes", true)); break;
     }
 }
 
@@ -269,7 +272,7 @@ function callFor() {
 
     const select = document.getElementById("selectCall");
     let m = "";
-    if (select.selectedIndex > 3 && !select.value.endsWith("EPOCH")) {
+    if (select.selectedIndex > 3 && !select.value.includes("EPOCH")) {
         m = "Gnomon.";
     } else {
         typeWriter("Waiting for wallet reply");
@@ -331,6 +334,9 @@ function callFor() {
         case "GetMiniblockDetailsByHash":
             call.params.blid = document.getElementById("blid").value; break;
         case "AttemptEPOCH":
+            call.params.hashes = parseInt(document.getElementById("hashes").value); break;
+        case "AttemptEPOCHWithAddr":
+            call.params.address = document.getElementById("address").value;
             call.params.hashes = parseInt(document.getElementById("hashes").value); break;
         default:
             call.params = null; break;

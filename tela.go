@@ -1,6 +1,7 @@
 package tela
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
 	"fmt"
@@ -32,13 +33,14 @@ import (
 
 // TELA-DOC-1 structure
 type DOC struct {
-	DocType   string   `json:"docType"`           // Language this document is using (ex: "TELA-HTML-1", "TELA-JS-1" or "TELA-CSS-1")
-	Code      string   `json:"code"`              // The application code HTML, JS...
-	SubDir    string   `json:"subDir"`            // Sub directory to place file in (always use / for further children, ex: "sub1" or "sub1/sub2/sub3")
-	SCID      string   `json:"scid"`              // SCID of this DOC, only used after DOC has been installed on-chain
-	Author    string   `json:"author"`            // Author of this DOC, only used after DOC has been installed on-chain
-	DURL      string   `json:"dURL"`              // TELA dURL
-	SCVersion *Version `json:"version,omitempty"` // Version of this DOC SC
+	DocType     string   `json:"docType"`           // Language this document is using (ex: "TELA-HTML-1", "TELA-JS-1" or "TELA-CSS-1")
+	Code        string   `json:"code"`              // The application code HTML, JS...
+	SubDir      string   `json:"subDir"`            // Sub directory to place file in (always use / for further children, ex: "sub1" or "sub1/sub2/sub3")
+	SCID        string   `json:"scid"`              // SCID of this DOC, only used after DOC has been installed on-chain
+	Author      string   `json:"author"`            // Author of this DOC, only used after DOC has been installed on-chain
+	DURL        string   `json:"dURL"`              // TELA dURL
+	Compression string   `json:"compression"`       // Compression format if used on this DOC (ex: .gz)
+	SCVersion   *Version `json:"version,omitempty"` // Version of this DOC SC
 	// Signature values of Code
 	Signature `json:"signature"`
 	// Standard headers
@@ -131,8 +133,9 @@ const DEFAULT_MAX_PORT = 65535  // Maximum port of possible serving range
 
 const MINIMUM_GAS_FEE = uint64(100) // Minimum gas fee used when making transfers
 
-const TAG_LIBRARY = ".lib"       // A collection of standard DOCs embedded within an INDEX, each DOC is its own file
-const TAG_DOC_SHARDS = ".shards" // A collection of DocShard DOCs embedded within an INDEX, when recreated this will be one file
+const TAG_LIBRARY = ".lib"       // A collection of standard DOCs embedded within an INDEX, each DOC is its own file  (usage is appended to INDEX and DOC dURLs)
+const TAG_DOC_SHARD = ".shard"   // A DocShard DOC  (usage is appended to DOC dURLs)
+const TAG_DOC_SHARDS = ".shards" // A collection of DocShard DOCs embedded within an INDEX, when recreated this will be one file  (usage is appended to INDEX dURLs)
 
 // Accepted languages of this TELA package
 var acceptedLanguages = []string{DOC_STATIC, DOC_HTML, DOC_JSON, DOC_CSS, DOC_JS, DOC_MD, DOC_GO}
@@ -277,7 +280,7 @@ func parseDocShardCode(fileName, code string) (shard []byte, err error) {
 }
 
 // Parse a TELA DOC for useable code and write file if IsAcceptedLanguage
-func parseAndSaveTELADoc(filePath, code, doctype string) (err error) {
+func parseAndSaveTELADoc(filePath, code, doctype, compression string) (err error) {
 	start := strings.Index(code, "/*")
 	end := strings.Index(code, "*/")
 
@@ -310,6 +313,13 @@ func parseAndSaveTELADoc(filePath, code, doctype string) (err error) {
 		return
 	}
 
+	var docCode []byte
+	docCode, err = Decompress([]byte(comment), compression)
+	if err != nil {
+		err = fmt.Errorf("failed to decompress: %s", err)
+		return
+	}
+
 	err = os.MkdirAll(filepath.Dir(filePath), os.ModePerm)
 	if err != nil {
 		return
@@ -317,7 +327,7 @@ func parseAndSaveTELADoc(filePath, code, doctype string) (err error) {
 
 	logger.Printf("[TELA] Creating %s\n", filepath.Base(filePath))
 
-	return os.WriteFile(filePath, []byte(comment), 0644)
+	return os.WriteFile(filePath, docCode, 0644)
 }
 
 // Decode a hex string if possible otherwise return it
@@ -512,14 +522,8 @@ func GetDefaultNetworkAddress() (network, destination string) {
 	return
 }
 
-// transfer0 is used for executing TELA smart contract functions without a DEROVALUE or ASSETVALUE, it creates a transfer of 0 to a default address for the network
-func transfer0(wallet *walletapi.Wallet_Disk, ringsize uint64, args rpc.Arguments) (txid string, err error) {
-	return Transfer(wallet, ringsize, nil, args)
-}
-
-// Transfer is used for executing TELA smart contract actions with DERO walletapi, if nil transfers is passed
-// it initializes a transfer of 0 to a default address for the network using GetDefaultNetworkAddress()
-func Transfer(wallet *walletapi.Wallet_Disk, ringsize uint64, transfers []rpc.Transfer, args rpc.Arguments) (txid string, err error) {
+// Get DERO gas estimate for transfers and args
+func GetGasEstimate(wallet *walletapi.Wallet_Disk, ringsize uint64, transfers []rpc.Transfer, args rpc.Arguments) (gasFees uint64, err error) {
 	if wallet == nil {
 		err = fmt.Errorf("no wallet for transfer")
 		return
@@ -576,7 +580,7 @@ func Transfer(wallet *walletapi.Wallet_Disk, ringsize uint64, transfers []rpc.Tr
 
 	var gasResult rpc.GasEstimate_Result
 	if err = tela.client.RPC.CallResult(context.Background(), "DERO.GetGasEstimate", gasParams, &gasResult); err != nil {
-		err = fmt.Errorf("could not estimate install fees: %s", err)
+		err = fmt.Errorf("could not estimate fees: %s", err)
 		return
 	}
 
@@ -584,7 +588,26 @@ func Transfer(wallet *walletapi.Wallet_Disk, ringsize uint64, transfers []rpc.Tr
 		gasResult.GasStorage = MINIMUM_GAS_FEE
 	}
 
-	tx, err := wallet.TransferPayload0(transfers, ringsize, false, args, gasResult.GasStorage, false)
+	gasFees = gasResult.GasStorage
+
+	return
+}
+
+// transfer0 is used for executing TELA smart contract functions without a DEROVALUE or ASSETVALUE, it creates a transfer of 0 to a default address for the network
+func transfer0(wallet *walletapi.Wallet_Disk, ringsize uint64, args rpc.Arguments) (txid string, err error) {
+	return Transfer(wallet, ringsize, nil, args)
+}
+
+// Transfer is used for executing TELA smart contract actions with DERO walletapi, if nil transfers is passed
+// it initializes a transfer of 0 to a default address for the network using GetDefaultNetworkAddress()
+func Transfer(wallet *walletapi.Wallet_Disk, ringsize uint64, transfers []rpc.Transfer, args rpc.Arguments) (txid string, err error) {
+	var gasFees uint64
+	gasFees, err = GetGasEstimate(wallet, ringsize, transfers, args)
+	if err != nil {
+		return
+	}
+
+	tx, err := wallet.TransferPayload0(transfers, ringsize, false, args, gasFees, false)
 	if err != nil {
 		err = fmt.Errorf("transfer build error: %s", err)
 		return
@@ -634,10 +657,18 @@ func cloneDOC(scid, docNum, path, endpoint string) (clone Cloning, err error) {
 		return
 	}
 
+	var compression string
+	ext := filepath.Ext(fileName)
+	if IsCompressedExt(ext) {
+		compression = ext
+	}
+
+	recreate := strings.TrimSuffix(fileName, compression)
+
 	// Set entrypoint DOC
 	isDOC1 := Header(docNum) == HEADER_DOCUMENT.Number(1)
 	if isDOC1 {
-		clone.Entrypoint = fileName
+		clone.Entrypoint = recreate
 	}
 
 	// Check if DOC is to be placed in subDir
@@ -662,7 +693,7 @@ func cloneDOC(scid, docNum, path, endpoint string) (clone Cloning, err error) {
 		}
 	}
 
-	filePath := filepath.Join(path, fileName)
+	filePath := filepath.Join(path, recreate)
 	if _, err = os.Stat(filePath); !os.IsNotExist(err) {
 		err = fmt.Errorf("file %s already exists", filePath)
 		return
@@ -673,7 +704,7 @@ func cloneDOC(scid, docNum, path, endpoint string) (clone Cloning, err error) {
 		return
 	}
 
-	err = parseAndSaveTELADoc(filePath, code, docType)
+	err = parseAndSaveTELADoc(filePath, code, docType, compression)
 	if err != nil {
 		err = fmt.Errorf("error saving %s: %s", fileName, err)
 		return
@@ -731,7 +762,7 @@ func cloneINDEX(scid, dURL, path, endpoint string) (clone Cloning, err error) {
 	servePath := ""
 
 	// If INDEX contains DocShards to be constructed
-	if strings.Contains(dURL, TAG_DOC_SHARDS) {
+	if strings.HasSuffix(dURL, TAG_DOC_SHARDS) {
 		err = cloneDocShards(sc, basePath, endpoint)
 		if err != nil {
 			err = fmt.Errorf("%s %s", tagErr, err)
@@ -760,13 +791,13 @@ func cloneINDEX(scid, dURL, path, endpoint string) (clone Cloning, err error) {
 
 // cloneDocShards takes a TELA-INDEX SC and parses its DOCs, creating them as DocShards which get recreated as a single file
 func cloneDocShards(sc dvm.SmartContract, basePath, endpoint string) (err error) {
-	docShards, recreate, err := parseDocShards(sc, basePath, endpoint)
+	docShards, recreate, compression, err := parseDocShards(sc, basePath, endpoint)
 	if err != nil {
 		err = fmt.Errorf("could not clone DocShards: %s", err)
 		return
 	}
 
-	err = ConstructFromShards(docShards, recreate, basePath)
+	err = ConstructFromShards(docShards, recreate, basePath, compression)
 	if err != nil {
 		err = fmt.Errorf("could not construct DocShards: %s", err)
 		return
@@ -775,9 +806,18 @@ func cloneDocShards(sc dvm.SmartContract, basePath, endpoint string) (err error)
 	return
 }
 
+// Get the total amount of shards that would be created if data is used to CreateShardFiles
+func GetTotalShards(data []byte) (totalShards int, fileSize int64) {
+	fileSize = int64(len(data))
+
+	totalShards = int((fileSize + SHARD_SIZE - 1) / SHARD_SIZE)
+
+	return
+}
+
 // ConstructFromShards takes DocShards and recreates them as a file at basePath,
 // CreateShardFiles can be used to create the shard files formatted for ConstructFromShards
-func ConstructFromShards(docShards [][]byte, recreate, basePath string) (err error) {
+func ConstructFromShards(docShards [][]byte, recreate, basePath, compression string) (err error) {
 	err = os.MkdirAll(basePath, os.ModePerm)
 	if err != nil {
 		return
@@ -799,11 +839,35 @@ func ConstructFromShards(docShards [][]byte, recreate, basePath string) (err err
 	}
 	defer file.Close()
 
-	for i, code := range docShards {
-		_, err = file.Write(code)
+	if compression != "" {
+		var buf bytes.Buffer
+		for i, code := range docShards {
+			_, err = buf.Write(code)
+			if err != nil {
+				err = fmt.Errorf("failed to write compressed shard %d to %s: %s", i+1, recreate, err)
+				return
+			}
+		}
+
+		var decompressed []byte
+		decompressed, err = Decompress(buf.Bytes(), compression)
 		if err != nil {
-			err = fmt.Errorf("failed to write shard %d to %s: %s", i+1, recreate, err)
+			err = fmt.Errorf("failed to decompress %s: %s", recreate, err)
 			return
+		}
+
+		_, err = file.Write(decompressed)
+		if err != nil {
+			err = fmt.Errorf("failed to write decompressed shards to %s: %s", recreate, err)
+			return
+		}
+	} else {
+		for i, code := range docShards {
+			_, err = file.Write(code)
+			if err != nil {
+				err = fmt.Errorf("failed to write shard %d to %s: %s", i+1, recreate, err)
+				return
+			}
 		}
 	}
 
@@ -812,16 +876,30 @@ func ConstructFromShards(docShards [][]byte, recreate, basePath string) (err err
 
 // CreateShardFiles takes a source file and creates DocShard files sized and formatted for installing as TELA DOCs,
 // the package uses ConstructFromShards to re-build the DocShards as its original file when cloning,
-// output files are formatted as "name-#.ext" in the source file's directory
-func CreateShardFiles(filePath string) (err error) {
-	var content []byte
-	content, err = os.ReadFile(filePath)
-	if err != nil {
-		err = fmt.Errorf("failed to read file: %s", err)
-		return
+// output files are formatted as "name-#.ext+compression" in the source file's directory
+// if content is nil the filePath will be read and compression will be applied if used, otherwise content will be handled as is
+func CreateShardFiles(filePath, compression string, content []byte) (err error) {
+	fileName := filepath.Base(filePath)
+
+	if content == nil {
+		content, err = os.ReadFile(filePath)
+		if err != nil {
+			err = fmt.Errorf("failed to read file: %s", err)
+			return
+		}
+
+		if compression != "" {
+			var compressed string
+			compressed, err = Compress(content, compression)
+			if err != nil {
+				err = fmt.Errorf("could not compress %s: %s", fileName, err)
+				return
+			}
+
+			content = []byte(compressed)
+		}
 	}
 
-	fileName := filepath.Base(filePath)
 	for _, r := range string(content) {
 		if r > unicode.MaxASCII {
 			err = fmt.Errorf("cannot shard file %s: '%c'", fileName, r)
@@ -829,12 +907,10 @@ func CreateShardFiles(filePath string) (err error) {
 		}
 	}
 
-	shardSize := int(MAX_DOC_CODE_SIZE*1000) - 500
+	totalShards, fileSize := GetTotalShards(content)
 
-	totalShards := (len(content) + shardSize - 1) / shardSize
-
-	newFileName := func(i int, name, ext string) string {
-		return fmt.Sprintf("%s-%d%s", strings.TrimSuffix(name, ext), i, ext)
+	newFileName := func(i int, name, ext, comp string) string {
+		return fmt.Sprintf("%s-%d%s%s", strings.TrimSuffix(name, ext), i, ext, comp)
 	}
 
 	fileDir := filepath.Dir(filePath)
@@ -842,7 +918,7 @@ func CreateShardFiles(filePath string) (err error) {
 
 	// Check no shard files already exist
 	for i := 1; i <= totalShards; i++ {
-		name := newFileName(int(i), fileName, ext)
+		name := newFileName(int(i), fileName, ext, compression)
 		newPath := filepath.Join(fileDir, name)
 		if _, err = os.Stat(newPath); !os.IsNotExist(err) {
 			err = fmt.Errorf("file %s already exists", newPath)
@@ -851,15 +927,14 @@ func CreateShardFiles(filePath string) (err error) {
 	}
 
 	count := 0
-	fileEnd := len(content)
-	for start := 0; start < fileEnd; start += shardSize {
-		end := start + shardSize
-		if end > fileEnd {
-			end = fileEnd
+	for start := int64(0); start < fileSize; start += SHARD_SIZE {
+		end := start + SHARD_SIZE
+		if end > fileSize {
+			end = fileSize
 		}
 
 		count++
-		name := newFileName(count, fileName, ext)
+		name := newFileName(count, fileName, ext, compression)
 
 		var shardFile *os.File
 		shardFile, err = os.Create(filepath.Join(fileDir, name))
@@ -942,7 +1017,7 @@ func cloneINDEXAtCommit(height int64, scid, txid, path, endpoint string) (clone 
 	servePath := ""
 
 	// If INDEX contains DocShards to be constructed
-	if strings.Contains(dURL, TAG_DOC_SHARDS) {
+	if strings.HasSuffix(dURL, TAG_DOC_SHARDS) {
 		err = cloneDocShards(sc, basePath, endpoint)
 		if err != nil {
 			err = fmt.Errorf("%s %s", tagErr, err)
@@ -1032,7 +1107,7 @@ func checkIfAbleToServe(scid, endpoint string) (dURL string, err error) {
 		return
 	}
 
-	if strings.Contains(dURL, TAG_DOC_SHARDS) {
+	if strings.HasSuffix(dURL, TAG_DOC_SHARDS) {
 		err = fmt.Errorf("%q is DocShards and cannot be served", dURL)
 		return
 	}
@@ -1397,6 +1472,9 @@ func NewInstallArgs(params interface{}) (args rpc.Arguments, err error) {
 		if err != nil {
 			return
 		}
+	case rpc.Arguments:
+		args = h
+		return
 	default:
 		err = fmt.Errorf("expecting params to be *INDEX or *DOC for install and got: %T", params)
 
@@ -1456,6 +1534,9 @@ func NewUpdateArgs(params interface{}) (args rpc.Arguments, err error) {
 		} else {
 			version = h.SCVersion
 		}
+	case rpc.Arguments:
+		args = h
+		return
 	default:
 		err = fmt.Errorf("expecting params to be *INDEX for update and got: %T", params)
 
@@ -1471,7 +1552,7 @@ func NewUpdateArgs(params interface{}) (args rpc.Arguments, err error) {
 
 	// Handle any version specific params that need to be added
 	switch {
-	case version.Equal(Version{1, 1, 0}):
+	case !version.LessThan(Version{1, 1, 0}):
 		args = append(args, rpc.Argument{Name: "mods", DataType: rpc.DataString, Value: mods})
 	default:
 		// nothing, use 1.0.0
@@ -1782,7 +1863,7 @@ func GetDOCInfo(scid, endpoint string) (doc DOC, err error) {
 
 	dURL := decodeHexString(d)
 
-	var nameHdr, descrHdr, iconHdr, subDir, checkC, checkS string
+	var nameHdr, descrHdr, iconHdr, subDir, checkC, checkS, compression string
 	name, ok := vars[HEADER_NAME.Trim()].(string)
 	if ok {
 		nameHdr = decodeHexString(name)
@@ -1819,14 +1900,20 @@ func GetDOCInfo(scid, endpoint string) (doc DOC, err error) {
 		checkS = decodeHexString(fS)
 	}
 
+	ext := filepath.Ext(nameHdr)
+	if IsCompressedExt(ext) {
+		compression = ext
+	}
+
 	doc = DOC{
-		DocType:   docType,
-		Code:      code,
-		SubDir:    subDir,
-		SCID:      scid,
-		Author:    author,
-		DURL:      dURL,
-		SCVersion: &version,
+		DocType:     docType,
+		Code:        code,
+		SubDir:      subDir,
+		SCID:        scid,
+		Author:      author,
+		DURL:        dURL,
+		Compression: compression,
+		SCVersion:   &version,
 		Signature: Signature{
 			CheckC: checkC,
 			CheckS: checkS,

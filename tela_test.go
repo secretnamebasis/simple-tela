@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode"
 
 	"github.com/civilware/tela/logger"
 	"github.com/civilware/tela/shards"
@@ -326,6 +327,40 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
+func TestCompression(t *testing.T) {
+	fileName := filepath.Join(testDir, "app1", "main.js")
+	fileData, err := readFile(fileName)
+	if err != nil {
+		t.Fatalf("Could not read compression test file")
+	}
+
+	data := []byte(fileData)
+
+	compressed, err := compressGzip(data)
+	assert.NoError(t, err, "Gzip compression should not error: %s", err)
+	decompressed, err := decompressGzip([]byte(compressed))
+	assert.NoError(t, err, "Gzip decompression should not error: %s", err)
+	assert.Equal(t, data, decompressed, "Results should be equal")
+
+	invalidBase64 := "!!!not_base64!!!"
+	_, err = decompressGzip([]byte(invalidBase64))
+	assert.Error(t, err, "Gzip invalid base64 should error")
+
+	_, err = Compress(data, "unknown")
+	assert.Error(t, err, "Unknown compression format should error")
+
+	_, err = Decompress(data, "unknown")
+	assert.Error(t, err, "Unknown decompression format should error")
+
+	assert.Equal(t, fileName, TrimCompressedExt(fileName), "Trimmed fileName should remain the same")
+	assert.Equal(t, fileName, TrimCompressedExt(fileName+COMPRESSION_GZIP), "Trimmed compressed fileName should be equal")
+	assert.Empty(t, TrimCompressedExt(""), "Trimming nothing should return empty")
+
+	assert.True(t, IsCompressedExt(COMPRESSION_GZIP), "%s should be a valid compression extension", COMPRESSION_GZIP)
+	assert.False(t, IsCompressedExt("unknown"), "Unknown compression extension should be false")
+	assert.False(t, IsCompressedExt(""), "Empty compression extension should be false")
+}
+
 func TestTELA(t *testing.T) {
 	endpoint, datashards, wallets := createTestEnvironment(t)
 
@@ -358,9 +393,16 @@ func TestTELA(t *testing.T) {
 				ringsize := uint64(2)
 				if i > 2 {
 					ringsize = 16
+					doc.NameHdr = doc.NameHdr + COMPRESSION_GZIP
+					compressed, err := Compress([]byte(code), COMPRESSION_GZIP)
+					if err != nil {
+						t.Fatalf("Could not compress %s file: %s", doc.NameHdr, err)
+					}
+					doc.Code = compressed
+				} else {
+					doc.Code = code
 				}
 
-				doc.Code = code
 				tx, err := retry(t, fmt.Sprintf("DOC %d install", i), func() (string, error) {
 					return Installer(wallets[i], ringsize, &doc.DOC)
 				})
@@ -603,6 +645,8 @@ func TestTELA(t *testing.T) {
 
 		_, err = GetDOCInfo(docs[0][0], endpoint)
 		assert.NoError(t, err, "Getting valid DOC should not error: %s", err)
+		_, err = GetDOCInfo(docs[1][0], endpoint)
+		assert.NoError(t, err, "Getting valid compressed DOC should not error: %s", err)
 		_, err = GetDOCInfo(docs[2][2], endpoint)
 		assert.Error(t, err, "Getting DOC with invalid docType should error and did not")
 		_, err = GetDOCInfo(nameservice, endpoint)
@@ -915,8 +959,6 @@ func TestTELA(t *testing.T) {
 	t.Run("DocShards", func(t *testing.T) {
 		ringsize := uint64(2)
 
-		CHUNK_SIZE := int64(17500)
-
 		moveTo := filepath.Join(testDir, "datashards", "clone", "shard")
 
 		var installedShardINDEXs []string
@@ -940,13 +982,31 @@ func TestTELA(t *testing.T) {
 		}
 
 		for si, shardFile := range docShardFiles {
+			var content []byte
+			var compression string
+			var totalShards int
 			goFile, _ := readFile(shardFile.Source)
-			// Prep the file content removing any multi line comments
-			goFile = strings.ReplaceAll(goFile, "/*", "")
-			goFile = strings.ReplaceAll(goFile, "*/", "")
-			docShardFiles[si].Content = goFile
+			if si < 1 {
+				compression = COMPRESSION_GZIP
+				goFile = goFile + goFile // add more data to make it multiple shards
+				compressed, err := Compress([]byte(goFile), compression)
+				if err != nil {
+					t.Fatalf("Could not compress %s: %s", shardFile.Name, err)
+				}
 
-			content := []byte(goFile)
+				docShardFiles[si].Content = goFile
+				content = []byte(goFile)
+
+				totalShards, _ = GetTotalShards([]byte(compressed))
+			} else {
+				// Prep the file content removing any multi line comments if not compressed/encoded
+				goFile = strings.ReplaceAll(goFile, "/*", "")
+				goFile = strings.ReplaceAll(goFile, "*/", "")
+				docShardFiles[si].Content = goFile
+				content = []byte(goFile)
+
+				totalShards, _ = GetTotalShards(content)
+			}
 
 			err = os.MkdirAll(moveTo, os.ModePerm)
 			assert.NoError(t, err, "Creating directories should not error: %s", err)
@@ -957,18 +1017,20 @@ func TestTELA(t *testing.T) {
 			_, err = file.Write(content)
 			assert.NoError(t, err, "Writing shard file should not error: %s", err)
 
-			err = CreateShardFiles(shardFile.Path)
+			err = CreateShardFiles(shardFile.Path, compression, nil)
 			assert.NoError(t, err, "CreateShardFiles should not error: %s", err)
-			err = CreateShardFiles(shardFile.Path)
+			err = CreateShardFiles(shardFile.Path, compression, nil)
 			assert.Error(t, err, "CreateShardFiles should error when exists already")
+			err = CreateShardFiles(shardFile.Path, "invalid", nil)
+			assert.Error(t, err, "CreateShardFiles should error with invalid compression")
 			// Hit already exists
-			err = ConstructFromShards(nil, shardFile.Name, moveTo)
+			err = ConstructFromShards(nil, shardFile.Name, moveTo, compression)
 			assert.Error(t, err, "ConstructFromShards should error when exists already")
 
-			shardDURL := fmt.Sprintf("%s%s", docShardFiles[si].Name, TAG_DOC_SHARDS)
+			shardDURL := fmt.Sprintf("%s%s", docShardFiles[si].Name, TAG_DOC_SHARD)
 
 			doc := &DOC{
-				DocType: "TELA-GO-1",
+				DocType: DOC_GO,
 				DURL:    shardDURL,
 				Headers: Headers{
 					NameHdr:  "",
@@ -980,13 +1042,10 @@ func TestTELA(t *testing.T) {
 				},
 			}
 
-			fileInfo, _ := os.Stat(shardFile.Path)
-			totalShards := (fileInfo.Size() + CHUNK_SIZE - 1) / CHUNK_SIZE
-
 			// Install all DocShards created from original file
-			for i := int64(1); i <= totalShards; i++ {
+			for i := 1; i <= totalShards; i++ {
 				// Name of file created by CreateShardFiles
-				newName := fmt.Sprintf("%s-%d.go", strings.TrimSuffix(shardFile.Name, ".go"), i)
+				newName := fmt.Sprintf("%s-%d.go%s", strings.TrimSuffix(shardFile.Name, ".go"), i, compression)
 				code, err := readFile(strings.ReplaceAll(shardFile.Path, shardFile.Name, newName))
 				if err != nil {
 					t.Fatalf("Could not read %s file: %s", newName, err)
@@ -1012,9 +1071,11 @@ func TestTELA(t *testing.T) {
 				t.Logf("Simulator DocShard %d SC installed %s: %s", i, doc.NameHdr, tx)
 			}
 
+			shardIndexDURL := fmt.Sprintf("%s%s", docShardFiles[si].Name, TAG_DOC_SHARDS)
+
 			// Embed all the DocShards SCIDs into INDEX
 			shardIndex := &INDEX{
-				DURL: shardDURL,
+				DURL: shardIndexDURL,
 				DOCs: shardSCIDs[si],
 				Headers: Headers{
 					NameHdr:  fmt.Sprintf("DocShards%d", si),
@@ -1142,7 +1203,7 @@ func TestTELA(t *testing.T) {
 		for i, code := range invalidDocShardSCs {
 			sc, _, err := dvm.ParseSmartContract(code)
 			assert.NoError(t, err, "Parsing DocShard code %d should not error: %s", i, err)
-			_, recreate, err := parseDocShards(sc, "", endpoint)
+			_, recreate, _, err := parseDocShards(sc, "", endpoint)
 			if i == 0 {
 				assert.NoError(t, err, "Parsing DocShard %d should not error: %s", i, err)
 				assert.Equal(t, filepath.Join(telaDocs[3].SubDir, telaDocs[3].NameHdr), recreate, "Recreated file should have subDir prefix")
@@ -1254,19 +1315,64 @@ func TestTELA(t *testing.T) {
 			}
 		}
 
+		// DOCs
+		pastVersionDoc := telaDocs[6]
+		readmeCode, err := readFile(pastVersionDoc.filePath) // use README for past versions docCode
+		if err != nil {
+			t.Fatalf("Could not read %s file: %s", pastVersionDoc.filePath, err)
+		}
+
+		var pastDocTXs []string
+		docVersions, docCode := createContractVersions(true, "")
+		for i := 0; i < len(docVersions)-1; i++ {
+			docVersionInstaller := func() (tx string, err error) {
+				vDOC := pastVersionDoc.DOC
+				vDOC.Headers = Headers{NameHdr: docVersions[i].String() + ".md"}
+				vDOC.DURL = fmt.Sprintf("v%s.doc.tela", docVersions[i].String())
+
+				testVersionCode, err := ParseHeaders(docCode[i], &vDOC)
+				assert.NoError(t, err, "Adding headers to v%s DOC should not error: %s", docVersions[i].String(), err)
+
+				testVersionCode, err = appendDocCode(testVersionCode, readmeCode)
+				assert.NoError(t, err, "Appending docCode to v%s DOC should not error: %s", docVersions[i].String(), err)
+
+				args := rpc.Arguments{
+					rpc.Argument{Name: rpc.SCACTION, DataType: rpc.DataUint64, Value: uint64(rpc.SC_INSTALL)},
+					rpc.Argument{Name: rpc.SCCODE, DataType: rpc.DataString, Value: testVersionCode},
+				}
+
+				return transfer0(wallets[i], 2, args)
+			}
+
+			tx, err := retry(t, fmt.Sprintf("DOC v%s install", docVersions[i].String()), func() (string, error) {
+				return docVersionInstaller()
+			})
+			assert.NoError(t, err, "Installing DOC v%s should not have error: %s", docVersions[i].String(), err)
+
+			_, err = retry(t, fmt.Sprintf("confirming install TX %s", tx), func() (string, error) {
+				return getContractCode(tx, endpoint)
+			})
+			if err != nil {
+				t.Fatalf("Could not confirm DOC v%s TX %s: %s", docVersions[i].String(), tx, err)
+			}
+
+			t.Logf("Simulator DOC v%s SC installed: %s", docVersions[i].String(), tx)
+			pastDocTXs = append(pastDocTXs, tx)
+		}
+
 		// INDEXs
 		indexVersions, indexCode := createContractVersions(false, "")
 		for i := 0; i < len(indexVersions)-1; i++ {
 			versionInstaller := func() (tx string, err error) {
 				vIndex := &INDEX{
-					DURL: fmt.Sprintf("v%s.tela", indexVersions[i].String()),
+					DURL: fmt.Sprintf("v%s.index.tela", indexVersions[i].String()),
 					Headers: Headers{
 						NameHdr: indexVersions[i].String(),
 					},
 				}
 
 				testVersionCode, err := ParseHeaders(indexCode[i], vIndex)
-				assert.NoError(t, err, "Adding headers to v%s should not error: %s", indexVersions[i].String(), err)
+				assert.NoError(t, err, "Adding headers to v%s INDEX should not error: %s", indexVersions[i].String(), err)
 
 				args := rpc.Arguments{
 					rpc.Argument{Name: rpc.SCACTION, DataType: rpc.DataUint64, Value: uint64(rpc.SC_INSTALL)},
@@ -1294,8 +1400,8 @@ func TestTELA(t *testing.T) {
 			update := &INDEX{
 				SCVersion: &indexVersions[i],
 				SCID:      scid,
-				DURL:      fmt.Sprintf("v%s.tela", indexVersions[len(indexVersions)-1].String()), // the latest version number
-				DOCs:      []string{docs[0][0], docs[0][1], docs[0][2]},
+				DURL:      fmt.Sprintf("v%s.index.tela", indexVersions[len(indexVersions)-1].String()), // the latest version number
+				DOCs:      append([]string{docs[0][0], docs[0][1], docs[0][2]}, pastDocTXs...),
 				Headers: Headers{
 					NameHdr:  indexVersions[len(indexVersions)-1].String(),
 					DescrHdr: "A TELA Application",
@@ -1332,16 +1438,18 @@ func TestTELA(t *testing.T) {
 		assert.Error(t, err, "Invalid shard code should error")
 
 		// Parse empty document with no multiline comment
-		assert.Error(t, parseAndSaveTELADoc("", "", ""), "Should not be able to parse this document")
+		assert.Error(t, parseAndSaveTELADoc("", "", "", ""), "Should not be able to parse this document")
 		// Parse invalid docType
-		assert.Error(t, parseAndSaveTELADoc("", "/*\n*/", "invalid"), "DocType should be invalid")
+		assert.Error(t, parseAndSaveTELADoc("", "/*\n*/", "invalid", ""), "DocType should be invalid")
+		// Decompression error
+		assert.Error(t, parseAndSaveTELADoc("", "/*?*/", DOC_HTML, COMPRESSION_GZIP), "Decompression should error with invalid data")
 		// Save to invalid path
-		assert.Error(t, parseAndSaveTELADoc(filepath.Join(mainPath, testDir, "app2", "index.html", "filename.html"), TELA_DOC_1, DOC_HTML), "Path should be invalid")
+		assert.Error(t, parseAndSaveTELADoc(filepath.Join(mainPath, testDir, "app2", "index.html", "filename.html"), TELA_DOC_1, DOC_HTML, ""), "Path should be invalid")
 		// Parse types not installed in tests
-		assert.NoError(t, parseAndSaveTELADoc(filepath.Join(datashards, "test_test.go"), TELA_DOC_1, DOC_GO), "DOC_GO should be valid")
-		assert.NoError(t, parseAndSaveTELADoc(filepath.Join(datashards, "json.json"), TELA_DOC_1, DOC_JSON), "DOC_JSON should be valid")
-		assert.NoError(t, parseAndSaveTELADoc(filepath.Join(datashards, "markdown.md"), TELA_DOC_1, DOC_MD), "DOC_MD should be valid")
-		assert.NoError(t, parseAndSaveTELADoc(filepath.Join(datashards, "other.jsx"), TELA_DOC_1, DOC_STATIC), "DOC_STATIC should be valid")
+		assert.NoError(t, parseAndSaveTELADoc(filepath.Join(datashards, "test_test.go"), TELA_DOC_1, DOC_GO, ""), "DOC_GO should be valid")
+		assert.NoError(t, parseAndSaveTELADoc(filepath.Join(datashards, "json.json"), TELA_DOC_1, DOC_JSON, ""), "DOC_JSON should be valid")
+		assert.NoError(t, parseAndSaveTELADoc(filepath.Join(datashards, "markdown.md"), TELA_DOC_1, DOC_MD, ""), "DOC_MD should be valid")
+		assert.NoError(t, parseAndSaveTELADoc(filepath.Join(datashards, "other.jsx"), TELA_DOC_1, DOC_STATIC, ""), "DOC_STATIC should be valid")
 
 		// decodeHexString return non hex
 		expectedAddress := "deto1qy87ghfeeh6n6tdxtgh7yuvtp6wh2uwfzvz7vjq0krjy4smmx62j5qgqht7t3"
@@ -1478,11 +1586,25 @@ func TestTELA(t *testing.T) {
 		SetMaxServers(DEFAULT_MAX_SERVER)
 		assert.Equal(t, DEFAULT_MAX_SERVER, MaxServers(), "Max servers should have been set to default")
 
+		testInstallArgs := rpc.Arguments{
+			rpc.Argument{Name: rpc.SCACTION, DataType: rpc.DataUint64, Value: uint64(rpc.SC_INSTALL)},
+			rpc.Argument{Name: rpc.SCCODE, DataType: rpc.DataString, Value: "code"},
+		}
+
+		matchArguments, err := NewInstallArgs(testInstallArgs)
+		assert.NoError(t, err, "NewInstallArgs should not error with rpc.Arguments")
+		assert.Equal(t, testInstallArgs, matchArguments, "NewInstallArgs processed rpc.Arguments should be equal")
+
 		// Pass nil values to Installer
 		_, err = Installer(nil, 0, nil)
 		assert.Error(t, err, "Installer should error with nil wallet and did not")
 		_, err = Installer(wallets[0], 0, nil)
 		assert.Error(t, err, "Installer should error with nil params and did not")
+
+		testInstallArgs = append(testInstallArgs, rpc.Argument{Name: "entrypoint", DataType: rpc.DataString, Value: "UpdateCode"})
+		matchArguments, err = NewUpdateArgs(testInstallArgs)
+		assert.NoError(t, err, "NewUpdateArgs should not error with rpc.Arguments")
+		assert.Equal(t, testInstallArgs, matchArguments, "NewUpdateArgs processed rpc.Arguments should be equal")
 
 		// Pass nil values to Updater
 		_, err = Updater(nil, nil)
@@ -1532,15 +1654,18 @@ func TestTELA(t *testing.T) {
 		// Test ParseDocType
 		assert.Equal(t, DOC_HTML, ParseDocType("index.html"), "Filename should parse as %s", DOC_HTML)
 		assert.Equal(t, DOC_HTML, ParseDocType("subDir/index.html"), "Filename should parse as %s", DOC_HTML)
+		assert.Equal(t, DOC_HTML, ParseDocType("subDir/index.html.gz"), "Compressed filename should parse as %s", DOC_HTML)
 		assert.Equal(t, DOC_JSON, ParseDocType("manifest.json"), "Filename should parse as %s", DOC_JSON)
 		assert.Equal(t, DOC_CSS, ParseDocType("subDir/style.css"), "Filename should parse as %s", DOC_CSS)
 		assert.Equal(t, DOC_JS, ParseDocType("main.js"), "Filename should parse as %s", DOC_JS)
 		assert.Equal(t, DOC_MD, ParseDocType("read.md"), "Filename should parse as %s", DOC_MD)
 		assert.Equal(t, DOC_MD, ParseDocType("read.MD"), "Filename should parse as %s", DOC_MD)
 		assert.Equal(t, DOC_GO, ParseDocType("main.go"), "Filename should parse as %s", DOC_GO)
+		assert.Equal(t, DOC_GO, ParseDocType("main.go.gz"), "Compressed filename should parse as %s", DOC_GO)
 		assert.Equal(t, DOC_STATIC, ParseDocType("read.txt"), "Filename should parse as %s", DOC_STATIC)
 		assert.Equal(t, DOC_STATIC, ParseDocType("static.tsx"), "Filename should parse as a %s", DOC_STATIC)
 		assert.Equal(t, DOC_STATIC, ParseDocType("LICENSE"), "LICENSE should parse as a %s", DOC_STATIC)
+		assert.Equal(t, DOC_STATIC, ParseDocType("static.txt.gz"), "Filename should parse as a %s", DOC_STATIC)
 		assert.Equal(t, "", ParseDocType("read"), "Filename should not parse as a DOC")
 
 		// Test ParseINDEXForDOCs
@@ -1675,7 +1800,7 @@ func TestTELA(t *testing.T) {
 		docCode := strings.Repeat(dvmCode, codeSizeToBig/len(dvmCode))
 
 		doc := &DOC{
-			DocType: "TELA-HTML-1",
+			DocType: DOC_HTML,
 			Code:    docCode,
 			DURL:    "error.tela",
 			Signature: Signature{
@@ -1790,11 +1915,15 @@ func TestTELA(t *testing.T) {
 
 		invalidPath := filepath.Join("/path/", "/to/", "/file/", "/file.txt")
 
-		err = CreateShardFiles(invalidPath)
+		err = CreateShardFiles(invalidPath, "", nil)
 		assert.Error(t, err, "CreateShardFiles should error when file is not present")
+		err = CreateShardFiles("", "", []byte(string(unicode.MaxRune)))
+		assert.Error(t, err, "CreateShardFiles should error with non ASCII")
 
-		err = ConstructFromShards(nil, "", invalidPath)
+		err = ConstructFromShards(nil, "", invalidPath, "")
 		assert.Error(t, err, "ConstructFromShards should error when path is invalid")
+		err = ConstructFromShards(nil, "invalid.txt", filepath.Join(testDir, "datashards", "clone"), "invalid")
+		assert.Error(t, err, "ConstructFromShards should error with invalid compression")
 		err = cloneDocShards(dvm.SmartContract{}, invalidPath, "")
 		assert.Error(t, err, "cloneDocShards should error when path is invalid")
 

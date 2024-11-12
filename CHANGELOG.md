@@ -6,6 +6,7 @@
 * Add `TELA-MOD-1` DVM function modules and related package functions.
 * Update `tela` package to handle smart contract versioning.
 * Update `tela` package to handle DocShards.
+* Update `tela` package to handle DOC compression.
 * Add `TELA-GO-1` as explicit golang docType.
 * Add CLI `functions_test.go` file
 * Add CLI `search exclude` commands.
@@ -18,7 +19,10 @@
 * Add CLI Git clone.
 * Fix CLI `--testnet` flag overwrite
 * Add CLI close handling on daemon disconnect
+* Add CLI file compress option and handling in applicable commands.
+* Add CLI gas estimate display.
 * Update test site webkit-scrollbar and favIcon
+* Update test site websocket methods.
 * Update repo documentation.
 
 

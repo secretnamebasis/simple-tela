@@ -582,7 +582,29 @@ func main() {
 				err := tela.Clone(args[0], app.endpoint)
 				if err != nil {
 					logger.Errorf("[%s] Clone: %s\n", appName, err)
-					continue
+					if !strings.Contains(err.Error(), "user defined no updates and content has been updated") {
+						continue
+					}
+
+					// Prompt to allow cloning the updated TELA content
+					yes, err := app.readYesNo("Allow this updated content to be cloned")
+					if err != nil {
+						if readError(err) {
+							return
+						}
+						continue
+					}
+
+					if !yes {
+						continue
+					}
+
+					tela.AllowUpdates(true)
+					err = tela.Clone(args[0], app.endpoint)
+					tela.AllowUpdates(false)
+					if err != nil {
+						logger.Errorf("[%s] Clone: %s\n", appName, err)
+					}
 				}
 			}
 		case "mv":
@@ -740,13 +762,56 @@ func main() {
 				continue
 			}
 
-			totalChunks := (fileInfo.Size() + CHUNK_SIZE - 1) / CHUNK_SIZE
-			if totalChunks < 2 {
-				logger.Errorf("[%s] %q is smaller than chunk size\n", appName, args[0])
+			fileData, err := os.ReadFile(args[0])
+			if err != nil {
+				logger.Errorf("[%s] Cannot read file data: %s\n", appName, err)
 				continue
 			}
 
-			yes, err := app.readYesNo(fmt.Sprintf("Shard %s%s%s (%d)", logger.Color.Green(), args[0], logger.Color.End(), totalChunks))
+			var totalShards int
+			var compression string
+			ext := filepath.Ext(args[0])
+			if tela.IsCompressedExt(ext) {
+				compression = ext
+				totalShards, _ = tela.GetTotalShards(fileData)
+				if totalShards < 2 {
+					logger.Errorf("[%s] %q is smaller than shard size\n", appName, args[0])
+					continue
+				}
+			} else {
+				yes, err := app.readYesNo("Compress file data")
+				if err != nil {
+					if readError(err) {
+						return
+					}
+					continue
+				}
+
+				if !yes {
+					totalShards, _ = tela.GetTotalShards(fileData)
+					if totalShards < 2 {
+						logger.Errorf("[%s] %q is smaller than shard size\n", appName, args[0])
+						continue
+					}
+				} else {
+					compression = tela.COMPRESSION_GZIP
+					compressed, err := tela.Compress(fileData, compression)
+					if err != nil {
+						logger.Errorf("[%s] Could not compress file data: %s\n", appName, err)
+						continue
+					}
+
+					fileData = []byte(compressed)
+
+					totalShards, _ = tela.GetTotalShards(fileData)
+					if totalShards < 2 {
+						logger.Errorf("[%s] %q is smaller than shard size when compressed\n", appName, args[0])
+						continue
+					}
+				}
+			}
+
+			yes, err := app.readYesNo(fmt.Sprintf("Shard %s%s%s (%d)", logger.Color.Green(), args[0], logger.Color.End(), totalShards))
 			if err != nil {
 				if readError(err) {
 					return
@@ -758,7 +823,7 @@ func main() {
 				continue
 			}
 
-			err = tela.CreateShardFiles(args[0])
+			err = tela.CreateShardFiles(args[0], compression, fileData)
 			if err != nil {
 				logger.Errorf("[%s] Shard: %s\n", appName, err)
 				continue
@@ -785,7 +850,7 @@ func main() {
 				continue
 			}
 
-			docShards, recreate, err := findDocShardFiles(args[0])
+			docShards, recreate, compression, err := findDocShardFiles(args[0])
 			if err != nil {
 				logger.Errorf("[%s] Find shards: %s\n", appName, err)
 				continue
@@ -808,7 +873,7 @@ func main() {
 				continue
 			}
 
-			err = tela.ConstructFromShards(docShards, recreate, filepath.Dir(args[0]))
+			err = tela.ConstructFromShards(docShards, recreate, filepath.Dir(args[0]), compression)
 			if err != nil {
 				logger.Errorf("[%s] Construct: %s\n", appName, err)
 			}
@@ -1400,6 +1465,20 @@ func main() {
 			category, _ := tela.Ratings.ParseString(rating)
 			logger.Printf("[%s] Rating is: %s  %s\n", appName, args[1], category)
 
+			arguments, err := tela.NewRateArgs(args[0], rating)
+			if err != nil {
+				logger.Errorf("[%s] Rate arguments: %s\n", appName, err)
+				continue
+			}
+
+			gasFees, err := tela.GetGasEstimate(app.wallet.disk, 2, nil, arguments)
+			if err != nil {
+				logger.Errorf("[%s] Estimating fees: %s\n", appName, err)
+				continue
+			}
+
+			printGasEstimate(gasFees)
+
 			yes, err := app.readYesNo("Confirm rating")
 			if err != nil {
 				if readError(err) {
@@ -1461,8 +1540,15 @@ func main() {
 
 			// Get DOC and install data
 			fileName := filepath.Base(filePath)
+			ext := filepath.Ext(fileName)
 
-			if !tela.IsAcceptedLanguage(tela.ParseDocType(fileName)) {
+			var compression string
+			if tela.IsCompressedExt(ext) {
+				compression = ext
+			}
+
+			docType := tela.ParseDocType(fileName)
+			if !tela.IsAcceptedLanguage(docType) {
 				logger.Errorf("[%s] %q is not a valid docType\n", appName, fileName)
 				continue
 			}
@@ -1476,12 +1562,6 @@ func main() {
 			docCode := string(data)
 			if docCode == "" {
 				logger.Errorf("[%s] DOC content is empty for %s\n", appName, fileName)
-				continue
-			}
-
-			docType := tela.ParseDocType(fileName)
-			if docType == "" {
-				logger.Errorf("[%s] Invalid docType language for %s\n", appName, fileName)
 				continue
 			}
 
@@ -1509,6 +1589,28 @@ func main() {
 
 			subDir = line
 
+			if compression == "" && !strings.HasSuffix(headers[tela.HEADER_DURL], tela.TAG_DOC_SHARD) {
+				yes, err := app.readYesNo("Compress file data")
+				if err != nil {
+					if readError(err) {
+						return
+					}
+					continue
+				}
+
+				if yes {
+					compression = tela.COMPRESSION_GZIP
+					compressed, err := tela.Compress(data, compression)
+					if err != nil {
+						logger.Errorf("[%s] Could not compress file data: %s\n", appName, err)
+						continue
+					}
+
+					docCode = compressed
+					fileName = fileName + compression
+				}
+			}
+
 			ringsize, err := app.ringsizePrompt("DOC")
 			if err != nil {
 				if readError(err) {
@@ -1518,7 +1620,7 @@ func main() {
 			}
 
 			// Sign docCode contents
-			signature := app.wallet.disk.SignData(data)
+			signature := app.wallet.disk.SignData([]byte(docCode))
 
 			_, cStr, sStr, err := tela.ParseSignature(signature)
 			if err != nil {
@@ -1558,6 +1660,20 @@ func main() {
 				},
 			}
 
+			arguments, err := tela.NewInstallArgs(doc)
+			if err != nil {
+				logger.Errorf("[%s] DOC arguments: %s\n", appName, err)
+				continue
+			}
+
+			gasFees, err := tela.GetGasEstimate(app.wallet.disk, ringsize, nil, arguments)
+			if err != nil {
+				logger.Errorf("[%s] Estimating fees: %s\n", appName, err)
+				continue
+			}
+
+			printGasEstimate(gasFees)
+
 			yes, err := app.readYesNo("Confirm DOC install")
 			if err != nil {
 				if readError(err) {
@@ -1567,12 +1683,11 @@ func main() {
 			}
 
 			if !yes {
-				logger.Printf("[%s] DOC install cancelled\n", appName)
 				continue
 			}
 
 			// Install TELA DOC
-			txid, err := tela.Installer(app.wallet.disk, ringsize, doc)
+			txid, err := tela.Installer(app.wallet.disk, ringsize, arguments)
 			if err != nil {
 				logger.Errorf("[%s] DOC install: %s\n", appName, err)
 				continue
@@ -1659,6 +1774,20 @@ func main() {
 				logger.Warnf("[%s] Ringsize is more than 2, this INDEX will be immutable\n", appName)
 			}
 
+			arguments, err := tela.NewInstallArgs(&index)
+			if err != nil {
+				logger.Errorf("[%s] INDEX arguments: %s\n", appName, err)
+				continue
+			}
+
+			gasFees, err := tela.GetGasEstimate(app.wallet.disk, ringsize, nil, arguments)
+			if err != nil {
+				logger.Errorf("[%s] Estimating fees: %s\n", appName, err)
+				continue
+			}
+
+			printGasEstimate(gasFees)
+
 			yes, err := app.readYesNo("Confirm INDEX install")
 			if err != nil {
 				if readError(err) {
@@ -1672,7 +1801,7 @@ func main() {
 			}
 
 			// Install TELA-INDEX
-			txid, err := tela.Installer(app.wallet.disk, ringsize, &index)
+			txid, err := tela.Installer(app.wallet.disk, ringsize, arguments)
 			if err != nil {
 				logger.Errorf("[%s] INDEX install: %s\n", appName, err)
 				continue
@@ -1797,6 +1926,20 @@ func main() {
 				}
 			}
 
+			arguments, err := tela.NewUpdateArgs(&index)
+			if err != nil {
+				logger.Errorf("[%s] Update arguments: %s\n", appName, err)
+				continue
+			}
+
+			gasFees, err := tela.GetGasEstimate(app.wallet.disk, 2, nil, arguments)
+			if err != nil {
+				logger.Errorf("[%s] Estimating fees: %s\n", appName, err)
+				continue
+			}
+
+			printGasEstimate(gasFees)
+
 			yes, err := app.readYesNo("Confirm INDEX update")
 			if err != nil {
 				if readError(err) {
@@ -1809,7 +1952,7 @@ func main() {
 				continue
 			}
 
-			txid, err := tela.Updater(app.wallet.disk, &index)
+			txid, err := tela.Updater(app.wallet.disk, arguments)
 			if err != nil {
 				logger.Errorf("[%s] INDEX update: %s\n", appName, err)
 				continue
@@ -2025,6 +2168,20 @@ func main() {
 				args = append(args, line)
 			}
 
+			arguments, err := tela.NewSetVarArgs(args[0], args[1], args[2])
+			if err != nil {
+				logger.Errorf("[%s] SetVar arguments: %s\n", appName, err)
+				continue
+			}
+
+			gasFees, err := tela.GetGasEstimate(app.wallet.disk, 2, nil, arguments)
+			if err != nil {
+				logger.Errorf("[%s] Estimating fees: %s\n", appName, err)
+				continue
+			}
+
+			printGasEstimate(gasFees)
+
 			yes, err := app.readYesNo("Confirm SetVar")
 			if err != nil {
 				if readError(err) {
@@ -2142,6 +2299,20 @@ func main() {
 				continue
 			}
 
+			arguments, err := tela.NewDeleteVarArgs(args[0], args[1])
+			if err != nil {
+				logger.Errorf("[%s] DeleteVar arguments: %s\n", appName, err)
+				continue
+			}
+
+			gasFees, err := tela.GetGasEstimate(app.wallet.disk, 2, nil, arguments)
+			if err != nil {
+				logger.Errorf("[%s] Estimating fees: %s\n", appName, err)
+				continue
+			}
+
+			printGasEstimate(gasFees)
+
 			yes, err := app.readYesNo("Confirm DeleteVar")
 			if err != nil {
 				if readError(err) {
@@ -2250,6 +2421,14 @@ func main() {
 			} else {
 				fmt.Printf("%v\n", arguments)
 			}
+
+			gasFees, err := tela.GetGasEstimate(app.wallet.disk, 2, transfers, arguments)
+			if err != nil {
+				logger.Errorf("[%s] Estimating fees: %s\n", appName, err)
+				continue
+			}
+
+			printGasEstimate(gasFees)
 
 			yes, err := app.readYesNo(fmt.Sprintf("Confirm %s", args[1]))
 			if err != nil {
@@ -2528,7 +2707,10 @@ func main() {
 								var yes bool
 								yes, err = app.readYesNo(fmt.Sprintf("Show more variables? (%d)", (resultLen-1)-printed))
 								if err != nil {
-									return
+									if readError(err) {
+										return
+									}
+									break
 								}
 
 								if !yes {

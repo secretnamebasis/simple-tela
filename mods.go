@@ -26,7 +26,7 @@ type MODClass struct {
 	Rules []MODClassRule // Any rules for the MODClass
 }
 
-// MODClassRule structure contains data for the rules used withing a MODClass
+// MODClassRule structure contains data for the rules used within a MODClass
 type MODClassRule struct {
 	Name        string                         // Name of the rule
 	Description string                         // Description of what the rule is enforcing

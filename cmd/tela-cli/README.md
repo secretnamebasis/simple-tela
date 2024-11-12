@@ -19,6 +19,9 @@
     - [Install TELA-INDEX](#install-tela-index)
     - [Update TELA-INDEX](#update-tela-index)
     - [Rate TELA content](#rate-tela-content)
+    - [DocShards](#docshards)
+      - [Create DocShards](#create-docshards)
+      - [Install DocShards](#install-docshards)
 - [TELA](../../README.md)
 
 ### What is TELA-CLI?
@@ -270,12 +273,14 @@ Use `install-doc` to enter guided install. Using `install-doc <file.html>` will 
 [01/02/2006 15:04:05]  ⠞⠑⠇⠁ TELA-CLI: [D:▲] [G:▲] [W:1337] [0/21] Enter DOC icon » https://iconurl.com (can be empty)
 [01/02/2006 15:04:05]  ⠞⠑⠇⠁ TELA-CLI: [D:▲] [G:▲] [W:1337] [0/21] Enter DOC dURL » readme.tela
 [01/02/2006 15:04:05]  ⠞⠑⠇⠁ TELA-CLI: [D:▲] [G:▲] [W:1337] [0/21] Enter DOC subDir » 
+[01/02/2006 15:04:05]  ⠞⠑⠇⠁ TELA-CLI: [D:▲] [G:▲] [W:1337] [0/21] Compress file data (y/n) » y
 [01/02/2006 15:04:05]  ⠞⠑⠇⠁ TELA-CLI: [D:▲] [G:▲] [W:1337] [0/21] Enter DOC install ringsize » 2
 [01/02/2006 15:04:05]  INFO  TELA-CLI: DOC signature headers:
 -----BEGIN DERO SIGNED MESSAGE-----
 Address: deto1qyre7td6x9r88y4cavdgpv6k7lvx6j39lfsx420hpvh3ydpcrtxrxqg8v8e3z
 C: 29e2863d6b7bcb340a4ea4e8740dcda7bbc887c73347d8fbad7773bc395fd770
 S: 18c12ed2e8ca950d5cc14c2725751230dea855c20b28cd2c7869b910b70e0578
+[01/02/2006 15:04:05]  INFO  TELA-CLI: Estimated fees: 0.15555 DERO
 [01/02/2006 15:04:05]  ⠞⠑⠇⠁ TELA-CLI: [D:▲] [G:▲] [W:1337] [0/21] Confirm DOC install (y/n) » y
 [01/02/2006 15:04:05]  INFO  TELA-CLI: DOC install TXID: 8232dd8e909bdc095ab213a035a70a94b64b2e4763a959f4fe3065f8f9fbc2df
 [01/02/2006 15:04:05]  ⠞⠑⠇⠁ TELA-CLI: [D:▲] [G:▲] [W:1337] [0/21] » 
@@ -296,6 +301,7 @@ Use `install-index` to enter guided install. It is recommended to have Gnomon ru
 [01/02/2006 15:04:05]  INFO  TELA-CLI: Author: deto1qyre7td6x9r88y4cavdgpv6k7lvx6j39lfsx420hpvh3ydpcrtxrxqg8v8e3z
 [01/02/2006 15:04:05]  ⠞⠑⠇⠁ TELA-CLI: [D:▲] [G:▲] [W:1337] [0/21] Add SC TELA-MODs (y/n) » n
 [01/02/2006 15:04:05]  ⠞⠑⠇⠁ TELA-CLI: [D:▲] [G:▲] [W:1337] [0/21] Enter INDEX install ringsize » 2
+[01/02/2006 15:04:05]  INFO  TELA-CLI: Estimated fees: 0.01775 DERO
 [01/02/2006 15:04:05]  ⠞⠑⠇⠁ TELA-CLI: [D:▲] [G:▲] [W:1337] [0/21] Confirm INDEX install (y/n) » y
 [01/02/2006 15:04:05]  INFO  TELA-CLI: INDEX install TXID: daab713d2c0ee0d0efacb5990dcc5df227b847ab3f064fe28ae8e3d946f903cb
 [01/02/2006 15:04:05]  ⠞⠑⠇⠁ TELA-CLI: [D:▲] [G:▲] [W:1337] [0/21] »  
@@ -318,6 +324,7 @@ Owners can update their INDEX smart contracts by using `update-index <scid>` to 
 [01/02/2006 15:04:05]  INFO  TELA-CLI: File: main.js
 [01/02/2006 15:04:05]  INFO  TELA-CLI: Author: deto1qyre7td6x9r88y4cavdgpv6k7lvx6j39lfsx420hpvh3ydpcrtxrxqg8v8e3z
 [01/02/2006 15:04:05]  ⠞⠑⠇⠁ TELA-CLI: [D:▲] [G:▲] [W:1337] [0/21] Add SC TELA-MODs (y/n) » n
+[01/02/2006 15:04:05]  INFO  TELA-CLI: Estimated fees: 0.03165 DERO
 [01/02/2006 15:04:05]  ⠞⠑⠇⠁ TELA-CLI: [D:▲] [G:▲] [W:1337] [0/21] Confirm INDEX update (y/n) » y
 [01/02/2006 15:04:05]  INFO  TELA-CLI: INDEX update TXID: 2694052c159b3d31bfaf9d562a6bc2f283429c1d334a03bd44765c893edbfbc9
 [01/02/2006 15:04:05]  ⠞⠑⠇⠁ TELA-CLI: [D:▲] [G:▲] [W:1337] [0/21] »  
@@ -351,10 +358,24 @@ All TELA content can be rated by users. TELA-CLI follows the `civilware/tela` go
 9: Benevolent
 [01/02/2006 15:04:05]  ⠞⠑⠇⠁ TELA-CLI: [D:▲] [G:▼] [W:1337] [0/21] Enter detail number » 0
 [01/02/2006 15:04:05]  INFO  TELA-CLI: Rating is: 60  Average
+[01/02/2006 15:04:05]  INFO  TELA-CLI: Estimated fees: 0.00100 DERO
 [01/02/2006 15:04:05]  ⠞⠑⠇⠁ TELA-CLI: [D:▲] [G:▼] [W:1337] [0/21] Confirm rating (y/n) » y
 [01/02/2006 15:04:05]  INFO  TELA-CLI: Rate TXID: 54c5c6b44ebb494160baa0f1d9071cea4caa342c109d70857ccfa55272589798
 [01/02/2006 15:04:05]  ⠞⠑⠇⠁ TELA-CLI: [D:▲] [G:▼] [W:1337] [0/21] »  
 ```
+
+#### DocShards
+Files exceeding the docCode size limit (~18KB) can be efficiently divided into smaller segments known as DocShards. This process allows the original file to be referenced and utilized in its entirety from a single SCID once installed.
+
+##### Create DocShards
+To create DocShard files from a source file, use the `file-shard <source>` command. Shard files will be created in the source file's directory. For example, the command `file-shard main.go` will output shard files as `main-1.go`, `main-2.go`, `main-3.go`, and so forth.
+
+To verify that the reconstructed DocShard files match the original source file, you can use the `file-construct <source>` command. For example, the command `file-construct main-2.go` will recreate the `main.go` file in the shard's directory.
+
+##### Install DocShards
+After creating your DocShard files, they can be installed following the same procedures outlined in [installing TELA-DOC](#install-tela-doc). When installing, ensure that you append `.shard` to the DOC dURLs to indicate that they are DocShards.
+
+Once all DocShard files are installed, their SCIDs can be embedded into a TELA-INDEX following the same procedures outlined in [installing TELA-INDEX](#install-tela-index). When installing, ensure that `.shards` is appended to the INDEX dURL to signify that reconstruction is required.
 
 ### TELA
 More information on TELA Decentralized Web Standard and its components can be found in the `civilware/tela` [package repo](https://github.com/civilware/tela).
