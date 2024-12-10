@@ -21,6 +21,10 @@
 * Add CLI close handling on daemon disconnect
 * Add CLI file compress option and handling in applicable commands.
 * Add CLI gas estimate display.
+* Add `.bootstrap` INDEX dURL tag.
+* Add validation for on and off chain images.
+* Add DOC helper methods for extracting DocCode, SVGs and `<meta>` tags.
+* Add `var_` standard header support in addition to the existing ART-NFA standard headers.
 * Update test site webkit-scrollbar and favIcon
 * Update test site websocket methods.
 * Update repo documentation.

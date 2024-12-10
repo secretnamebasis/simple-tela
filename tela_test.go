@@ -280,6 +280,47 @@ var telaDocs = []struct {
 	},
 }
 
+// TELA image data
+var telaImages = []struct {
+	filePath string // Where the test image file is stored
+	DOC
+}{
+	{
+		filePath: filepath.Join(testDir, "images", "test1.svg"),
+		DOC: DOC{
+			DocType: DOC_STATIC,
+			SubDir:  "",
+			DURL:    "image1.tela",
+			Headers: Headers{
+				NameHdr:  "test1.svg",
+				DescrHdr: "TELA test SVG image file",
+				IconHdr:  "icon.url",
+			},
+			Signature: Signature{
+				CheckC: "c4d7bbdaaf9344f4c351e72d0b2145b4235402c89510101e0500f43969fd1387",
+				CheckS: "b879b0ff01d78841d61e9770fd18436d8b9afce59302c77a786272e7422c15f6",
+			},
+		},
+	},
+	{
+		filePath: filepath.Join(testDir, "images", "test2.svg"),
+		DOC: DOC{
+			DocType: DOC_STATIC,
+			SubDir:  "",
+			DURL:    "image2.tela",
+			Headers: Headers{
+				NameHdr:  "test2.svg",
+				DescrHdr: "TELA test compressed SVG image file",
+				IconHdr:  "icon.url",
+			},
+			Signature: Signature{
+				CheckC: "c4d7bbdaaf9344f4c351e72d0b2145b4235402c89510101e0500f43969fd1387",
+				CheckS: "b879b0ff01d78841d61e9770fd18436d8b9afce59302c77a786272e7422c15f6",
+			},
+		},
+	},
+}
+
 // Simulator wallet seeds
 var walletSeeds = []string{
 	"2af6630905d73ee40864bd48339f297908a0731a6c4c6fa0a27ea574ac4e4733",
@@ -328,48 +369,58 @@ func TestMain(m *testing.M) {
 }
 
 func TestCompression(t *testing.T) {
-	fileName := filepath.Join(testDir, "app1", "main.js")
-	fileData, err := readFile(fileName)
-	if err != nil {
-		t.Fatalf("Could not read compression test file")
+	testFiles := []string{
+		filepath.Join(testDir, "app1", "main.js"),
+		filepath.Join(testDir, "app1", "style.css"),
+		filepath.Join(testDir, "app1", "index.html"),
 	}
 
-	data := []byte(fileData)
+	// Gzip
+	for _, fileName := range testFiles {
+		fileData, err := readFile(fileName)
+		if err != nil {
+			t.Fatalf("Could not read Gzip compression test file")
+		}
 
-	compressed, err := compressGzip(data)
-	assert.NoError(t, err, "Gzip compression should not error: %s", err)
-	decompressed, err := decompressGzip([]byte(compressed))
-	assert.NoError(t, err, "Gzip decompression should not error: %s", err)
-	assert.Equal(t, data, decompressed, "Results should be equal")
+		data := []byte(fileData)
 
-	invalidBase64 := "!!!not_base64!!!"
-	_, err = decompressGzip([]byte(invalidBase64))
-	assert.Error(t, err, "Gzip invalid base64 should error")
+		compressed, err := compressGzip(data)
+		assert.NoError(t, err, "Gzip %s compression should not error: %s", fileName, err)
+		decompressed, err := decompressGzip([]byte(compressed))
+		assert.NoError(t, err, "Gzip %s decompression should not error: %s", fileName, err)
+		assert.Equal(t, data, decompressed, "Gzip results for %s should be equal", fileName)
 
-	_, err = Compress(data, "unknown")
-	assert.Error(t, err, "Unknown compression format should error")
+		invalidBase64 := "!!!not_base64!!!"
+		_, err = decompressGzip([]byte(invalidBase64))
+		assert.Error(t, err, "Gzip invalid base64 should error")
 
-	_, err = Decompress(data, "unknown")
-	assert.Error(t, err, "Unknown decompression format should error")
+		_, err = Compress(data, "unknown")
+		assert.Error(t, err, "Unknown compression format should error")
 
-	assert.Equal(t, fileName, TrimCompressedExt(fileName), "Trimmed fileName should remain the same")
-	assert.Equal(t, fileName, TrimCompressedExt(fileName+COMPRESSION_GZIP), "Trimmed compressed fileName should be equal")
-	assert.Empty(t, TrimCompressedExt(""), "Trimming nothing should return empty")
+		_, err = Decompress(data, "unknown")
+		assert.Error(t, err, "Unknown decompression format should error")
 
-	assert.True(t, IsCompressedExt(COMPRESSION_GZIP), "%s should be a valid compression extension", COMPRESSION_GZIP)
-	assert.False(t, IsCompressedExt("unknown"), "Unknown compression extension should be false")
-	assert.False(t, IsCompressedExt(""), "Empty compression extension should be false")
+		assert.Equal(t, fileName, TrimCompressedExt(fileName), "Trimmed %s fileName should remain the same", fileName)
+		assert.Equal(t, fileName, TrimCompressedExt(fileName+COMPRESSION_GZIP), "Trimmed %s compressed fileName should be equal", fileName)
+		assert.Empty(t, TrimCompressedExt(""), "Trimming nothing should return empty")
+
+		assert.True(t, IsCompressedExt(COMPRESSION_GZIP), "%s should be a valid compression extension", COMPRESSION_GZIP)
+		assert.False(t, IsCompressedExt("unknown"), "Unknown compression extension should be false")
+		assert.False(t, IsCompressedExt(""), "Empty compression extension should be false")
+	}
 }
 
 func TestTELA(t *testing.T) {
 	endpoint, datashards, wallets := createTestEnvironment(t)
 
 	var err error
-	var docs [3][]string       // Organize DOC scids
-	var shardSCIDs [2][]string // Stitch their docCode together
-	var librarySCIDs []string  // Embedded library SCIDs
-	var commitTXIDs []string   // TXIDs of updates
-	var noCodeTXIDs []string   // TXIDs without any SC code
+	var docs [3][]string        // Organize DOC scids
+	var shardSCIDs [2][]string  // Stitch their docCode together
+	var librarySCIDs []string   // Embedded library SCIDs
+	var commitTXIDs []string    // TXIDs of updates
+	var noCodeTXIDs []string    // TXIDs without any SC code
+	var bootstrapSCIDs []string // SCIDs of bootstrap INDEXs
+	var imageSCIDs []string     // SCIDs of TELA DOC images
 
 	successful := true
 	scidsPredefined := true
@@ -505,7 +556,7 @@ func TestTELA(t *testing.T) {
 			}
 
 			// SC will install and can be updated with at least this amount of DOCs
-			// GetCodeSizeInKB() returns SC code size of 9.115234375 KB
+			// GetCodeSizeInKB() returns SC code size of 9.1416015625 KB
 			for i := 0; i < 90; i++ {
 				indexLimits.DOCs = append(indexLimits.DOCs, scDoesNotExist)
 			}
@@ -531,9 +582,9 @@ func TestTELA(t *testing.T) {
 			assert.Equal(t, tx, hash, "Contract hash should be txid of update")
 
 			// SC will install but will not be able to be updated with this amount of DOCs
-			// GetCodeSizeInKB() returns SC code size of 11.6240234375 KB
+			// GetCodeSizeInKB() returns SC code size of 11.5634765625 KB
 			indexLimits.DURL = "max-limit.tela"
-			for i := 0; i < 24; i++ {
+			for i := 0; i < 23; i++ {
 				indexLimits.DOCs = append(indexLimits.DOCs, scDoesNotExist)
 			}
 
@@ -548,7 +599,7 @@ func TestTELA(t *testing.T) {
 			assert.NotEmpty(t, v, "Likes value should not be empty")
 
 			// This should error as installing SC with this many DOCs will not be successful
-			// GetCodeSizeInKB() returns SC code size of 11.80078125 KB
+			// GetCodeSizeInKB() returns SC code size of 11.740234375 KB
 			indexLimits.DURL = "exceed-limit.tela"
 			for i := 0; i < 2; i++ {
 				indexLimits.DOCs = append(indexLimits.DOCs, scDoesNotExist)
@@ -556,6 +607,58 @@ func TestTELA(t *testing.T) {
 
 			tx, err = Installer(wallets[2], 2, indexLimits)
 			assert.Error(t, err, "Installing exceeding max limit should error")
+
+			// Install bootstrap INDEX
+			bootstrapInstall := &INDEX{
+				DOCs: []string{validSCIDs[0], validSCIDs[2]},
+				DURL: "a.index.bootstrap",
+				Headers: Headers{
+					NameHdr:  "INDEX Bootstrap",
+					DescrHdr: "Bootstrap description",
+				},
+			}
+
+			tx, err = Installer(wallets[3], 2, bootstrapInstall)
+			assert.NoError(t, err, "Installing Bootstrap INDEX should not error: %s", err)
+			t.Logf("Simulator Bootstrap INDEX SC installed %s: %s", bootstrapInstall.DURL, tx)
+
+			bootstrapSCIDs = append(bootstrapSCIDs, tx)
+
+			// Install DOC images
+			for i, doc := range telaImages {
+				code, err := readFile(doc.filePath)
+				if err != nil {
+					t.Fatalf("Could not read %s file: %s", doc.NameHdr, err)
+				}
+
+				if i > 0 {
+					doc.NameHdr = doc.NameHdr + COMPRESSION_GZIP
+					compressed, err := Compress([]byte(code), COMPRESSION_GZIP)
+					if err != nil {
+						t.Fatalf("Could not compress %s file: %s", doc.NameHdr, err)
+					}
+					doc.Code = compressed
+				} else {
+					doc.Code = code
+				}
+
+				tx, err := retry(t, fmt.Sprintf("DOC image %d install", i), func() (string, error) {
+					return Installer(wallets[i], 2, &doc.DOC)
+				})
+
+				assert.NoError(t, err, "Install Image %d %s should not error: %s", i, doc.NameHdr, err)
+
+				_, err = retry(t, fmt.Sprintf("confirming install TX %s", tx), func() (string, error) {
+					return getContractCode(tx, endpoint)
+				})
+				if err != nil {
+					t.Fatalf("Could not confirm DOC Image %d TX %s: %s", i, tx, err)
+				}
+
+				t.Logf("Simulator DOC Image %d SC installed %s: %s", i, doc.NameHdr, tx)
+
+				imageSCIDs = append(imageSCIDs, tx)
+			}
 		})
 	} else {
 		t.Logf("Testing %d user defined SCIDs", len(validSCIDs))
@@ -592,7 +695,7 @@ func TestTELA(t *testing.T) {
 		os.RemoveAll(filepath.Join(datashards, "tela", telaApps[3].DURL))
 		for _, scid := range validSCIDs {
 			_, err := ServeTELA(scid, endpoint)
-			assert.Error(t, err, "SCID %s should have error when all ports in use: %s", scid, err)
+			assert.Error(t, err, "SCID %s should have error when all ports in use", scid)
 		}
 
 		count := len(tela.servers)
@@ -935,24 +1038,24 @@ func TestTELA(t *testing.T) {
 
 		// Has error first because it was updated, then it will clone successfully after AllowUpdates is set true
 		err = Clone(embedSCIDs[0], endpoint)
-		assert.Error(t, err, "Cloning INDEX embed with commits while updates set false should error: %s", err)
+		assert.Error(t, err, "Cloning INDEX embed with commits while updates set false should error")
 		AllowUpdates(true)
 		err = Clone(embedSCIDs[0], endpoint)
 		assert.NoError(t, err, "Cloning INDEX embed should not have error: %s", err)
 		AllowUpdates(false)
 
 		err = Clone(embedSCIDs[1], endpoint)
-		assert.Error(t, err, "Cloning non library INDEX embed should error: %s", err)
+		assert.Error(t, err, "Cloning non library INDEX embed should error")
 
 		err = Clone(embedSCIDs[2], endpoint)
-		assert.Error(t, err, "Cloning embed with invalid TELA SCID should error: %s", err)
+		assert.Error(t, err, "Cloning embed with invalid TELA SCID should error")
 
 		err = Clone(embedSCIDs[3], endpoint)
-		assert.Error(t, err, "Cloning INDEX with INDEX entrypoint should error: %s", err)
+		assert.Error(t, err, "Cloning INDEX with INDEX entrypoint should error")
 
 		// Serve
 		_, err = ServeTELA(librarySCIDs[1], endpoint)
-		assert.Error(t, err, "Serving a library should error: %s", err)
+		assert.Error(t, err, "Serving a library should error")
 	})
 
 	// // Test creating, install and recreating shard INDEXs
@@ -1156,9 +1259,9 @@ func TestTELA(t *testing.T) {
 			`Function InitializePrivate() Uint64
 	10 IF init() == 0 THEN GOTO 30
 	20 RETURN 1
-	30 STORE("nameHdr", "<nameHdr>")
-	31 STORE("descrHdr", "<descrHdr>")
-	32 STORE("iconURLHdr", "<iconURLHdr>")
+	30 STORE("var_header_name", "<nameHdr>")
+	31 STORE("var_header_description", "<descrHdr>")
+	32 STORE("var_header_icon", "<iconURLHdr>")
 	33 STORE("dURL", "<dURL>")
 	40 STORE("DOC1", "` + docs[1][0] + `")
 	1000 RETURN 0
@@ -1167,9 +1270,9 @@ func TestTELA(t *testing.T) {
 			`Function InitializePrivate() Uint64
 	10 IF init() == 0 THEN GOTO 30
 	20 RETURN 1
-	30 STORE("nameHdr", "<nameHdr>")
-	31 STORE("descrHdr", "<descrHdr>")
-	32 STORE("iconURLHdr", "<iconURLHdr>")
+	30 STORE("var_header_name", "<nameHdr>")
+	31 STORE("var_header_description", "<descrHdr>")
+	32 STORE("var_header_icon", "<iconURLHdr>")
 	33 STORE("dURL", "<dURL>")
 	40 STORE("DOC1", "<scid>")
 	1000 RETURN 0
@@ -1179,9 +1282,9 @@ func TestTELA(t *testing.T) {
 			`Function InitializePrivate() Uint64
 	10 IF init() == 0 THEN GOTO 30
 	20 RETURN 1
-	30 STORE("nameHdr", "<nameHdr>")
-	31 STORE("descrHdr", "<descrHdr>")
-	32 STORE("iconURLHdr", "<iconURLHdr>")
+	30 STORE("var_header_name", "<nameHdr>")
+	31 STORE("var_header_description", "<descrHdr>")
+	32 STORE("var_header_icon", "<iconURLHdr>")
 	33 STORE("dURL", "<dURL>")
 	40 STORE("DOC1", "c4d7bbdaaf9344f4c351e72d0b2145b4235402c89510101e0500f43969fd1387")
 	1000 RETURN 0
@@ -1191,9 +1294,9 @@ func TestTELA(t *testing.T) {
 			`Function InitializePrivate() Uint64
 	10 IF init() == 0 THEN GOTO 30
 	20 RETURN 1
-	30 STORE("nameHdr", "<nameHdr>")
-	31 STORE("descrHdr", "<descrHdr>")
-	32 STORE("iconURLHdr", "<iconURLHdr>")
+	30 STORE("var_header_name", "<nameHdr>")
+	31 STORE("var_header_description", "<descrHdr>")
+	32 STORE("var_header_icon", "<iconURLHdr>")
 	33 STORE("dURL", "<dURL>")
 	40 STORE("DOC1", "0000000000000000000000000000000000000000000000000000000000000001")
 	1000 RETURN 0
@@ -1423,6 +1526,60 @@ func TestTELA(t *testing.T) {
 		}
 
 		ShutdownTELA()
+
+		// Dual headers
+		headersV1 := `Function InitializePrivate() Uint64
+10 IF init() == 0 THEN GOTO 30
+20 RETURN 1
+30 STORE("nameHdr", "<nameHdr>")
+31 STORE("descrHdr", "<descrHdr>")
+32 STORE("iconURLHdr", "<iconURLHdr>")
+`
+
+		durlLine := `33 STORE("dURL", "<dURL>")`
+		standardHeadersIndex := strings.Index(TELA_INDEX_1, durlLine)
+		headersCode := headersV1 + TELA_INDEX_1[standardHeadersIndex:]
+
+		args := rpc.Arguments{
+			rpc.Argument{Name: rpc.SCACTION, DataType: rpc.DataUint64, Value: uint64(rpc.SC_INSTALL)},
+			rpc.Argument{Name: rpc.SCCODE, DataType: rpc.DataString, Value: headersCode},
+		}
+
+		tx, err := transfer0(wallets[0], 2, args)
+		assert.NoError(t, err, "Installing dual headers INDEX should not error: %s", err)
+		_, err = retry(t, fmt.Sprintf("confirming install TX %s", tx), func() (string, error) {
+			return getContractCode(tx, endpoint)
+		})
+		if err != nil {
+			t.Fatalf("Could not confirm dual headers INDEX TX %s: %s", tx, err)
+		}
+
+		t.Logf("Dual headers INDEX SC installed: %s", tx)
+		_, err = GetINDEXInfo(tx, endpoint)
+		assert.NoError(t, err, "Dual headers GetINDEXInfo should not error: %s", err)
+
+		docTypeLine := `34 STORE("docType", "<language>")`
+		standardHeadersIndex = strings.Index(TELA_DOC_1, docTypeLine)
+		headersCode = headersV1 + fmt.Sprintf("%s\n%s", durlLine, `34 STORE("docType", "TELA-HTML-1")`) + TELA_DOC_1[standardHeadersIndex+len(docTypeLine):]
+
+		args = rpc.Arguments{
+			rpc.Argument{Name: rpc.SCACTION, DataType: rpc.DataUint64, Value: uint64(rpc.SC_INSTALL)},
+			rpc.Argument{Name: rpc.SCCODE, DataType: rpc.DataString, Value: headersCode},
+		}
+
+		tx, err = transfer0(wallets[1], 2, args)
+		assert.NoError(t, err, "Installing dual headers DOC should not error: %s", err)
+		_, err = retry(t, fmt.Sprintf("confirming install TX %s", tx), func() (string, error) {
+			return getContractCode(tx, endpoint)
+		})
+		if err != nil {
+			t.Fatalf("Could not confirm dual headers DOC TX %s: %s", tx, err)
+		}
+
+		t.Logf("Dual headers DOC SC installed: %s", tx)
+		_, err = GetDOCInfo(tx, endpoint)
+		cloneDOC(tx, "DOC1", filepath.Join(testDir, "datashards", "clone", "headers"), endpoint)
+		assert.NoError(t, err, "Dual headers GetDOCInfo should not error: %s", err)
 	})
 
 	// // Test internal functions
@@ -1629,6 +1786,7 @@ func TestTELA(t *testing.T) {
 	t.Run("Header", func(t *testing.T) {
 		// Trim()
 		assert.Equal(t, "nameHdr", HEADER_NAME.Trim(), "HEADER_NAME should be equal and was not")
+		assert.Equal(t, "var_header_name", HEADER_NAME_V2.Trim(), "HEADER_NAME_V2 should be equal and was not")
 		assert.Equal(t, "DOC", HEADER_DOCUMENT.Trim(), "HEADER_DOCUMENT should be equal and was not")
 
 		// Number()
@@ -1870,12 +2028,134 @@ func TestTELA(t *testing.T) {
 		assert.Equal(t, Ratings.positiveDetails, Ratings.PositiveDetails(), "Positive details should be the same")
 	})
 
+	// // Test DOC Images
+	t.Run("Images", func(t *testing.T) {
+		testCode := []string{
+			"/*no svg*/",       // Not svg
+			`/*<?xml>*/`,       // No closing svg tag
+			"/*<svg> <>*/",     // No closing svg tag
+			"/*<svg> </svg>*/", // No xmlns
+			"test",             // No multiline comment
+		}
+
+		for i, docCode := range testCode {
+			d := DOC{Code: docCode}
+			_, err := d.ExtractAsSVG()
+			assert.Error(t, err, "Extracting invalid SVG %d should error", i)
+		}
+
+		testURLs := []string{
+			"",
+			"https://a.img.test",
+			"http://a.img.test",
+			"https://github.com/civilware/tela/blob/main/tela.png?raw=true",
+			"www.invalid",
+			docs[0][0],
+			docs[1][0],
+			nameservice,
+		}
+
+		for i, url := range testURLs {
+			if i < 4 {
+				_, err := ValidateImageURL(url, endpoint)
+				assert.NoError(t, err, "Image URL %s should not error: %s", url, err)
+			} else {
+				_, err := ValidateImageURL(url, endpoint)
+				assert.Error(t, err, "Invalid image URL %s should error", url)
+			}
+		}
+
+		for i, sc := range imageSCIDs {
+			svgCode, err := ValidateImageURL(sc, endpoint)
+			assert.NoError(t, err, "Validating image %s should not error: %s", sc, err)
+			doc, err := GetDOCInfo(sc, endpoint)
+			assert.NoError(t, err, "Getting image %s should not error: %s", sc, err)
+			docCode, err := doc.ExtractDocCode()
+			assert.NoError(t, err, "Extracting DocCode %s should not error: %s", sc, err)
+
+			fileData, err := readFile(telaImages[i].filePath)
+			if err != nil {
+				t.Fatalf("Could not read %s file: %s", telaImages[i].filePath, err)
+			}
+
+			assert.Equal(t, fileData, docCode, "docCode result should be equal")
+			assert.Equal(t, fileData, svgCode, "svgCode result should be equal")
+		}
+	})
+
+	// // Test MetaTags
+	t.Run("MetaTags", func(t *testing.T) {
+		testCode := []string{
+			"/**/",                  // Empty string
+			"/*no meta tags here*/", // No meta tags
+			"/*<meta*/",             // Tag is missing close
+			"test",                  // No multiline comment
+		}
+
+		for i, docCode := range testCode {
+			d := DOC{Code: docCode}
+			metaTags, err := d.ExtractMetaTags()
+			if i > 2 {
+				assert.Error(t, err, "Extracting invalid meta tags %d should error", i)
+			} else {
+				assert.Nil(t, metaTags, "MetaTags %d should be nil", i)
+			}
+		}
+
+		testTags := []MetaTag{
+			"",               // Empty tag
+			"name=%noquote%", // Mising quotes
+			"name='missing",  // Missing closing quote
+			"name=",          // No data
+		}
+
+		for i, tag := range testTags {
+			result := tag.ExtractAttribute("name")
+			assert.Empty(t, result, "Extracting invalid attribute %d should be empty", i)
+		}
+
+		// Test MetaTags
+		htmlDocs := []string{
+			docs[0][0],
+			docs[1][0],
+		}
+
+		for _, htmlDoc := range htmlDocs {
+			doc, err := GetDOCInfo(htmlDoc, endpoint)
+			assert.NoError(t, err, "MetaTags GetDOCInfo %s should not error: %s", htmlDoc, err)
+
+			metaTags, err := doc.ExtractMetaTags()
+			assert.NoError(t, err, "ExtractMetaTags %s should not error: %s", htmlDoc, err)
+
+			for i, m := range metaTags {
+				httpAttr := m.ExtractAttribute("http-equiv")
+				nameAttr := m.ExtractAttribute("name")
+				if httpAttr != "" {
+					assert.Equal(t, "Content-Type", httpAttr, "http-equiv extraction %d should be equal", i)
+				} else if nameAttr != "" {
+					contentAttr := m.ExtractAttribute("content")
+					switch nameAttr {
+					case "keywords":
+						assert.Equal(t, "TELA, DERO Project, Civilware, DERO, $DERO", contentAttr, "keywords %d extraction should be equal", i)
+					case "viewport":
+						assert.Equal(t, "width=device-width, initial-scale=1, maximum-scale=1", contentAttr, "viewport %d extraction should be equal", i)
+					}
+				}
+			}
+		}
+	})
+
 	// // Test errors
 	t.Run("Errors", func(t *testing.T) {
 		// Invalid scids
 		for _, scid := range invalidSCIDS {
 			_, err := ServeTELA(scid, endpoint)
 			assert.Error(t, err, "SCID should error and did not")
+		}
+
+		for _, scid := range bootstrapSCIDs {
+			_, err := ServeTELA(scid, endpoint)
+			assert.Error(t, err, "Bootstrap SCID should error and did not")
 		}
 
 		// Test SetVar errors

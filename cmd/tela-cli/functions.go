@@ -712,15 +712,25 @@ func (t *tela_cli) headersPrompt(text string, index *tela.INDEX) (headers map[te
 	}
 
 	prompt := fmt.Sprintf("Enter %s description", text)
-	headers[tela.HEADER_DESCRIPTION], err = t.readLine(prompt, descrHdr)
+	headers[tela.HEADER_DESCRIPTION_V2], err = t.readLine(prompt, descrHdr)
 	if err != nil {
 		return
 	}
 
-	prompt = fmt.Sprintf("Enter %s icon", text)
-	headers[tela.HEADER_ICON_URL], err = t.readLine(prompt, iconHdr)
-	if err != nil {
-		return
+	for {
+		prompt = fmt.Sprintf("Enter %s icon", text)
+		headers[tela.HEADER_ICON_URL_V2], err = t.readLine(prompt, iconHdr)
+		if err != nil {
+			return
+		}
+
+		_, err := tela.ValidateImageURL(headers[tela.HEADER_ICON_URL_V2], t.endpoint)
+		if err != nil {
+			logger.Errorf("[%s] Could not validate iconURL: %s\n", appName, err)
+			continue
+		}
+
+		break
 	}
 
 	var dURL string
@@ -745,7 +755,7 @@ func (t *tela_cli) ringsizePrompt(text string) (ringsize uint64, err error) {
 	prompt := fmt.Sprintf("Enter %s install ringsize", text)
 	completer := readline.NewPrefixCompleter(readline.PcItem("2"), readline.PcItem("16"))
 
-	for ringsize < 2 {
+	for {
 		var line string
 		line, err = t.readLineWithCompleter(prompt, "", completer)
 		if err != nil {
@@ -759,12 +769,19 @@ func (t *tela_cli) ringsizePrompt(text string) (ringsize uint64, err error) {
 		}
 
 		if ringsize < 2 {
-			ringsize = 2
-			logger.Printf("[%s] Applying minimum ringsize of 2\n", appName)
+			logger.Printf("[%s] The minimum ringsize is 2\n", appName)
+			continue
 		} else if ringsize > 128 {
 			ringsize = 128
 			logger.Printf("[%s] Applying maximum ringsize of 128\n", appName)
 		}
+
+		if ringsize&(ringsize-1) != 0 {
+			logger.Errorf("[%s] Ringsize should be power of 2\n", appName)
+			continue
+		}
+
+		break
 	}
 
 	return
@@ -772,10 +789,25 @@ func (t *tela_cli) ringsizePrompt(text string) (ringsize uint64, err error) {
 
 // Read INDEX input for installer/updater
 func (t *tela_cli) indexPrompt(nameHdr string, previousIndex *tela.INDEX) (index tela.INDEX, err error) {
-	// Common headers
-	headers, err := t.headersPrompt("INDEX", previousIndex)
-	if err != nil {
-		return
+	var headers = map[tela.Header]string{}
+	if previousIndex == nil {
+		// Prompt for common headers when installing
+		headers, err = t.headersPrompt("INDEX", previousIndex)
+		if err != nil {
+			return
+		}
+	} else {
+		// Use existing headers for update code
+		headers[tela.HEADER_DURL] = previousIndex.DURL
+		headers[tela.HEADER_MODS] = previousIndex.Mods
+		headers[tela.HEADER_DESCRIPTION_V2] = previousIndex.DescrHdr
+		headers[tela.HEADER_ICON_URL_V2] = previousIndex.IconHdr
+	}
+
+	var bootstrapINDEX bool
+	if strings.HasSuffix(headers[tela.HEADER_DURL], tela.TAG_BOOTSTRAP) {
+		logger.Printf("[%s] This will be a bootstrap INDEX\n", appName)
+		bootstrapINDEX = true
 	}
 
 	var line string
@@ -823,46 +855,49 @@ func (t *tela_cli) indexPrompt(nameHdr string, previousIndex *tela.INDEX) (index
 				continue
 			}
 
-			if i == 0 {
-				logger.Errorf("[%s] INDEX %s cannot be used as DOC1\n", appName, ind.DURL)
-				continue
-			}
-
-			if !strings.HasSuffix(ind.DURL, tela.TAG_LIBRARY) && !strings.HasSuffix(ind.DURL, tela.TAG_DOC_SHARDS) {
-				logger.Errorf("[%s] INDEX %s is not a library or shards\n", appName, ind.DURL)
-				continue
-			}
-
-			// SCID is INDEX library, ensure its DOC paths do not exist already in this INDEX
-			var indexErr string
-			for _, d := range ind.DOCs {
-				doc, err = tela.GetDOCInfo(d, t.endpoint)
-				if err != nil {
-					indexErr = fmt.Sprintf("Failed to validate %q from %s", ind.NameHdr, d)
-					logger.Errorf("[%s] GetDOCInfo: %s\n", appName, err)
-					break
+			// A bootstrap INDEX can have an INDEX as DOC1 and does not need to check for conflicting paths
+			if !bootstrapINDEX {
+				if i == 0 {
+					logger.Errorf("[%s] INDEX %s cannot be used as DOC1\n", appName, ind.DURL)
+					continue
 				}
 
-				filePath := strings.TrimSuffix(filepath.Join(doc.SubDir, doc.NameHdr), doc.Compression)
-				for _, p := range paths {
-					if p == filePath {
-						indexErr = fmt.Sprintf("Import from %s INDEX already contains a DOC with path %q", d, filePath)
+				if !strings.HasSuffix(ind.DURL, tela.TAG_LIBRARY) && !strings.HasSuffix(ind.DURL, tela.TAG_DOC_SHARDS) {
+					logger.Errorf("[%s] INDEX %s is not a library or shards\n", appName, ind.DURL)
+					continue
+				}
+
+				// SCID is INDEX library, ensure its DOC paths do not exist already in this INDEX
+				var indexErr string
+				for _, d := range ind.DOCs {
+					doc, err = tela.GetDOCInfo(d, t.endpoint)
+					if err != nil {
+						indexErr = fmt.Sprintf("Failed to validate %q from %s", ind.NameHdr, d)
+						logger.Errorf("[%s] GetDOCInfo: %s\n", appName, err)
 						break
 					}
+
+					filePath := strings.TrimSuffix(filepath.Join(ind.DURL, doc.SubDir, doc.NameHdr), doc.Compression)
+					for _, p := range paths {
+						if p == filePath {
+							indexErr = fmt.Sprintf("Import from %s INDEX already contains a DOC with path %q", d, filePath)
+							break
+						}
+					}
+
+					if indexErr != "" {
+						break
+					}
+
+					logger.Printf("[%s] File: %s\n", appName, doc.NameHdr)
+					logger.Printf("[%s] Author: %s\n", appName, doc.Author)
+					paths = append(paths, filePath)
 				}
 
 				if indexErr != "" {
-					break
+					logger.Errorf("[%s] %s\n", appName, indexErr)
+					continue
 				}
-
-				logger.Printf("[%s] File: %s\n", appName, doc.NameHdr)
-				logger.Printf("[%s] Author: %s\n", appName, doc.Author)
-				paths = append(paths, filePath)
-			}
-
-			if indexErr != "" {
-				logger.Errorf("[%s] %s\n", appName, indexErr)
-				continue
 			}
 		} else {
 			// Ensure DOC path does not exists already in this INDEX
@@ -901,11 +936,12 @@ func (t *tela_cli) indexPrompt(nameHdr string, previousIndex *tela.INDEX) (index
 		SCVersion: version,
 		SCID:      scid,
 		DURL:      headers[tela.HEADER_DURL],
+		Mods:      headers[tela.HEADER_MODS],
 		DOCs:      scids,
 		Headers: tela.Headers{
 			NameHdr:  nameHdr,
-			DescrHdr: headers[tela.HEADER_DESCRIPTION],
-			IconHdr:  headers[tela.HEADER_ICON_URL],
+			DescrHdr: headers[tela.HEADER_DESCRIPTION_V2],
+			IconHdr:  headers[tela.HEADER_ICON_URL_V2],
 		},
 	}
 
@@ -1405,26 +1441,16 @@ func getDOCType(scid string) (docType []string) {
 
 // Parse generic info (non tela) from search queries and return resulting lines to print
 func parseBASInfo(scid, owner string) (lines []string) {
-	nameHdr, _ := gnomon.GetSCIDValuesByKey(scid, "nameHdr")
-	if nameHdr == nil {
-		nameHdr = append(nameHdr, "?")
-	}
-
 	lines = append(lines, fmt.Sprintf("%sNon-TELA%s %-62s Author: %s", logger.Color.Yellow(), logger.Color.End(), "", owner))
-	lines = append(lines, fmt.Sprintf("SCID: %s  Name: %-35s", scid, nameHdr[0]))
+	lines = append(lines, fmt.Sprintf("SCID: %s  Name: %-35s", scid, getNameHdr(scid)))
 
 	return
 }
 
 // Parse INDEX info from search queries and return resulting lines to print
 func parseINDEXInfo(scid, owner, dURL, modTag string, ratio float64) (lines []string) {
-	nameHdr, _ := gnomon.GetSCIDValuesByKey(scid, "nameHdr")
-	if nameHdr == nil {
-		nameHdr = append(nameHdr, "?")
-	}
-
 	lines = append(lines, fmt.Sprintf("%sdURL:%s %-65s Author: %s", logger.Color.Grey(), logger.Color.End(), dURL, owner))
-	lines = append(lines, fmt.Sprintf("SCID: %s  Type: %-16s  Name: %-33s  Likes: %s", scid, "TELA-INDEX-1", nameHdr[0], colorLikesRatio(ratio)))
+	lines = append(lines, fmt.Sprintf("SCID: %s  Type: %-16s  Name: %-33s  Likes: %s", scid, "TELA-INDEX-1", getNameHdr(scid), colorLikesRatio(ratio)))
 	if modTag != "" {
 		lines = append(lines, fmt.Sprintf("MODs: %s", modTag))
 	}
@@ -1466,13 +1492,8 @@ func (t *tela_cli) searchINDEXInfo(all map[string]string, owned bool) (resultLin
 
 // Parse DOC info from search queries and return resulting lines to print
 func parseDOCInfo(scid, owner, docType, dURL string, ratio float64) (lines []string) {
-	nameHdr, _ := gnomon.GetSCIDValuesByKey(scid, "nameHdr")
-	if nameHdr == nil {
-		nameHdr = append(nameHdr, "?")
-	}
-
 	lines = append(lines, fmt.Sprintf("%sdURL:%s %-65s Author: %s", logger.Color.Grey(), logger.Color.End(), dURL, owner))
-	lines = append(lines, fmt.Sprintf("SCID: %s  DocType: %-13s  Name: %-33s  Likes: %s", scid, docType, nameHdr[0], colorLikesRatio(ratio)))
+	lines = append(lines, fmt.Sprintf("SCID: %s  DocType: %-13s  Name: %-33s  Likes: %s", scid, docType, getNameHdr(scid), colorLikesRatio(ratio)))
 
 	return
 }
@@ -1538,10 +1559,7 @@ func createDOC(scid, dURL string) (doc tela.DOC) {
 		subDir = append(subDir, "")
 	}
 
-	nameHdr, _ := gnomon.GetSCIDValuesByKey(scid, "nameHdr")
-	if nameHdr == nil {
-		nameHdr = append(nameHdr, "?")
-	}
+	nameHdr := getNameHdr(scid)
 
 	return tela.DOC{
 		DocType: docType[0],
@@ -1549,7 +1567,7 @@ func createDOC(scid, dURL string) (doc tela.DOC) {
 		SCID:    scid,
 		DURL:    dURL,
 		Headers: tela.Headers{
-			NameHdr: nameHdr[0],
+			NameHdr: nameHdr,
 		},
 	}
 }

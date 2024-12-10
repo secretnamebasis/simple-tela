@@ -45,7 +45,7 @@ func appendDocCode(code, docCode string) (newCode string, err error) {
 
 // Check if Header key requires a value STORE that is not empty
 func requiredHeader(value string, key Header) bool {
-	return value == `""` && (key == HEADER_NAME || key == HEADER_CHECK_C || key == HEADER_CHECK_S)
+	return value == `""` && (key == HEADER_NAME || key == HEADER_NAME_V2 || key == HEADER_CHECK_C || key == HEADER_CHECK_S)
 }
 
 // Format a string or uint64 value to be used on a DVM SC, default case assumes value to be string
@@ -259,10 +259,12 @@ func parseDocShards(sc dvm.SmartContract, path, endpoint string) (docShards [][]
 		}
 
 		var fileName string
-		fileName, err = getContractVar(scid, HEADER_NAME.Trim(), endpoint)
-		if err != nil {
-			err = fmt.Errorf("could not get nameHdr from %s", scid)
-			return
+		if fileName, err = getContractVar(scid, HEADER_NAME_V2.Trim(), endpoint); err != nil {
+			fileName, err = getContractVar(scid, HEADER_NAME.Trim(), endpoint)
+			if err != nil {
+				err = fmt.Errorf("could not get nameHdr from %s", scid)
+				return
+			}
 		}
 
 		if i == 0 {
@@ -407,11 +409,11 @@ func ParseHeaders(code string, headerType interface{}) (formatted string, err er
 	switch h := headerType.(type) {
 	case *INDEX:
 		headers = map[Header]string{
-			HEADER_NAME:        formatValue(h.NameHdr),
-			HEADER_DESCRIPTION: formatValue(h.DescrHdr),
-			HEADER_ICON_URL:    formatValue(h.IconHdr),
-			HEADER_DURL:        formatValue(h.DURL),
-			HEADER_MODS:        formatValue(h.Mods),
+			HEADER_NAME_V2:        formatValue(h.NameHdr),
+			HEADER_DESCRIPTION_V2: formatValue(h.DescrHdr),
+			HEADER_ICON_URL_V2:    formatValue(h.IconHdr),
+			HEADER_DURL:           formatValue(h.DURL),
+			HEADER_MODS:           formatValue(h.Mods),
 		}
 
 		for i, scid := range h.DOCs {
@@ -425,20 +427,20 @@ func ParseHeaders(code string, headerType interface{}) (formatted string, err er
 		}
 	case *DOC:
 		headers = map[Header]string{
-			HEADER_NAME:        formatValue(h.NameHdr),
-			HEADER_DESCRIPTION: formatValue(h.DescrHdr),
-			HEADER_ICON_URL:    formatValue(h.IconHdr),
-			HEADER_DURL:        formatValue(h.DURL),
-			HEADER_SUBDIR:      formatValue(h.SubDir),
-			HEADER_DOCTYPE:     formatValue(h.DocType),
-			HEADER_CHECK_C:     formatValue(h.CheckC),
-			HEADER_CHECK_S:     formatValue(h.CheckS),
+			HEADER_NAME_V2:        formatValue(h.NameHdr),
+			HEADER_DESCRIPTION_V2: formatValue(h.DescrHdr),
+			HEADER_ICON_URL_V2:    formatValue(h.IconHdr),
+			HEADER_DURL:           formatValue(h.DURL),
+			HEADER_SUBDIR:         formatValue(h.SubDir),
+			HEADER_DOCTYPE:        formatValue(h.DocType),
+			HEADER_CHECK_C:        formatValue(h.CheckC),
+			HEADER_CHECK_S:        formatValue(h.CheckS),
 		}
 	case *Headers:
 		headers = map[Header]string{
-			HEADER_NAME:        formatValue(h.NameHdr),
-			HEADER_DESCRIPTION: formatValue(h.DescrHdr),
-			HEADER_ICON_URL:    formatValue(h.IconHdr),
+			HEADER_NAME_V2:        formatValue(h.NameHdr),
+			HEADER_DESCRIPTION_V2: formatValue(h.DescrHdr),
+			HEADER_ICON_URL_V2:    formatValue(h.IconHdr),
 		}
 	case map[Header]interface{}:
 		headers = map[Header]string{}

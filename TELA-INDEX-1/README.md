@@ -23,9 +23,9 @@ It is recommended to use a compliant host application such as [TELA-CLI](../cmd/
 Function InitializePrivate() Uint64
 ... 
 // Input fields starts at line 30
-30 STORE("nameHdr", "App Name") // nameHdr defines the name of the TELA application, following the ART-NFA headers standard.
-31 STORE("descrHdr", "A TELA App") // descrHdr defines the description of the TELA application, following the ART-NFA headers standard.
-32 STORE("iconURLHdr", "https://raw.githubusercontent.com/civilware/.github/main/CVLWR.png") // iconURLHdr defines the URL for the icon representing the TELA application, following the ART-NFA headers standard. This should be of size 100x100.
+30 STORE("var_header_name", "App Name") // var_header_name defines the name of the TELA application.
+31 STORE("var_header_description", "A TELA App") // var_header_description defines the description of the TELA application.
+32 STORE("var_header_icon", "https://raw.githubusercontent.com/civilware/.github/main/CVLWR.png") // var_header_icon defines the URL or SCID for the icon representing the TELA application. This should be of size 100x100.
 33 STORE("dURL", "app.tela") // dURL is unique identifier for the TELA application, ex myapp.tela.
 34 STORE("mods", "") // mods is an optional store and can be an empty string. Its usage is to store any tags for enabled TELA-MOD-1's within this smart contract, for more information on MODs reference the TELA-MOD-1 documentation.
 40 STORE("DOC1", "a891299086d218840d1eb71ae759ddc08f1e85cbf35801cc34ef64b4b07939c9") // DOC#s are installed TELA-DOC-1 SCIDs to be used in this TELA application. DOC1 will be used as the entrypoint for the application, a valid DOC1 k/v store is the minimum requirement for a TELA application.

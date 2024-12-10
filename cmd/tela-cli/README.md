@@ -312,10 +312,6 @@ Owners can update their INDEX smart contracts by using `update-index <scid>` to 
 ```
 [01/02/2006 15:04:05]  ⠞⠑⠇⠁ TELA-CLI: [D:▲] [G:▲] [W:1337] [0/21] » update-index b0f24cac2045e2b21eb2885f4da1f2771cfdf88863f5f602b47ea897ae40fa83
 [01/02/2006 15:04:05]  ⠞⠑⠇⠁ TELA-CLI: [D:▲] [G:▲] [W:1337] [0/21] Confirm password (7) » 
-[01/02/2006 15:04:05]  ⠞⠑⠇⠁ TELA-CLI: [D:▲] [G:▲] [W:1337] [0/21] Enter INDEX name » myApp
-[01/02/2006 15:04:05]  ⠞⠑⠇⠁ TELA-CLI: [D:▲] [G:▲] [W:1337] [0/21] Enter INDEX description » Index description (can be empty)
-[01/02/2006 15:04:05]  ⠞⠑⠇⠁ TELA-CLI: [D:▲] [G:▲] [W:1337] [0/21] Enter INDEX icon » https://iconurl.com (can be empty)
-[01/02/2006 15:04:05]  ⠞⠑⠇⠁ TELA-CLI: [D:▲] [G:▲] [W:1337] [0/21] Enter INDEX dURL » app.tela
 [01/02/2006 15:04:05]  ⠞⠑⠇⠁ TELA-CLI: [D:▲] [G:▲] [W:1337] [0/21] How many total documents are embedded in this INDEX? » 2
 [01/02/2006 15:04:05]  ⠞⠑⠇⠁ TELA-CLI: [D:▲] [G:▲] [W:1337] [0/21] Enter DOC1 SCID » 8232dd8e909bdc095ab213a035a70a94b64b2e4763a959f4fe3065f8f9fbc2df
 [01/02/2006 15:04:05]  INFO  TELA-CLI: File: index.html

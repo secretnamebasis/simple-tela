@@ -1655,8 +1655,8 @@ func main() {
 				},
 				Headers: tela.Headers{
 					NameHdr:  fileName,
-					DescrHdr: headers[tela.HEADER_DESCRIPTION],
-					IconHdr:  headers[tela.HEADER_ICON_URL],
+					DescrHdr: headers[tela.HEADER_DESCRIPTION_V2],
+					IconHdr:  headers[tela.HEADER_ICON_URL_V2],
 				},
 			}
 
@@ -1882,23 +1882,7 @@ func main() {
 				}
 			}
 
-			// Prompt for INDEX name or use arg
-			var name string
-			if len(args) < 2 {
-				line, err := app.readLine("Enter INDEX name", index.NameHdr)
-				if err != nil {
-					if readError(err) {
-						return
-					}
-					continue
-				}
-
-				name = line
-			} else {
-				name = args[0]
-			}
-
-			index, err = app.indexPrompt(name, &index)
+			index, err = app.indexPrompt(index.NameHdr, &index)
 			if err != nil {
 				if readError(err) {
 					return
@@ -1909,20 +1893,37 @@ func main() {
 			if index.SCVersion != nil {
 				// SC code is still behind TELA-MODs version so don't offer
 				if !index.SCVersion.LessThan(tela.Version{Major: 1, Minor: 1, Patch: 0}) {
-					_, err = tela.Mods.TagsAreValid(index.Mods)
+					var keepMods bool
+					modTags, err := tela.Mods.TagsAreValid(index.Mods)
 					if err != nil {
 						logger.Warnf("[%s] MODs are invalid, continue update to repair: %s\n", appName, err)
-					}
+					} else {
+						if len(modTags) > 0 {
+							yes, err := app.readYesNo(fmt.Sprintf("Keep existing MODs: %v", modTags))
+							if err != nil {
+								if readError(err) {
+									return
+								}
+								continue
+							}
 
-					modTag, err := app.modsPrompt()
-					if err != nil {
-						if readError(err) {
-							return
+							if yes {
+								keepMods = true
+							}
 						}
-						continue
 					}
 
-					index.Mods = modTag
+					if !keepMods {
+						modTag, err := app.modsPrompt()
+						if err != nil {
+							if readError(err) {
+								return
+							}
+							continue
+						}
+
+						index.Mods = modTag
+					}
 				}
 			}
 
@@ -2063,7 +2064,7 @@ func main() {
 
 			// Handle MOD requirements
 			var isOwner = index.Author == app.wallet.disk.GetAddress().String()
-			var canSetVars, ownerOnly, singleUse, immutable bool
+			var canSetVars, ownerOnly, singleUse, immutable, validateIcon bool
 			for _, t := range modTags {
 				if strings.HasPrefix(t, "vs") {
 					canSetVars = true
@@ -2135,6 +2136,10 @@ func main() {
 					checkKey = fmt.Sprintf("var_%s_%s", app.wallet.disk.GetAddress().String(), args[1])
 				}
 
+				if checkKey == tela.HEADER_ICON_URL_V2.Trim() {
+					validateIcon = true
+				}
+
 				_, exists, err := tela.KeyExists(args[0], checkKey, app.endpoint)
 				if err != nil {
 					logger.Errorf("[%s] KeyExists: %s\n", appName, err)
@@ -2166,6 +2171,14 @@ func main() {
 				}
 
 				args = append(args, line)
+			}
+
+			if validateIcon {
+				_, err = tela.ValidateImageURL(args[2], app.endpoint)
+				if err != nil {
+					logger.Errorf("[%s] Could not validate iconURL: %s\n", appName, err)
+					continue
+				}
 			}
 
 			arguments, err := tela.NewSetVarArgs(args[0], args[1], args[2])
@@ -3158,12 +3171,7 @@ func main() {
 					continue
 				}
 
-				nameHdr, _ := gnomon.GetSCIDValuesByKey(args[1], "nameHdr")
-				if nameHdr == nil {
-					nameHdr = append(nameHdr, "?")
-				}
-
-				fmt.Printf("Name: %s\n", nameHdr[0])
+				fmt.Printf("Name: %s\n", getNameHdr(args[1]))
 				fmt.Printf("Likes: %s%d%s\n", logger.Color.Green(), ratings.Likes, logger.Color.End())
 				fmt.Printf("Dislikes: %s%d%s\n", logger.Color.Red(), ratings.Dislikes, logger.Color.End())
 

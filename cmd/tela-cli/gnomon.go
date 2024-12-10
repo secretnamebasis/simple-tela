@@ -217,3 +217,16 @@ func (t *tela_cli) addToIndex(scids []string) (err error) {
 
 	return
 }
+
+// Get the nameHdr value for a smart contract
+func getNameHdr(scid string) (name string) {
+	nameHdr, _ := gnomon.GetSCIDValuesByKey(scid, tela.HEADER_NAME_V2.Trim())
+	if nameHdr == nil {
+		nameHdr, _ = gnomon.GetSCIDValuesByKey(scid, tela.HEADER_NAME.Trim())
+		if nameHdr == nil {
+			nameHdr = append(nameHdr, "?")
+		}
+	}
+
+	return nameHdr[0]
+}

@@ -4,9 +4,9 @@
 Function InitializePrivate() Uint64
 10 IF init() == 0 THEN GOTO 30
 20 RETURN 1
-30 STORE("nameHdr", "<nameHdr>")
-31 STORE("descrHdr", "<descrHdr>")
-32 STORE("iconURLHdr", "<iconURLHdr>")
+30 STORE("var_header_name", "<nameHdr>")
+31 STORE("var_header_description", "<descrHdr>")
+32 STORE("var_header_icon", "<iconURLHdr>")
 33 STORE("dURL", "<dURL>")
 34 STORE("mods", "<modTags>")
 40 STORE("DOC1", "<scid>") 

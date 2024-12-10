@@ -168,6 +168,21 @@ The variable store `MODClass` has defined some common stores which can be univer
 |-----------------|----------------|----------------------------------------------------------------|-----------------------------------------------------------|
 | var_owners_note | String         | Commentary from the smart contract owner about the application | "Deprecated", "Offline", "Something I want users to know" |
 
+The `var_header_` prefix builds upon the existing [ART-NFA header standard](https://github.com/civilware/artificer-nfa-standard/blob/main/Headers/README.md), allowing names, descriptions, and icons to be individually updated.
+| Key                    | Value   | Usage Description                                               | Examples          |
+|------------------------|---------|-----------------------------------------------------------------|-------------------|
+| var_header_name        | String  | The application name of an INDEX                                | "App Name"        |
+| var_header_description | String  | Describe the INDEX                                              | "Some text"       |
+| var_header_icon        | String  | Location of the icon image, this can be a URL or a DOC SCID     | "URL", "SCID"     |
+
+Using the `var_meta_` prefix for keys allows developers to define custom metadata stored as strings, ensuring that these keys remain easily identifiable for clients.
+| Key                    | Value   | Usage Description                                                     | Examples                                           |
+|------------------------|---------|-----------------------------------------------------------------------|----------------------------------------------------|
+| var_meta_category      | String  | Primary category for the application or content                       | "Productivity", "Game", "Development", "Education" |
+| var_meta_group         | String  | Group within the main category for further classification             | "RPG", "FPS", "Adventure"                          |
+| var_meta_subgroup      | String  | Specific subcategories within a group for additional organization     | "Open World", "Single player", "Multiplayer"       |
+| var_meta_tags          | String  | Tags that enhance searchability and categorization                    | "#TELA", "#TELA #DERO #Privacy"                    |
+
 All the variable store `MODs` use a common API for their functions and data retrieval.
 
 ##### Get Variable

@@ -72,9 +72,9 @@ It is recommended to use a compliant host application such as [TELA-CLI](../cmd/
 Function InitializePrivate() Uint64
 ...
 // Input fields starts at line 30
-30 STORE("nameHdr", "index.html") // nameHdr defines the name of the TELA document, following the ART-NFA headers standard.
-31 STORE("descrHdr", "A HTML index") // descrHdr defines the description of the TELA document, following the ART-NFA headers standard.
-32 STORE("iconURLHdr", "https://raw.githubusercontent.com/civilware/.github/main/CVLWR.png")  // iconURLHdr defines the url for the icon representing the TELA document, following the ART-NFA headers standard. This should be of size 100x100.
+30 STORE("var_header_name", "index.html") // var_header_name defines the name of the TELA document.
+31 STORE("var_header_description", "A HTML index") // var_header_description defines the description of the TELA document.
+32 STORE("var_header_icon", "https://raw.githubusercontent.com/civilware/.github/main/CVLWR.png")  // var_header_icon defines the URL or SCID for the icon representing the TELA document. This should be of size 100x100.
 33 STORE("dURL", "app.tela") // dURL is a unique identifier for the TELA document likely linking to the TELA-INDEX-1 where this document is being used or to its corresponding library. 
 34 STORE("docType", "TELA-HTML-1") // docType is the language or file type being used, ex TELA-JS-1, TELA-CSS-1... see docTypes list for all store values
 35 STORE("subDir", "") // subDir adds this file to a sub directory, it can be left empty if file location is in root directory, separators should always be / ex: sub1/sub2/sub3

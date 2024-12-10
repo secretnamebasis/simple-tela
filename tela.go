@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
@@ -34,7 +35,7 @@ import (
 // TELA-DOC-1 structure
 type DOC struct {
 	DocType     string   `json:"docType"`           // Language this document is using (ex: "TELA-HTML-1", "TELA-JS-1" or "TELA-CSS-1")
-	Code        string   `json:"code"`              // The application code HTML, JS...
+	Code        string   `json:"code"`              // The application code HTML, JS... (when a DOC is returned this will be the SC code, the DocCode can be retrieved with ExtractDocCode)
 	SubDir      string   `json:"subDir"`            // Sub directory to place file in (always use / for further children, ex: "sub1" or "sub1/sub2/sub3")
 	SCID        string   `json:"scid"`              // SCID of this DOC, only used after DOC has been installed on-chain
 	Author      string   `json:"author"`            // Author of this DOC, only used after DOC has been installed on-chain
@@ -133,9 +134,10 @@ const DEFAULT_MAX_PORT = 65535  // Maximum port of possible serving range
 
 const MINIMUM_GAS_FEE = uint64(100) // Minimum gas fee used when making transfers
 
-const TAG_LIBRARY = ".lib"       // A collection of standard DOCs embedded within an INDEX, each DOC is its own file  (usage is appended to INDEX and DOC dURLs)
-const TAG_DOC_SHARD = ".shard"   // A DocShard DOC  (usage is appended to DOC dURLs)
-const TAG_DOC_SHARDS = ".shards" // A collection of DocShard DOCs embedded within an INDEX, when recreated this will be one file  (usage is appended to INDEX dURLs)
+const TAG_LIBRARY = ".lib"         // A collection of standard DOCs embedded within an INDEX, each DOC is its own file  (usage is appended to INDEX and DOC dURLs)
+const TAG_DOC_SHARD = ".shard"     // A DocShard DOC  (usage is appended to DOC dURLs)
+const TAG_DOC_SHARDS = ".shards"   // A collection of DocShard DOCs embedded within an INDEX, when recreated this will be one file  (usage is appended to INDEX dURLs)
+const TAG_BOOTSTRAP = ".bootstrap" // A collection of TELA INDEXs or DOCs which can be used to bootstrap a list of applications or content (usage is appended to INDEX dURLs)
 
 // Accepted languages of this TELA package
 var acceptedLanguages = []string{DOC_STATIC, DOC_HTML, DOC_JSON, DOC_CSS, DOC_JS, DOC_MD, DOC_GO}
@@ -279,8 +281,8 @@ func parseDocShardCode(fileName, code string) (shard []byte, err error) {
 	return
 }
 
-// Parse a TELA DOC for useable code and write file if IsAcceptedLanguage
-func parseAndSaveTELADoc(filePath, code, doctype, compression string) (err error) {
+// Parse a TELA DOC for its multiline comment
+func parseDocCode(code string) (comment string, err error) {
 	start := strings.Index(code, "/*")
 	end := strings.Index(code, "*/")
 
@@ -289,8 +291,19 @@ func parseAndSaveTELADoc(filePath, code, doctype, compression string) (err error
 		return
 	}
 
-	comment := code[start+2:]
+	comment = code[start+2:]
 	comment = strings.TrimSpace(strings.TrimSuffix(comment, "*/"))
+
+	return
+}
+
+// Parse a TELA DOC for useable code and write file if IsAcceptedLanguage
+func parseAndSaveTELADoc(filePath, code, doctype, compression string) (err error) {
+	var comment string
+	comment, err = parseDocCode(code)
+	if err != nil {
+		return
+	}
 
 	// TODO any further DOC parsing for docTypes
 	switch doctype {
@@ -651,10 +664,13 @@ func cloneDOC(scid, docNum, path, endpoint string) (clone Cloning, err error) {
 	}
 
 	var fileName string
-	fileName, err = getContractVar(scid, HEADER_NAME.Trim(), endpoint)
+	fileName, err = getContractVar(scid, HEADER_NAME_V2.Trim(), endpoint)
 	if err != nil {
-		err = fmt.Errorf("could not get nameHdr from %s", scid)
-		return
+		fileName, err = getContractVar(scid, HEADER_NAME.Trim(), endpoint)
+		if err != nil {
+			err = fmt.Errorf("could not get nameHdr from %s", scid)
+			return
+		}
 	}
 
 	var compression string
@@ -1109,6 +1125,11 @@ func checkIfAbleToServe(scid, endpoint string) (dURL string, err error) {
 
 	if strings.HasSuffix(dURL, TAG_DOC_SHARDS) {
 		err = fmt.Errorf("%q is DocShards and cannot be served", dURL)
+		return
+	}
+
+	if strings.HasSuffix(dURL, TAG_BOOTSTRAP) {
+		err = fmt.Errorf("%q is a bootstrap and cannot be served", dURL)
 		return
 	}
 
@@ -1822,6 +1843,159 @@ func GetRating(scid, endpoint string, height uint64) (ratings Rating_Result, err
 	return
 }
 
+// ExtractDocCode parses a DOC for its DocCode and decompresses it if required
+func (d *DOC) ExtractDocCode() (docCode string, err error) {
+	rawDocCode, err := parseDocCode(d.Code)
+	if err != nil {
+		return
+	}
+
+	ext := filepath.Ext(d.NameHdr)
+	if IsCompressedExt(ext) {
+		var decompressed []byte
+		decompressed, err = Decompress([]byte(rawDocCode), ext)
+		if err != nil {
+			err = fmt.Errorf("failed to decompress: %s", err)
+			return
+		}
+
+		docCode = string(decompressed)
+
+		return
+	}
+
+	docCode = rawDocCode
+
+	return
+}
+
+// ExtractAsSVG extends ExtractDocCode and validates that the DocCode is formatted for SVG images
+func (d *DOC) ExtractAsSVG() (svgCode string, err error) {
+	docCode, err := d.ExtractDocCode()
+	if err != nil {
+		return
+	}
+
+	docCode = strings.TrimSpace(docCode)
+
+	if !strings.HasPrefix(docCode, "<?xml") && !strings.HasPrefix(docCode, "<svg") {
+		err = fmt.Errorf("could not parse valid svg opening tag")
+		return
+	}
+
+	if !strings.HasSuffix(docCode, "/svg>") {
+		err = fmt.Errorf("could not parse valid svg closing tag")
+		return
+	}
+
+	if !strings.Contains(docCode, "xmlns") {
+		err = fmt.Errorf("could not parse xmlns attribute")
+		return
+	}
+
+	svgCode = docCode
+
+	return
+}
+
+// MetaTag type for handling TELA DOC metadata
+type MetaTag string
+
+// ExtractMetaTags parses a DOC for any <meta> within the DocCode and returns the tags
+func (d *DOC) ExtractMetaTags() (metaTags []MetaTag, err error) {
+	var docCode string
+	docCode, err = d.ExtractDocCode()
+	if err != nil {
+		return
+	}
+
+	docCode = strings.TrimSpace(docCode)
+
+	start := 0
+	for {
+		metaStart := strings.Index(docCode[start:], "<meta")
+		if metaStart == -1 {
+			break
+		}
+		metaStart += start
+
+		metaEnd := strings.Index(docCode[metaStart:], ">")
+		if metaEnd == -1 {
+			break
+		}
+		metaEnd += metaStart
+
+		if metaEnd+1 > len(docCode) {
+			break
+		}
+
+		metaTags = append(metaTags, MetaTag(docCode[metaStart:metaEnd+1]))
+
+		start = metaEnd + 1
+	}
+
+	return
+}
+
+// Extract the data from a MetaTag for the given attribute
+func (tag MetaTag) ExtractAttribute(attribute string) (value string) {
+	attribute = attribute + "="
+	tagStr := string(tag)
+	start := strings.Index(tagStr, attribute)
+	if start == -1 {
+		return
+	}
+
+	start += len(attribute)
+	if start >= len(tagStr) {
+		return
+	}
+
+	quote := tagStr[start]
+	if quote != '"' && quote != '\'' {
+		return
+	}
+
+	end := strings.Index(tagStr[start+1:], string(quote))
+	if end == -1 {
+		return
+	}
+
+	if start+1+end > len(tagStr) {
+		return
+	}
+
+	return tagStr[start+1 : start+1+end]
+}
+
+// ValidateImageURL will return error if the imageURL is not a valid URL or a valid image smart contract
+func ValidateImageURL(imageURL, endpoint string) (svgCode string, err error) {
+	if imageURL == "" {
+		// Empty is valid
+		return
+	}
+
+	// Try to validate as URI first
+	_, err = url.ParseRequestURI(imageURL)
+	if err != nil {
+		if len(imageURL) != 64 {
+			return
+		}
+
+		// Check if it is a TELA DOC SC
+		var doc DOC
+		doc, err = GetDOCInfo(imageURL, endpoint)
+		if err != nil {
+			return
+		}
+
+		// Check if the DocCode is SVG
+		svgCode, err = doc.ExtractAsSVG()
+	}
+
+	return
+}
+
 // Get TELA-DOC info from scid at endpoint
 func GetDOCInfo(scid, endpoint string) (doc DOC, err error) {
 	vars, err := getContractVars(scid, endpoint)
@@ -1864,19 +2038,34 @@ func GetDOCInfo(scid, endpoint string) (doc DOC, err error) {
 	dURL := decodeHexString(d)
 
 	var nameHdr, descrHdr, iconHdr, subDir, checkC, checkS, compression string
-	name, ok := vars[HEADER_NAME.Trim()].(string)
+	name, ok := vars[HEADER_NAME_V2.Trim()].(string)
 	if ok {
 		nameHdr = decodeHexString(name)
+	} else {
+		name, ok := vars[HEADER_NAME.Trim()].(string)
+		if ok {
+			nameHdr = decodeHexString(name)
+		}
 	}
 
-	desc, ok := vars[HEADER_DESCRIPTION.Trim()].(string)
+	desc, ok := vars[HEADER_DESCRIPTION_V2.Trim()].(string)
 	if ok {
 		descrHdr = decodeHexString(desc)
+	} else {
+		desc, ok := vars[HEADER_DESCRIPTION.Trim()].(string)
+		if ok {
+			descrHdr = decodeHexString(desc)
+		}
 	}
 
-	ic, ok := vars[HEADER_ICON_URL.Trim()].(string)
+	ic, ok := vars[HEADER_ICON_URL_V2.Trim()].(string)
 	if ok {
 		iconHdr = decodeHexString(ic)
+	} else {
+		ic, ok := vars[HEADER_ICON_URL.Trim()].(string)
+		if ok {
+			iconHdr = decodeHexString(ic)
+		}
 	}
 
 	sd, ok := vars[HEADER_SUBDIR.Trim()].(string)
@@ -1964,19 +2153,34 @@ func GetINDEXInfo(scid, endpoint string) (index INDEX, err error) {
 	dURL := decodeHexString(d)
 
 	var nameHdr, descrHdr, iconHdr string
-	name, ok := vars[HEADER_NAME.Trim()].(string)
+	name, ok := vars[HEADER_NAME_V2.Trim()].(string)
 	if ok {
 		nameHdr = decodeHexString(name)
+	} else {
+		name, ok := vars[HEADER_NAME.Trim()].(string)
+		if ok {
+			nameHdr = decodeHexString(name)
+		}
 	}
 
-	desc, ok := vars[HEADER_DESCRIPTION.Trim()].(string)
+	desc, ok := vars[HEADER_DESCRIPTION_V2.Trim()].(string)
 	if ok {
 		descrHdr = decodeHexString(desc)
+	} else {
+		desc, ok := vars[HEADER_DESCRIPTION.Trim()].(string)
+		if ok {
+			descrHdr = decodeHexString(desc)
+		}
 	}
 
-	ic, ok := vars[HEADER_ICON_URL.Trim()].(string)
+	ic, ok := vars[HEADER_ICON_URL_V2.Trim()].(string)
 	if ok {
 		iconHdr = decodeHexString(ic)
+	} else {
+		ic, ok := vars[HEADER_ICON_URL.Trim()].(string)
+		if ok {
+			iconHdr = decodeHexString(ic)
+		}
 	}
 
 	author := "anon"
