@@ -1,7 +1,7 @@
 # TELA-DOC-1 - TELA Decentralized Web Standard Document <!-- omit in toc -->
 
 ## Introduction <!-- omit in toc -->
-TELA introduces a standard for decentralized browser-based applications that can be executed locally, eliminating the need for third-party servers.
+TELA introduces a standard for decentralized browser-based applications that can be executed locally, eliminating the reliance on third-party servers.
 
 This portion of the documentation will focus on `TELA-DOC-1`.
 
@@ -19,6 +19,10 @@ This portion of the documentation will focus on `TELA-DOC-1`.
 - [TELA Libraries](#tela-libraries)
     - [Library Usage](#library-usage)
     - [Library Creation](#library-creation)
+- [DocShards](#docshards)
+    - [DocShard Usage](#docshard-usage)
+    - [DocShard Creation](#docshard-creation)
+- [Compression](#compression)
 - [TELA-DOC-1 Template](#tela-doc-1-template)
 - [Utilization](#utilization)
     - [Install TELA-DOC-1](#install-tela-doc-1)
@@ -36,10 +40,11 @@ Prepare all the code (or text) that will be required for the document. Ensure yo
 
 #### Guidelines
 - One `TELA-DOC-1` cannot exceed 20KB in total size.
-- Do not use any `/* */` multiline comments within any document or smart contract code as it may cause errors during contract installation.
+- If `/* */` multiline comments or non ASCII characters are used in the document code it should be encoded to avoid errors during contract installation. See [compression](#compression) for more details.
 - Example application code can be found in [tela_tests](../tela_tests/).
 - The dURL can be used to help indexers query details beyond the defined contract stores, examples:
     - Appending `.lib` to a dURL will mark it as a library for indexes such as in [TELA-CLI](../cmd/tela-cli/README.md).
+    - DocShards append `.shard` and `.shards` to their DOC and INDEX dURLs respectively to indicate it is a shard or requires reconstruction.
 
 ##### JavaScript
 - Accurate origin URLs for web socket connections can be generated using:
@@ -57,18 +62,19 @@ const applicationData = {
 "TELA-CSS-1"
 "TELA-JS-1"
 "TELA-MD-1"
+"TELA-GO-1"
 ```
 
 ### Initialization
-To deploy a `TELA-DOC-1` manually, developers can fill out the input fields inside of `InitializePrivate()` and input the document code in the designated multiline comment section at the bottom of the smart contract template.
+It is recommended to use a compliant host application such as [TELA-CLI](../cmd/tela-cli/README.md) when installing a `TELA-DOC-1`, which will automate the process and help to avoid errors during installation. To deploy a `TELA-DOC-1` manually, developers can fill out the input fields inside of `InitializePrivate()` and input the document code in the designated multiline comment section at the bottom of the smart contract template.
 
 ```go
 Function InitializePrivate() Uint64
 ...
 // Input fields starts at line 30
-30 STORE("nameHdr", "index.html") // nameHdr defines the name of the TELA document, following the ART-NFA headers standard.
-31 STORE("descrHdr", "A HTML index") // descrHdr defines the description of the TELA document, following the ART-NFA headers standard.
-32 STORE("iconURLHdr", "https://raw.githubusercontent.com/civilware/.github/main/CVLWR.png")  // iconURLHdr defines the url for the icon representing the TELA document, following the ART-NFA headers standard. This should be of size 100x100.
+30 STORE("var_header_name", "index.html") // var_header_name defines the name of the TELA document.
+31 STORE("var_header_description", "A HTML index") // var_header_description defines the description of the TELA document.
+32 STORE("var_header_icon", "https://raw.githubusercontent.com/civilware/.github/main/CVLWR.png")  // var_header_icon defines the URL or SCID for the icon representing the TELA document. This should be of size 100x100.
 33 STORE("dURL", "app.tela") // dURL is a unique identifier for the TELA document likely linking to the TELA-INDEX-1 where this document is being used or to its corresponding library. 
 34 STORE("docType", "TELA-HTML-1") // docType is the language or file type being used, ex TELA-JS-1, TELA-CSS-1... see docTypes list for all store values
 35 STORE("subDir", "") // subDir adds this file to a sub directory, it can be left empty if file location is in root directory, separators should always be / ex: sub1/sub2/sub3
@@ -107,13 +113,42 @@ To consume a library:
 - While in the development stages, libraries can be cloned to get a local copy of the files so its functions and variables can be referenced and tested in the application before it is installed on-chain. 
 - When development is finished, input any `TELA-INDEX-1` or `TELA-DOC-1` library SCID(s) used while developing, into your applications `TELA-INDEX-1` contract before it is installed. The application will now contain those libraries when served.
 
-#### Library creation
+#### Library Creation
 The codebase being installed as a TELA library might exceed the total size of a single `TELA-DOC-1` smart contract. In this case multiple `TELA-DOC-1`'s can be deployed and embedded within a `TELA-INDEX-1` to create a multi-part TELA library which can be referenced by a single SCID for further use.
 
 To create a library:
 - Write all the docType code needed for the `TELA-DOC-1` smart contract or contracts.
 - Install the `TELA-DOC-1` contracts, ensuring that all the dURLs match and have a `.lib` suffix.
 - Optionally, all the `TELA-DOC-1` contracts can then be embedded within a `TELA-INDEX-1` to reference it with a single SCID.
+
+### DocShards
+DocShards provide developers with an alternative method for packaging TELA content. They are similar to libraries in their construction; however, embedded DocShards are recreated as a single file when cloned or served. This allows a single piece of TELA content to exceed the smart contract installation maximum size. Additionally, DocShards can be embedded into libraries to enhance their utility.
+
+#### DocShard Usage
+Like TELA libraries, DocShards consist of a collection of `TELA-DOC-1` contracts. It is important to note that a DocShard cannot serve as the entrypoint of a `TELA-INDEX-1`.
+
+To consume a DocShard:
+- Identify the SCID of the DocShard you want to use in your application.
+- While in the development stages, DocShards can be cloned to get a local copy of the file so its functions and variables can be referenced and tested in the application before it is installed on-chain. DocShards are cloned to `dURL/nameHdr` in the target directory.
+- When development is finished, input any `TELA-INDEX-1` DocShard SCID(s) used while developing, into your applications `TELA-INDEX-1` contract before it is installed. The application will now contain those DocShards when served.
+
+#### DocShard Creation
+To avoid formatting errors during the cloning or serving of content, it is recommended to use the `civilware/tela` go package when creating DocShards. `TELA-CLI` has extended the package's tooling to simplify the creation of DocShards. Creation is limited to files containing only ASCII characters.
+
+To create a DocShard:
+- Write the docType code that will be recreated as a single source file. 
+- Using the appropriate tools, create the DocShard smart contracts from the source file. 
+- Install the `TELA-DOC-1` DocShard contracts. The `.shard` tag should be appended to the DOC dURL's to indicate they are DocShards.
+- Embed all installed `TELA-DOC-1` DocShard contracts into a `TELA-INDEX-1` and append `.shards` to its dURL to signify it requires reconstruction.
+
+#### Compression
+Document code can be compressed and encoded to maximize the storage capacity of a single DOC. Additionally, applying compression when creating DocShards can reduce the number of shards needed for large files. Adding the compression extension to the end of the nameHdr will signal that the content is compressed, ensuring it is processed appropriately when served.
+
+For optimal results, it is recommended to use a host application such as `TELA-CLI`, which automates the compression process during DOC installation. The `civilware/tela` package currently supports the following compression formats:
+
+| Format       | Extension |
+|--------------|-----------|
+| gzip         | `.gz`     |
 
 ### TELA-DOC-1 Template
 * [TELA-DOC-1](TELA-DOC-1.bas)

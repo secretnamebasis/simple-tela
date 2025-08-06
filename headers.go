@@ -27,6 +27,7 @@ const (
 	HEADER_ICON_URL     Header = `"iconURLHdr"`
 	HEADER_CHECK_C      Header = `"fileCheckC"`
 	HEADER_CHECK_S      Header = `"fileCheckS"`
+	HEADER_MODS         Header = `"mods"`
 	HEADER_DURL         Header = `"dURL"`
 	HEADER_DOCUMENT     Header = `"DOC` // append with Number()
 	HEADER_SUBDIR       Header = `"subDir"`
@@ -41,6 +42,14 @@ const (
 	HEADER_ROYALTY      Header = `"royalty"`
 	HEADER_OWNER        Header = `"owner"`
 	HEADER_OWNER_UPDATE Header = `"ownerCanUpdate"`
+
+	HEADER_NAME_V2        Header = `"var_header_name"`
+	HEADER_DESCRIPTION_V2 Header = `"var_header_description"`
+	HEADER_ICON_URL_V2    Header = `"var_header_icon"`
+
+	LINE_MODS_STORE    = `34 STORE("mods", `
+	LINE_DOC_VERSION   = `50 STORE("docVersion", `
+	LINE_INDEX_VERSION = `50 STORE("telaVersion", `
 )
 
 // Trim any `"` from Header and return string
