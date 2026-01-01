@@ -4,7 +4,6 @@ import (
 	"encoding/pem"
 	"fmt"
 	"math/big"
-	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -160,145 +159,145 @@ func parseINDEXForDOCs(sc dvm.SmartContract) (scids []string) {
 	return
 }
 
-func parseAndCloneINDEXForDOCs(sc dvm.SmartContract, height int64, basePath, endpoint string) (entrypoint, servePath string, err error) {
-	// Parse INDEX SC for valid DOCs
-	for name, function := range sc.Functions {
-		// Find initialize function and parse lines
-		if name == DVM_FUNC_INIT_PRIVATE {
-			for _, line := range function.Lines {
-				// Parse the contents of the line
-				for i, parts := range line {
-					if strings.Contains(parts, string(HEADER_DOCUMENT)) {
-						// Line STORE is a DOC#, find scid and get its document data
-						scid := strings.Trim(line[i+2], `"`)
-						isDOC1 := Header(parts) == HEADER_DOCUMENT.Number(1)
+// func parseAndCloneINDEXForDOCs(sc dvm.SmartContract, height int64, basePath, endpoint string) (entrypoint, servePath string, err error) {
+// 	// Parse INDEX SC for valid DOCs
+// 	for name, function := range sc.Functions {
+// 		// Find initialize function and parse lines
+// 		if name == DVM_FUNC_INIT_PRIVATE {
+// 			for _, line := range function.Lines {
+// 				// Parse the contents of the line
+// 				for i, parts := range line {
+// 					if strings.Contains(parts, string(HEADER_DOCUMENT)) {
+// 						// Line STORE is a DOC#, find scid and get its document data
+// 						scid := strings.Trim(line[i+2], `"`)
+// 						isDOC1 := Header(parts) == HEADER_DOCUMENT.Number(1)
 
-						// Check if scid is INDEX or DOC and handle accordingly
-						var c Cloning
-						_, err = getContractVar(scid, "telaVersion", endpoint)
-						if err != nil {
-							c, err = cloneDOC(scid, parts, basePath, endpoint)
-							if err != nil {
-								return
-							}
+// 						// Check if scid is INDEX or DOC and handle accordingly
+// 						var c Cloning
+// 						_, err = getContractVar(scid, "telaVersion", endpoint)
+// 						if err != nil {
+// 							c, err = cloneDOC(scid, parts, basePath, endpoint)
+// 							if err != nil {
+// 								return
+// 							}
 
-							// If DOC is entrypoint set it, and if serving from subDir point to it
-							if isDOC1 {
-								entrypoint = c.Entrypoint
-								servePath = c.ServePath
-							}
-						} else {
-							if isDOC1 {
-								err = fmt.Errorf("cannot use TELA-INDEX as entrypoint for TELA-INDEX")
-								return
-							}
+// 							// If DOC is entrypoint set it, and if serving from subDir point to it
+// 							if isDOC1 {
+// 								entrypoint = c.Entrypoint
+// 								servePath = c.ServePath
+// 							}
+// 						} else {
+// 							if isDOC1 {
+// 								err = fmt.Errorf("cannot use TELA-INDEX as entrypoint for TELA-INDEX")
+// 								return
+// 							}
 
-							var dURL string
-							dURL, err = getContractVar(scid, HEADER_DURL.Trim(), endpoint)
-							if err != nil {
-								err = fmt.Errorf("could not verify TELA-INDEX dURL: %s", err)
-								return
-							}
+// 							var dURL string
+// 							dURL, err = getContractVar(scid, HEADER_DURL.Trim(), endpoint)
+// 							if err != nil {
+// 								err = fmt.Errorf("could not verify TELA-INDEX dURL: %s", err)
+// 								return
+// 							}
 
-							if !strings.HasSuffix(dURL, TAG_LIBRARY) && !strings.HasSuffix(dURL, TAG_DOC_SHARDS) {
-								err = fmt.Errorf("cannot embed TELA-INDEX without %q or %q tag", TAG_LIBRARY, TAG_DOC_SHARDS)
-								return
-							}
+// 							if !strings.HasSuffix(dURL, TAG_LIBRARY) && !strings.HasSuffix(dURL, TAG_DOC_SHARDS) {
+// 								err = fmt.Errorf("cannot embed TELA-INDEX without %q or %q tag", TAG_LIBRARY, TAG_DOC_SHARDS)
+// 								return
+// 							}
 
-							if height > 0 {
-								c, err = cloneINDEXAtCommit(height, scid, "", basePath, endpoint)
-								if err != nil {
-									return
-								}
-							} else {
-								c, err = cloneINDEX(scid, dURL, basePath, endpoint)
-								if err != nil {
-									return
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
+// 							if height > 0 {
+// 								c, err = cloneINDEXAtCommit(height, scid, "", basePath, endpoint)
+// 								if err != nil {
+// 									return
+// 								}
+// 							} else {
+// 								c, err = cloneINDEX(scid, dURL, basePath, endpoint)
+// 								if err != nil {
+// 									return
+// 								}
+// 							}
+// 						}
+// 					}
+// 				}
+// 			}
+// 		}
+// 	}
 
-	return
-}
+// 	return
+// }
 
-// Parse a TELA-INDEX for DOCs and prepare its content as DocShards to be recreated by ConstructFromShards
-func parseDocShards(sc dvm.SmartContract, path, endpoint string) (docShards [][]byte, recreate, compression string, err error) {
-	scids := parseINDEXForDOCs(sc)
-	for i, scid := range scids {
-		if len(scid) != 64 {
-			err = fmt.Errorf("invalid DOC SCID: %s", scid)
-			return
-		}
+// // Parse a TELA-INDEX for DOCs and prepare its content as DocShards to be recreated by ConstructFromShards
+// func parseDocShards(sc dvm.SmartContract, path, endpoint string) (docShards [][]byte, recreate, compression string, err error) {
+// 	scids := parseINDEXForDOCs(sc)
+// 	for i, scid := range scids {
+// 		if len(scid) != 64 {
+// 			err = fmt.Errorf("invalid DOC SCID: %s", scid)
+// 			return
+// 		}
 
-		var code string
-		code, err = getContractCode(scid, endpoint)
-		if err != nil {
-			err = fmt.Errorf("could not get SC code from %s: %s", scid, err)
-			return
-		}
+// 		var code string
+// 		code, err = getContractCode(scid, endpoint)
+// 		if err != nil {
+// 			err = fmt.Errorf("could not get SC code from %s: %s", scid, err)
+// 			return
+// 		}
 
-		_, _, err = ValidDOCVersion(code)
-		if err != nil {
-			err = fmt.Errorf("scid does not parse as TELA-DOC-1: %s", err)
-			return
-		}
+// 		_, _, err = ValidDOCVersion(code)
+// 		if err != nil {
+// 			err = fmt.Errorf("scid does not parse as TELA-DOC-1: %s", err)
+// 			return
+// 		}
 
-		var docType string
-		docType, err = getContractVar(scid, HEADER_DOCTYPE.Trim(), endpoint)
-		if err != nil {
-			err = fmt.Errorf("could not get docType from %s: %s", scid, err)
-			return
-		}
+// 		var docType string
+// 		docType, err = getContractVar(scid, HEADER_DOCTYPE.Trim(), endpoint)
+// 		if err != nil {
+// 			err = fmt.Errorf("could not get docType from %s: %s", scid, err)
+// 			return
+// 		}
 
-		var fileName string
-		if fileName, err = getContractVar(scid, HEADER_NAME_V2.Trim(), endpoint); err != nil {
-			fileName, err = getContractVar(scid, HEADER_NAME.Trim(), endpoint)
-			if err != nil {
-				err = fmt.Errorf("could not get nameHdr from %s", scid)
-				return
-			}
-		}
+// 		var fileName string
+// 		if fileName, err = getContractVar(scid, HEADER_NAME_V2.Trim(), endpoint); err != nil {
+// 			fileName, err = getContractVar(scid, HEADER_NAME.Trim(), endpoint)
+// 			if err != nil {
+// 				err = fmt.Errorf("could not get nameHdr from %s", scid)
+// 				return
+// 			}
+// 		}
 
-		if i == 0 {
-			ext := filepath.Ext(fileName)
-			if IsCompressedExt(ext) {
-				compression = ext
-			}
+// 		if i == 0 {
+// 			ext := filepath.Ext(fileName)
+// 			if IsCompressedExt(ext) {
+// 				compression = ext
+// 			}
 
-			recreate = strings.ReplaceAll(strings.TrimSuffix(fileName, compression), "-1.", ".")
-			filePath := filepath.Join(path, recreate)
-			if _, err = os.Stat(filePath); !os.IsNotExist(err) {
-				err = fmt.Errorf("file %s already exists", filePath)
-				return
-			}
+// 			recreate = strings.ReplaceAll(strings.TrimSuffix(fileName, compression), "-1.", ".")
+// 			filePath := filepath.Join(path, recreate)
+// 			if _, err = os.Stat(filePath); !os.IsNotExist(err) {
+// 				err = fmt.Errorf("file %s already exists", filePath)
+// 				return
+// 			}
 
-			// May be empty so don't return error
-			if subDir, err := getContractVar(scid, HEADER_SUBDIR.Trim(), endpoint); err == nil && subDir != "" {
-				recreate = filepath.Join(subDir, recreate)
-			}
-		}
+// 			// May be empty so don't return error
+// 			if subDir, err := getContractVar(scid, HEADER_SUBDIR.Trim(), endpoint); err == nil && subDir != "" {
+// 				recreate = filepath.Join(subDir, recreate)
+// 			}
+// 		}
 
-		if !IsAcceptedLanguage(docType) {
-			err = fmt.Errorf("%s is not an accepted language for DOC %s", docType, fileName)
-			return
-		}
+// 		if !IsAcceptedLanguage(docType) {
+// 			err = fmt.Errorf("%s is not an accepted language for DOC %s", docType, fileName)
+// 			return
+// 		}
 
-		var shard []byte
-		shard, err = parseDocShardCode(fileName, code)
-		if err != nil {
-			return
-		}
+// 		var shard []byte
+// 		shard, err = parseDocShardCode(fileName, code)
+// 		if err != nil {
+// 			return
+// 		}
 
-		docShards = append(docShards, shard)
-	}
+// 		docShards = append(docShards, shard)
+// 	}
 
-	return
-}
+// 	return
+// }
 
 // Decode a TXID as hex and parse it for SC code and return the result
 func extractCodeFromTXID(txidAsHex string) (code string, err error) {
@@ -856,110 +855,110 @@ func GetLatestContractVersion(isDOC bool) (version Version) {
 }
 
 // Returns TELA smart contract code for valid versions of DOCs/INDEXs
-func createContractVersions(isDOC bool, modTag string) (versions []Version, scCode []string) {
-	var code, versionLine string
+// func createContractVersions(isDOC bool, modTag string) (versions []Version, scCode []string) {
+// 	var code, versionLine string
 
-	// Create base contract
-	if isDOC {
-		code = TELA_DOC_1
-		versions = tela.version.docs
-		versionLine = LINE_DOC_VERSION
-		modTag = "" // DOCs are not MOD enabled
-	} else {
-		code = TELA_INDEX_1
-		versions = tela.version.index
-		versionLine = LINE_INDEX_VERSION
-	}
+// 	// Create base contract
+// 	if isDOC {
+// 		code = TELA_DOC_1
+// 		versions = tela.version.docs
+// 		versionLine = LINE_DOC_VERSION
+// 		modTag = "" // DOCs are not MOD enabled
+// 	} else {
+// 		code = TELA_INDEX_1
+// 		versions = tela.version.index
+// 		versionLine = LINE_INDEX_VERSION
+// 	}
 
-	for i := 0; i < len(versions)-1; i++ {
-		newVersion := fmt.Sprintf(`"%d.%d.%d")`, versions[i].Major, versions[i].Minor, versions[i].Patch)
-		lineIndex := strings.Index(code, versionLine)
-		if lineIndex == -1 {
-			continue
-		}
+// 	for i := 0; i < len(versions)-1; i++ {
+// 		newVersion := fmt.Sprintf(`"%d.%d.%d")`, versions[i].Major, versions[i].Minor, versions[i].Patch)
+// 		lineIndex := strings.Index(code, versionLine)
+// 		if lineIndex == -1 {
+// 			continue
+// 		}
 
-		// Inject the SC version number
-		newCode := fmt.Sprintf("%s%s%s", code[:lineIndex], versionLine+newVersion, code[lineIndex+len(versionLine)+len(newVersion):])
-		sc, _, err := dvm.ParseSmartContract(newCode)
-		if err != nil {
-			continue
-		}
+// 		// Inject the SC version number
+// 		newCode := fmt.Sprintf("%s%s%s", code[:lineIndex], versionLine+newVersion, code[lineIndex+len(versionLine)+len(newVersion):])
+// 		sc, _, err := dvm.ParseSmartContract(newCode)
+// 		if err != nil {
+// 			continue
+// 		}
 
-		// Create version specific SCs
-		if isDOC {
-			// switch versions[i] {
-			// case Version{1, 0, 0}:
+// 		// Create version specific SCs
+// 		if isDOC {
+// 			// switch versions[i] {
+// 			// case Version{1, 0, 0}:
 
-			// default:
-			// 	continue
-			// }
-		} else {
-			switch versions[i] {
-			case Version{1, 0, 0}:
-				// UpdateCode was changed in INDEX 1.1.0
-				updateFunc := sc.Functions["UpdateCode"]
-				// Replace mod param and remove its store line from UpdateCode
-				updateFunc.Params = []dvm.Variable{{Name: "code", Type: dvm.String}}
-				updateFunc.LineNumbers = append(updateFunc.LineNumbers[:updateFunc.LinesNumberIndex[70]], updateFunc.LineNumbers[updateFunc.LinesNumberIndex[100]:]...)
-				delete(updateFunc.Lines, 70)
-				delete(updateFunc.LinesNumberIndex, 70)
-				sc.Functions["UpdateCode"] = updateFunc
-			default:
-				continue
-			}
+// 			// default:
+// 			// 	continue
+// 			// }
+// 		} else {
+// 			switch versions[i] {
+// 			case Version{1, 0, 0}:
+// 				// UpdateCode was changed in INDEX 1.1.0
+// 				updateFunc := sc.Functions["UpdateCode"]
+// 				// Replace mod param and remove its store line from UpdateCode
+// 				updateFunc.Params = []dvm.Variable{{Name: "code", Type: dvm.String}}
+// 				updateFunc.LineNumbers = append(updateFunc.LineNumbers[:updateFunc.LinesNumberIndex[70]], updateFunc.LineNumbers[updateFunc.LinesNumberIndex[100]:]...)
+// 				delete(updateFunc.Lines, 70)
+// 				delete(updateFunc.LinesNumberIndex, 70)
+// 				sc.Functions["UpdateCode"] = updateFunc
+// 			default:
+// 				continue
+// 			}
 
-			// TELA-MODs introduced in INDEX 1.1.0
-			if !versions[i].LessThan(Version{1, 1, 0}) {
-				if modSC, modCode, err := Mods.InjectMODs(modTag, newCode); err == nil {
-					sc = modSC
-					newCode = modCode
-				}
-			}
-		}
+// 			// TELA-MODs introduced in INDEX 1.1.0
+// 			if !versions[i].LessThan(Version{1, 1, 0}) {
+// 				if modSC, modCode, err := Mods.InjectMODs(modTag, newCode); err == nil {
+// 					sc = modSC
+// 					newCode = modCode
+// 				}
+// 			}
+// 		}
 
-		// Format SC code and any MODs added
-		inject, err := FormatSmartContract(sc, newCode)
-		if err != nil {
-			continue
-		}
+// 		// Format SC code and any MODs added
+// 		inject, err := FormatSmartContract(sc, newCode)
+// 		if err != nil {
+// 			continue
+// 		}
 
-		scCode = append(scCode, inject)
-	}
+// 		scCode = append(scCode, inject)
+// 	}
 
-	// Inject any MODs into latest INDEX
-	if _, modCode, err := Mods.InjectMODs(modTag, code); err == nil {
-		code = modCode
-	}
+// 	// Inject any MODs into latest INDEX
+// 	if _, modCode, err := Mods.InjectMODs(modTag, code); err == nil {
+// 		code = modCode
+// 	}
 
-	scCode = append(scCode, code)
+// 	scCode = append(scCode, code)
 
-	return
-}
+// 	return
+// }
 
-// ValidINDEXVersion checks if code is equal to a valid TELA-INDEX SC version
-func ValidINDEXVersion(code string, modTag string) (contract dvm.SmartContract, version Version, err error) {
-	versions, scCode := createContractVersions(false, modTag)
-	for i, c := range scCode {
-		contract, err = EqualSmartContracts(c, code)
-		if err == nil {
-			version = versions[i]
-			return
-		}
-	}
+// // ValidINDEXVersion checks if code is equal to a valid TELA-INDEX SC version
+// func ValidINDEXVersion(code string, modTag string) (contract dvm.SmartContract, version Version, err error) {
+// 	versions, scCode := createContractVersions(false, modTag)
+// 	for i, c := range scCode {
+// 		contract, err = EqualSmartContracts(c, code)
+// 		if err == nil {
+// 			version = versions[i]
+// 			return
+// 		}
+// 	}
 
-	return
-}
+// 	return
+// }
 
-// ValidDOCVersion checks if code is equal to a valid TELA-DOC SC version
-func ValidDOCVersion(code string) (contract dvm.SmartContract, version Version, err error) {
-	versions, scCode := createContractVersions(true, "")
-	for i, c := range scCode {
-		contract, err = EqualSmartContracts(c, code)
-		if err == nil {
-			version = versions[i]
-			return
-		}
-	}
+// // ValidDOCVersion checks if code is equal to a valid TELA-DOC SC version
+// func ValidDOCVersion(code string) (contract dvm.SmartContract, version Version, err error) {
+// 	versions, scCode := createContractVersions(true, "")
+// 	for i, c := range scCode {
+// 		contract, err = EqualSmartContracts(c, code)
+// 		if err == nil {
+// 			version = versions[i]
+// 			return
+// 		}
+// 	}
 
-	return
-}
+// 	return
+// }

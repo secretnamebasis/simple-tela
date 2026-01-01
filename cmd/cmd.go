@@ -120,5 +120,4 @@ func Run() {
 	}
 
 	fmt.Println(docs)
-	tela.
 }

@@ -122,28 +122,20 @@ func (m *MODs) Index() (ci []int) {
 
 // // Embed the TELA-MOD smart contract function sets
 
-//go:embed */vs/TELA-MOD-1-VSOO.bas
 var TELA_MOD_1_VSOO string
 
-//go:embed */vs/TELA-MOD-1-VSOOIM.bas
 var TELA_MOD_1_VSOOIM string
 
-//go:embed */vs/TELA-MOD-1-VSPUBSU.bas
 var TELA_MOD_1_VSPUBSU string
 
-//go:embed */vs/TELA-MOD-1-VSPUBOW.bas
 var TELA_MOD_1_VSPUBOW string
 
-//go:embed */vs/TELA-MOD-1-VSPUBIM.bas
 var TELA_MOD_1_VSPUBIM string
 
-//go:embed */tx/TELA-MOD-1-TXDWA.bas
 var TELA_MOD_1_TXDWA string
 
-//go:embed */tx/TELA-MOD-1-TXDWD.bas
 var TELA_MOD_1_TXDWD string
 
-//go:embed */tx/TELA-MOD-1-TXTO.bas
 var TELA_MOD_1_TXTO string
 
 // Initialize TELA-MOD data
