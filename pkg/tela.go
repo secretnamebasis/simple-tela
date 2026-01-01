@@ -19,14 +19,14 @@ import (
 	"unicode/utf8"
 
 	"github.com/creachadair/jrpc2"
-	"github.com/creachadair/jrpc2/channel"
 	"github.com/deroproject/derohe/cryptography/crypto"
 	"github.com/deroproject/derohe/dvm"
 	"github.com/deroproject/derohe/globals"
 	"github.com/deroproject/derohe/rpc"
 	"github.com/deroproject/derohe/walletapi"
 	"github.com/gorilla/websocket"
-	"github.com/secretnamebasis/Gnomon/rwc"
+
+	// "github.com/secretnamebasis/Gnomon/rwc"
 	"github.com/secretnamebasis/simple-tela/pkg/logger"
 	"github.com/secretnamebasis/simple-tela/pkg/shards"
 
@@ -352,149 +352,149 @@ func getSCErrors(result string) bool {
 	return false
 }
 
-// Get a string key from smart contract at endpoint
-func getContractVar(scid, key, endpoint string) (variable string, err error) {
-	var params = rpc.GetSC_Params{SCID: scid, Variables: false, Code: false, KeysString: []string{key}}
-	var result rpc.GetSC_Result
+// // Get a string key from smart contract at endpoint
+// func getContractVar(scid, key, endpoint string) (variable string, err error) {
+// 	var params = rpc.GetSC_Params{SCID: scid, Variables: false, Code: false, KeysString: []string{key}}
+// 	var result rpc.GetSC_Result
 
-	tela.client.WS, _, err = websocket.DefaultDialer.Dial("ws://"+endpoint+"/ws", nil)
-	if err != nil {
-		return
-	}
+// 	tela.client.WS, _, err = websocket.DefaultDialer.Dial("ws://"+endpoint+"/ws", nil)
+// 	if err != nil {
+// 		return
+// 	}
 
-	input_output := rwc.New(tela.client.WS)
-	tela.client.RPC = jrpc2.NewClient(channel.RawJSON(input_output, input_output), nil)
+// 	input_output := rwc.New(tela.client.WS)
+// 	tela.client.RPC = jrpc2.NewClient(channel.RawJSON(input_output, input_output), nil)
 
-	err = tela.client.RPC.CallResult(context.Background(), "DERO.GetSC", params, &result)
-	if err != nil {
-		return
-	}
+// 	err = tela.client.RPC.CallResult(context.Background(), "DERO.GetSC", params, &result)
+// 	if err != nil {
+// 		return
+// 	}
 
-	res := result.ValuesString
-	if len(res) < 1 || res[0] == "" || getSCErrors(res[0]) {
-		err = fmt.Errorf("invalid string value for %q", key)
-		return
-	}
+// 	res := result.ValuesString
+// 	if len(res) < 1 || res[0] == "" || getSCErrors(res[0]) {
+// 		err = fmt.Errorf("invalid string value for %q", key)
+// 		return
+// 	}
 
-	// uint values don't need to be decoded
-	if key == "likes" || key == "dislikes" {
-		variable = res[0]
-		return
-	}
+// 	// uint values don't need to be decoded
+// 	if key == "likes" || key == "dislikes" {
+// 		variable = res[0]
+// 		return
+// 	}
 
-	variable = decodeHexString(res[0])
+// 	variable = decodeHexString(res[0])
 
-	return
-}
+// 	return
+// }
 
-// Get a TXID as hex from daemon endpoint
-func getTXID(txid, endpoint string) (txidAsHex string, height int64, err error) {
-	var params = rpc.GetTransaction_Params{Tx_Hashes: []string{txid}}
-	var result rpc.GetTransaction_Result
+// // Get a TXID as hex from daemon endpoint
+// func getTXID(txid, endpoint string) (txidAsHex string, height int64, err error) {
+// 	var params = rpc.GetTransaction_Params{Tx_Hashes: []string{txid}}
+// 	var result rpc.GetTransaction_Result
 
-	tela.client.WS, _, err = websocket.DefaultDialer.Dial("ws://"+endpoint+"/ws", nil)
-	if err != nil {
-		return
-	}
+// 	tela.client.WS, _, err = websocket.DefaultDialer.Dial("ws://"+endpoint+"/ws", nil)
+// 	if err != nil {
+// 		return
+// 	}
 
-	input_output := rwc.New(tela.client.WS)
-	tela.client.RPC = jrpc2.NewClient(channel.RawJSON(input_output, input_output), nil)
+// 	input_output := rwc.New(tela.client.WS)
+// 	tela.client.RPC = jrpc2.NewClient(channel.RawJSON(input_output, input_output), nil)
 
-	err = tela.client.RPC.CallResult(context.Background(), "DERO.GetTransaction", params, &result)
-	if err != nil {
-		return
-	}
+// 	err = tela.client.RPC.CallResult(context.Background(), "DERO.GetTransaction", params, &result)
+// 	if err != nil {
+// 		return
+// 	}
 
-	res := result.Txs_as_hex
-	if len(res) < 1 || res[0] == "" {
-		err = fmt.Errorf("no data found for TXID %s", txid)
-		return
-	}
+// 	res := result.Txs_as_hex
+// 	if len(res) < 1 || res[0] == "" {
+// 		err = fmt.Errorf("no data found for TXID %s", txid)
+// 		return
+// 	}
 
-	txidAsHex = res[0]
-	height = result.Txs[0].Block_Height
+// 	txidAsHex = res[0]
+// 	height = result.Txs[0].Block_Height
 
-	return
-}
+// 	return
+// }
 
-// Get the current state of all string keys in a smart contract
-func getContractVars(scid, endpoint string) (vars map[string]interface{}, err error) {
-	var params = rpc.GetSC_Params{SCID: scid, Variables: true, Code: false}
-	var result rpc.GetSC_Result
+// // Get the current state of all string keys in a smart contract
+// func getContractVars(scid, endpoint string) (vars map[string]interface{}, err error) {
+// 	var params = rpc.GetSC_Params{SCID: scid, Variables: true, Code: false}
+// 	var result rpc.GetSC_Result
 
-	tela.client.WS, _, err = websocket.DefaultDialer.Dial("ws://"+endpoint+"/ws", nil)
-	if err != nil {
-		return
-	}
+// 	tela.client.WS, _, err = websocket.DefaultDialer.Dial("ws://"+endpoint+"/ws", nil)
+// 	if err != nil {
+// 		return
+// 	}
 
-	input_output := rwc.New(tela.client.WS)
-	tela.client.RPC = jrpc2.NewClient(channel.RawJSON(input_output, input_output), nil)
+// 	input_output := rwc.New(tela.client.WS)
+// 	tela.client.RPC = jrpc2.NewClient(channel.RawJSON(input_output, input_output), nil)
 
-	err = tela.client.RPC.CallResult(context.Background(), "DERO.GetSC", params, &result)
-	if err != nil {
-		return
-	}
+// 	err = tela.client.RPC.CallResult(context.Background(), "DERO.GetSC", params, &result)
+// 	if err != nil {
+// 		return
+// 	}
 
-	vars = result.VariableStringKeys
+// 	vars = result.VariableStringKeys
 
-	return
-}
+// 	return
+// }
 
-// Get the current code of a smart contract at endpoint
-func getContractCode(scid, endpoint string) (code string, err error) {
-	var params = rpc.GetSC_Params{SCID: scid, Variables: false, Code: true}
-	var result rpc.GetSC_Result
+// // Get the current code of a smart contract at endpoint
+// func getContractCode(scid, endpoint string) (code string, err error) {
+// 	var params = rpc.GetSC_Params{SCID: scid, Variables: false, Code: true}
+// 	var result rpc.GetSC_Result
 
-	tela.client.WS, _, err = websocket.DefaultDialer.Dial("ws://"+endpoint+"/ws", nil)
-	if err != nil {
-		return
-	}
+// 	tela.client.WS, _, err = websocket.DefaultDialer.Dial("ws://"+endpoint+"/ws", nil)
+// 	if err != nil {
+// 		return
+// 	}
 
-	input_output := rwc.New(tela.client.WS)
-	tela.client.RPC = jrpc2.NewClient(channel.RawJSON(input_output, input_output), nil)
+// 	input_output := rwc.New(tela.client.WS)
+// 	tela.client.RPC = jrpc2.NewClient(channel.RawJSON(input_output, input_output), nil)
 
-	err = tela.client.RPC.CallResult(context.Background(), "DERO.GetSC", params, &result)
-	if err != nil {
-		return
-	}
+// 	err = tela.client.RPC.CallResult(context.Background(), "DERO.GetSC", params, &result)
+// 	if err != nil {
+// 		return
+// 	}
 
-	if result.Code == "" {
-		err = fmt.Errorf("code is empty string")
-		return
-	}
+// 	if result.Code == "" {
+// 		err = fmt.Errorf("code is empty string")
+// 		return
+// 	}
 
-	code = result.Code
+// 	code = result.Code
 
-	return
-}
+// 	return
+// }
 
-// Get the code of a smart contract at height from endpoint
-func getContractCodeAtHeight(height int64, scid, endpoint string) (code string, err error) {
-	var params = rpc.GetSC_Params{SCID: scid, Variables: false, Code: true, TopoHeight: height}
-	var result rpc.GetSC_Result
+// // Get the code of a smart contract at height from endpoint
+// func getContractCodeAtHeight(height int64, scid, endpoint string) (code string, err error) {
+// 	var params = rpc.GetSC_Params{SCID: scid, Variables: false, Code: true, TopoHeight: height}
+// 	var result rpc.GetSC_Result
 
-	tela.client.WS, _, err = websocket.DefaultDialer.Dial("ws://"+endpoint+"/ws", nil)
-	if err != nil {
-		return
-	}
+// 	tela.client.WS, _, err = websocket.DefaultDialer.Dial("ws://"+endpoint+"/ws", nil)
+// 	if err != nil {
+// 		return
+// 	}
 
-	input_output := rwc.New(tela.client.WS)
-	tela.client.RPC = jrpc2.NewClient(channel.RawJSON(input_output, input_output), nil)
+// 	input_output := rwc.New(tela.client.WS)
+// 	tela.client.RPC = jrpc2.NewClient(channel.RawJSON(input_output, input_output), nil)
 
-	err = tela.client.RPC.CallResult(context.Background(), "DERO.GetSC", params, &result)
-	if err != nil {
-		return
-	}
+// 	err = tela.client.RPC.CallResult(context.Background(), "DERO.GetSC", params, &result)
+// 	if err != nil {
+// 		return
+// 	}
 
-	if result.Code == "" {
-		err = fmt.Errorf("code is empty string")
-		return
-	}
+// 	if result.Code == "" {
+// 		err = fmt.Errorf("code is empty string")
+// 		return
+// 	}
 
-	code = result.Code
+// 	code = result.Code
 
-	return
-}
+// 	return
+// }
 
 // Get a default DERO transfer address for the network defined by globals.Arguments --testnet and --simulator flags
 func GetDefaultNetworkAddress() (network, destination string) {
@@ -518,76 +518,76 @@ func GetDefaultNetworkAddress() (network, destination string) {
 	return
 }
 
-// Get DERO gas estimate for transfers and args
-func GetGasEstimate(wallet *walletapi.Wallet_Disk, ringsize uint64, transfers []rpc.Transfer, args rpc.Arguments) (gasFees uint64, err error) {
-	if wallet == nil {
-		err = fmt.Errorf("no wallet for transfer")
-		return
-	}
+// // Get DERO gas estimate for transfers and args
+// func GetGasEstimate(wallet *walletapi.Wallet_Disk, ringsize uint64, transfers []rpc.Transfer, args rpc.Arguments) (gasFees uint64, err error) {
+// 	if wallet == nil {
+// 		err = fmt.Errorf("no wallet for transfer")
+// 		return
+// 	}
 
-	if ringsize < 2 {
-		ringsize = 2
-	} else if ringsize > 128 {
-		ringsize = 128
-	}
+// 	if ringsize < 2 {
+// 		ringsize = 2
+// 	} else if ringsize > 128 {
+// 		ringsize = 128
+// 	}
 
-	// Initialize a DERO transfer if none is provided
-	if transfers == nil || len(transfers) < 1 {
-		_, dest := GetDefaultNetworkAddress()
-		transfers = []rpc.Transfer{{Destination: dest, Amount: 0}}
-	}
+// 	// Initialize a DERO transfer if none is provided
+// 	if transfers == nil || len(transfers) < 1 {
+// 		_, dest := GetDefaultNetworkAddress()
+// 		transfers = []rpc.Transfer{{Destination: dest, Amount: 0}}
+// 	}
 
-	// Validate all transfer addresses
-	for i, t := range transfers {
-		_, err = globals.ParseValidateAddress(t.Destination)
-		if err != nil {
-			err = fmt.Errorf("invalid transfer address %d: %s", i, err)
-			return
-		}
-	}
+// 	// Validate all transfer addresses
+// 	for i, t := range transfers {
+// 		_, err = globals.ParseValidateAddress(t.Destination)
+// 		if err != nil {
+// 			err = fmt.Errorf("invalid transfer address %d: %s", i, err)
+// 			return
+// 		}
+// 	}
 
-	var code string
-	if c, ok := args.Value(rpc.SCCODE, rpc.DataString).(string); ok {
-		code = c
-	}
+// 	var code string
+// 	if c, ok := args.Value(rpc.SCCODE, rpc.DataString).(string); ok {
+// 		code = c
+// 	}
 
-	// Get gas estimate for transfer
-	gasParams := rpc.GasEstimate_Params{
-		Transfers: transfers,
-		SC_Code:   code,
-		SC_Value:  0,
-		SC_RPC:    args,
-		Ringsize:  ringsize,
-	}
+// 	// Get gas estimate for transfer
+// 	gasParams := rpc.GasEstimate_Params{
+// 		Transfers: transfers,
+// 		SC_Code:   code,
+// 		SC_Value:  0,
+// 		SC_RPC:    args,
+// 		Ringsize:  ringsize,
+// 	}
 
-	if ringsize == 2 {
-		gasParams.Signer = wallet.GetAddress().String()
-	}
+// 	if ringsize == 2 {
+// 		gasParams.Signer = wallet.GetAddress().String()
+// 	}
 
-	endpoint := walletapi.Daemon_Endpoint_Active
-	tela.client.WS, _, err = websocket.DefaultDialer.Dial("ws://"+endpoint+"/ws", nil)
-	if err != nil {
-		err = fmt.Errorf("could not dial daemon endpoint %s: %s", endpoint, err)
-		return
-	}
+// 	endpoint := walletapi.Daemon_Endpoint_Active
+// 	tela.client.WS, _, err = websocket.DefaultDialer.Dial("ws://"+endpoint+"/ws", nil)
+// 	if err != nil {
+// 		err = fmt.Errorf("could not dial daemon endpoint %s: %s", endpoint, err)
+// 		return
+// 	}
 
-	input_output := rwc.New(tela.client.WS)
-	tela.client.RPC = jrpc2.NewClient(channel.RawJSON(input_output, input_output), nil)
+// 	input_output := rwc.New(tela.client.WS)
+// 	tela.client.RPC = jrpc2.NewClient(channel.RawJSON(input_output, input_output), nil)
 
-	var gasResult rpc.GasEstimate_Result
-	if err = tela.client.RPC.CallResult(context.Background(), "DERO.GetGasEstimate", gasParams, &gasResult); err != nil {
-		err = fmt.Errorf("could not estimate fees: %s", err)
-		return
-	}
+// 	var gasResult rpc.GasEstimate_Result
+// 	if err = tela.client.RPC.CallResult(context.Background(), "DERO.GetGasEstimate", gasParams, &gasResult); err != nil {
+// 		err = fmt.Errorf("could not estimate fees: %s", err)
+// 		return
+// 	}
 
-	if gasResult.GasStorage < MINIMUM_GAS_FEE {
-		gasResult.GasStorage = MINIMUM_GAS_FEE
-	}
+// 	if gasResult.GasStorage < MINIMUM_GAS_FEE {
+// 		gasResult.GasStorage = MINIMUM_GAS_FEE
+// 	}
 
-	gasFees = gasResult.GasStorage
+// 	gasFees = gasResult.GasStorage
 
-	return
-}
+// 	return
+// }
 
 // transfer0 is used for executing TELA smart contract functions without a DEROVALUE or ASSETVALUE, it creates a transfer of 0 to a default address for the network
 func transfer0(wallet *walletapi.Wallet_Disk, ringsize uint64, args rpc.Arguments) (txid string, err error) {
