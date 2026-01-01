@@ -1,0 +1,784 @@
+[
+ {
+  "docType": "TELA-STATIC-1",
+  "code": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0i",
+  "subDir": "FEED",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 1e291f33d28228d4d323ce77928f0b7010ad96b8807c2bf2f114c7c7257481bf",
+   "checkS": "S: 1b525570d5d578ebdcdbe95b5b5b4b95be41e96ee39ccab5b46591aaee229b83"
+  },
+  "headers": {
+   "nameHdr": "FEED/feed-bg.svg",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-HTML-1",
+  "code": "PCFET0NUWVBFIEhUTUw+CjxodG1sIGxhbmc9ImVuLVVTIj4KCjxoZWFkPgogICAg",
+  "subDir": "FEED",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 2b6597e4055e9d9ae0115de51f9d73d8cee62f0fe8d16ae803a33d4301497286",
+   "checkS": "S: 276140ef9b812c4597207007881d1e684658a1e7eebe794f807b44493631ef1f"
+  },
+  "headers": {
+   "nameHdr": "FEED/index.html",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-JS-1",
+  "code": "Ly8gR2xvYmFsIHdlYnNvY2tldApsZXQgc29ja2V0Owpjb25zdCBzaWduYXR1cmUg",
+  "subDir": "FEED",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 26334062b58912c9ec206a7ea9e0fc6efebbe93a669f22d055c9652011c73de1",
+   "checkS": "S: 3592b24bbc5b041856420d429b76c24a0a0bc93de865aa638b73a9a25491cee"
+  },
+  "headers": {
+   "nameHdr": "FEED/main.js",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-CSS-1",
+  "code": "Ym9keSB7CiAgICBkaXNwbGF5OiBmbGV4OwogICAgaGVpZ2h0OiAxMDB2aDsKICAg",
+  "subDir": "FEED",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 706784cd225dd7dda118fd7ab10493c9168d2dcc9dc8b95c60e8149f18c52d",
+   "checkS": "S: 1e0f6512372b983b75450dc21d84be2359dff26fbf57e263dabce5f750b46036"
+  },
+  "headers": {
+   "nameHdr": "FEED/style.css",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-STATIC-1",
+  "code": "Ly8gRzQ1IE1hcmtldHBsYWNlIENvbnRyYWN0Ci8vIFN1cHBvcnRzIGZpeGVkLXBy",
+  "subDir": "ORED",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: ce947170741721f5ff5dd1cb8e9caae95871dd8ede02cd509ec10dedeb23742",
+   "checkS": "S: 2607ea60d9752c5f03acbe848057c7a9708e566d2d2c945c818c9365c01cd044"
+  },
+  "headers": {
+   "nameHdr": "ORED/G45Marketplace.bas",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-STATIC-1",
+  "code": "UEsDBBQAAAAAAAeYgVsAAAAAAAAAAAAAAAAKACAAT1JFRC1WMDAxL3V4CwABBOgD",
+  "subDir": "ORED",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 24fdcc56c49f88904018bf103d92426d7d3b46dd976a26745a4dfce299c869e6",
+   "checkS": "S: 74d7d63c1febdceee396594fe9d271276623e6ace8e94e52d6cc0d8693070f8"
+  },
+  "headers": {
+   "nameHdr": "ORED/ORED-V001.zip",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-MD-1",
+  "code": "IyBPUkVEIFRyYW5zZmVyIFByb2Nlc3NlcyBEb2N1bWVudGF0aW9uCgpUaGlzIGRv",
+  "subDir": "ORED",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 95ffbe31cb666ba2a0ef4492b8fc7bc586cb6518b23ea4b672f546bd1dfbfe3",
+   "checkS": "S: 1a546c18ff79a290ef603dfa56720b184178403b8a8372a52848d62b5133d4ac"
+  },
+  "headers": {
+   "nameHdr": "ORED/TRANSFER-PROCESSES-DOCUMENTATION.md",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-STATIC-1",
+  "code": "MjQ5NWQ3MjczMjVhNGJhZWIyM2U1NjQ4YThlYzM5MTYzYmY5NTQ1MDUxYTZkYzQ2",
+  "subDir": "ORED",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 790a35e866f98414a3b8c579f1f073f68da8c6ca9fd4d54ddf540ea47094c07",
+   "checkS": "S: 37337df810e554add9a0062a7410f7b70e463c70b0f16cc474073eaac64617f"
+  },
+  "headers": {
+   "nameHdr": "ORED/appData.txt",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-STATIC-1",
+  "code": "LS0tLS1CRUdJTiBERVJPIFNJR05FRCBNRVNTQUdFLS0tLS0KQWRkcmVzczogZGVy",
+  "subDir": "ORED",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 21991b83e06496d94878b7aed614ca3d6cafff580850e9e57bdc1708f2a17a02",
+   "checkS": "S: 2ee9aa1b7b4a12abc6b82ed2dc766e70ce1233e07761c9ac9bdaa0ce6c3f6621"
+  },
+  "headers": {
+   "nameHdr": "ORED/appData.txt.signed",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-JS-1",
+  "code": "LyoqCiAqIE9SRUQtYXNzZXQtbWFuYWdlciAtIEFzc2V0IE1hbmFnZXIgZm9yIERF",
+  "subDir": "ORED",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 19f41ed66449320de9736b1b3996ceb42a83031dd20947fc22401847ad22b5fb",
+   "checkS": "S: 9d4c971e1762f84e1201e221ec6712795168651f940abd304dd3e670c863185"
+  },
+  "headers": {
+   "nameHdr": "ORED/appcore.js",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-JS-1",
+  "code": "ICAgIERlcm9ORlRBcHAucHJvdG90eXBlLmlzQXNzZXRJbkNhY2hlID0gZnVuY3Rp",
+  "subDir": "ORED",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 1586c20fe55b2efd5c53bb3abf95d7cf6e6ac8f803e329f7e17fb00355f6ce5b",
+   "checkS": "S: 28bec84fe65406bf4d15e7d7020c455394195df001c68c9bdb835fc8324bf4fc"
+  },
+  "headers": {
+   "nameHdr": "ORED/appfeat1.js",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-JS-1",
+  "code": "LyoqCiAqIE9SRUQtYXNzZXQtbWFuYWdlciAtIEFzc2V0IE1hbmFnZXIgZm9yIERF",
+  "subDir": "ORED",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 38a7366309ad888d9c5b84615d1e728a32156a40b22b548460ee9c70cda7bb8",
+   "checkS": "S: 724975ff232d8ad16ee8e1a1ce632eb5617907ac7a1dd64ca629fd382f13716"
+  },
+  "headers": {
+   "nameHdr": "ORED/appfeat2.js",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-JS-1",
+  "code": "LyoqCiAqIE9SRUQtYXNzZXQtbWFuYWdlciAtIEFzc2V0IE1hbmFnZXIgZm9yIERF",
+  "subDir": "ORED",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 2b266dc688942c9bec836203af3325807c1c4eaba3d105be0ad728286d2f5656",
+   "checkS": "S: 24b83663b2711dd1405c6e861046a8d6f8a81e610bbc23ac98609b0e0698db14"
+  },
+  "headers": {
+   "nameHdr": "ORED/appfeat3.js",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-JS-1",
+  "code": "LyoqCiAqIE9SRUQtYXNzZXQtbWFuYWdlciAtIEFzc2V0IE1hbmFnZXIgZm9yIERF",
+  "subDir": "ORED",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: dc95495d3477042becd575886b005ed063c74ec3ece4bb33b7e25882bef364",
+   "checkS": "S: 2b805658ae10e15d4d19a280915b0dbd201f19005d06f252cc5a117dfc81bcf1"
+  },
+  "headers": {
+   "nameHdr": "ORED/appfeat4.js",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-JS-1",
+  "code": "LyoqCiAqIE9SRUQtYXNzZXQtbWFuYWdlciAtIEFzc2V0IE1hbmFnZXIgZm9yIERF",
+  "subDir": "ORED",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 24b83fea12495c6cab8ad5f8c7db7eee15efa8bde091b8f86777e8ce694815f1",
+   "checkS": "S: e93413af4eb5c0164b579546d81315353d52dda04502155982f15f76a445327"
+  },
+  "headers": {
+   "nameHdr": "ORED/appfeat5.js",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-JS-1",
+  "code": "LyoqCiAqIE9SRUQtYXNzZXQtbWFuYWdlciAtIEFzc2V0IE1hbmFnZXIgZm9yIERF",
+  "subDir": "ORED",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 1b0c6eaa43574dd90097e9d2b943d88a40dc1e403693c9bb0c5f907637274660",
+   "checkS": "S: 1eaab89149a1b4e1a6375c5f20182fdf472b9eaa45b35d1eb387482697c02dd8"
+  },
+  "headers": {
+   "nameHdr": "ORED/appfeat6.js",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-JS-1",
+  "code": "LyoqCiAqIE9SRUQtYXNzZXQtbWFuYWdlciAtIEFzc2V0IE1hbmFnZXIgZm9yIERF",
+  "subDir": "ORED",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: eafcd10892427c21d4ce59bdcd5741bd8031d1327e9eb21afed9cf64ef482f9",
+   "checkS": "S: 2f03e6bad13076359da18c2c3b3d137f20cc5895ac1e294b7b0d2d74ca3f70a8"
+  },
+  "headers": {
+   "nameHdr": "ORED/appfeat7.js",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-JS-1",
+  "code": "LyoqCiAqIE9SRUQtYXNzZXQtbWFuYWdlciAtIEFzc2V0IE1hbmFnZXIgZm9yIERF",
+  "subDir": "ORED",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 18d47cc7e3216bd34872f27690e619a2d56dd00ea013c2e188599577ffbdf12b",
+   "checkS": "S: 24701a6ec33ff89b2c38ead01ae71c74d6c905d136fcc45ba304bf5b169a1d6d"
+  },
+  "headers": {
+   "nameHdr": "ORED/appfeat8.js",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-CSS-1",
+  "code": "LyogUmVzZXQgYW5kIEJhc2UgU3R5bGVzICovCiogewogICAgbWFyZ2luOiAwOwog",
+  "subDir": "ORED",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 1b59a2bf4672d97877aeef10fc1d81a11145455440af97f2fef9ecc8c40f8288",
+   "checkS": "S: 24acbbc9a63d5aacb11da8ea2dd27a0a70c8601478616b31301b283cce8b6765"
+  },
+  "headers": {
+   "nameHdr": "ORED/combined.css",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-JS-1",
+  "code": "LyoqCiAqIENvbWJpbmVkIEphdmFTY3JpcHQgZm9yIE9SRUQtYXNzZXQtbWFuYWdl",
+  "subDir": "ORED",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: ffdcb842282ae56b523efc7e516cc6bca8624ddd506459befd1ed40d24f792b",
+   "checkS": "S: 42182e8eeb17862366333477aafc1d7f03e00a99915be19d5656d68df1b9c83"
+  },
+  "headers": {
+   "nameHdr": "ORED/combined.js",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-HTML-1",
+  "code": "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9ImVuIj4KPGhlYWQ+CiAgICA8bWV0",
+  "subDir": "ORED",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: a73eb19609068380282a0319f8422541c032e301ee2c5b1cdb32e1aacaeb075",
+   "checkS": "S: 517c9d0ec676e706fca403f6b9011256cef714b9bffe97ca8674f601ec56e2c"
+  },
+  "headers": {
+   "nameHdr": "ORED/index.html",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-JS-1",
+  "code": "ICAgICAgICAvLyBVcGRhdGUgRW5ncmFtIHN0YXR1cyB3aGVuIHdhbGxldCBjb25u",
+  "subDir": "ORED",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 2a9b0d654f68d99e556bf633a235c7d99ce76ec5a2539495c9952e3fefddeeaf",
+   "checkS": "S: c17ddb14572bda1ce0bb5549677080ebc563ffa21179498f3053266327603bd"
+  },
+  "headers": {
+   "nameHdr": "ORED/index.js",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-STATIC-1",
+  "code": "Ly8gVG9rZW4gTWFya2V0cGxhY2UgQ29udHJhY3QgZm9yIERFUk8KLy8gSGFuZGxl",
+  "subDir": "ORED",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 1e13510a42bf1db495c3baa18309748fbf0822f16edb2d7399e1afa9f9f1dec4",
+   "checkS": "S: 13cb34378cd896e284b8c1c6e30e246135c14b7486cd9520a8448f19ee30faaf"
+  },
+  "headers": {
+   "nameHdr": "ORED/token-marketplace-ready.bas",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-STATIC-1",
+  "code": "aHR0cHM6Ly9kZXJvZC5vcmcvcnBjLWFwaS9kYWVtb24tcnBjLWFwaQ0KaHR0cHM6",
+  "subDir": "fs",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 12b82b097f2706847dd81710cf214090ddbad8ae40be9afcf6d6b582ad11a647",
+   "checkS": "S: 15755cce25b99cb5f180b0c97612a85bc1dcbc1f5acac0f91573c8d14906888"
+  },
+  "headers": {
+   "nameHdr": "fs/Villager.readme",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-CSS-1",
+  "code": "LmdhbGxlcnktbW9kYWwgew0KICAgIGRpc3BsYXk6IG5vbmU7DQogICAgcG9zaXRp",
+  "subDir": "fs",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 27fe26c8affc5d383c46e077ffcf3d017300d99df2d4e3eae6fbb1e21c9414d",
+   "checkS": "S: 1244728ab4a64c078ad572a23a300fb0fc53c225a2e2516f420ca04726e8bc64"
+  },
+  "headers": {
+   "nameHdr": "fs/gallery.css",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-JS-1",
+  "code": "Ly8gQVZBVEFSIENPTE9SIE1BUA0KY29uc3QgQ2hhcl9Ub19Db2xvciA9IHsNCiAg",
+  "subDir": "fs",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 25324284d61547525bca4eca1428f72ad31c765f604551feb3b6d653b0f0e67e",
+   "checkS": "S: 344438f0818ff0738ba3e23984aa256a092d2daef86c03d06cb2d7d749ec83f"
+  },
+  "headers": {
+   "nameHdr": "fs/gallery.js",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-HTML-1",
+  "code": "PCFET0NUWVBFIGh0bWw+DQo8aHRtbCBsYW5nPSJlbiI+DQo8aGVhZD4NCiAgPG1l",
+  "subDir": "fs",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 57ef252e2ac7df07b0afee70c951fcbc22544c860ebecf9a044212b442dd791",
+   "checkS": "S: 1982eb1fb7d745c8f01dab6f98fad7b67e1e3954d861336b5860e9e6fe8b6ff3"
+  },
+  "headers": {
+   "nameHdr": "fs/index.html",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-JS-1",
+  "code": "Ly8gR0xPQkFMUw0KbGV0IHNvY2tldCA9IG51bGw7CQkJCQkJLy8gV2FsbGV0IFhT",
+  "subDir": "fs",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 6df72c61d8028ec865bcfa58c4696ff05ed3d1c3af1907715ab82e78c47fa4c",
+   "checkS": "S: 15d948795b8c06086fd4b7eef774db128e1049d54b7a362ab95100088bd2238d"
+  },
+  "headers": {
+   "nameHdr": "fs/main.js",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-JS-1",
+  "code": "KGZ1bmN0aW9uIHdlYnBhY2tVbml2ZXJzYWxNb2R1bGVEZWZpbml0aW9uKHJvb3Qs",
+  "subDir": "fs",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 2c17543ea39294101ce0c60ee0fa8217d07a6b7242369bd6947f1f8c6fb9aef",
+   "checkS": "S: b1a8e0f4020d13287ce1cf332f9cc482363f63f4dc2c6f44dd8f3a231df48d1"
+  },
+  "headers": {
+   "nameHdr": "fs/rive.js",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-JS-1",
+  "code": "bGV0IGNhbnZhcyA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJyaXZlQ2FudmFz",
+  "subDir": "fs",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: b488efc0d7929fd7d49ba61f2e3fd9fb1f2698219bb7d5e5fe7ddd24af6337f",
+   "checkS": "S: 148cc28dcd9807f7425f5686b674e0b44e5c89f5bbaef5f83373ca6ed19e6f0f"
+  },
+  "headers": {
+   "nameHdr": "fs/stage.js",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-JS-1",
+  "code": "LyoNCnZpbGxhZ2VyLWlkZW50aWNvbi5qcw0KT2ZmaWNpYWwgc3RhbmRhbG9uZSBW",
+  "subDir": "fs",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 19b5e89b62dcc499c4cbf24ff72fe307adf32f2ee9607a58d1ff0d5e2d77a498",
+   "checkS": "S: 2bddcfb3fcb3ec6a802015586f332f7b8690e1f7bf293de418c8ff9675aa1fae"
+  },
+  "headers": {
+   "nameHdr": "fs/villager-identicon.js",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-STATIC-1",
+  "code": "UklWRQcA1ZNyoAGtAcQBxQHGAcsBzAHUAeAB4QHjAeQB5QHsAe0B7wGMApACkgKX",
+  "subDir": "fs",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 5d7a5771aa971f7e5af59b7b3e1b3304b3e56e183455c2e7616d97bd0343e10",
+   "checkS": "S: 100e915d0e3ccfd7135ee17881466f29a5a60fa03144db19e3fd7f50b37ffa59"
+  },
+  "headers": {
+   "nameHdr": "fs/villager-r3.riv",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-STATIC-1",
+  "code": "Ly8gICJWaWxsYWdlciIgLSBBIDI0eDI0IHBpeGVsIGF2YXRhciBpbmRleCBmb3Ig",
+  "subDir": "fs",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 1a0d5809ea3f057ecec2b0e24bdafee9a354a8895c8266e04224f042a9c6e64f",
+   "checkS": "S: 6e692d6f74c02e7ee4d92133c910b68da0754d0787145ea09cbe319f5800ca9"
+  },
+  "headers": {
+   "nameHdr": "fs/villager2.bas",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-GO-1",
+  "code": "cGFja2FnZSBtYWluCgppbXBvcnQgKAoJImxvZyIKCSJuZXQvaHR0cCIKCSJvcyIK",
+  "subDir": "",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 25951ebd8d779590a81e3aa75ae0a068bb26c3ab2ce8ec7f554a1a609b6022f",
+   "checkS": "S: 3029e366ea8ecd2651988ca0013632e55111104ba644fe4f2318e2fa6d2ab0f7"
+  },
+  "headers": {
+   "nameHdr": "main.go",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ }
+]

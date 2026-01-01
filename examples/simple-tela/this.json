@@ -1,0 +1,301 @@
+[
+ {
+  "docType": "TELA-STATIC-1",
+  "code": "MIT License\n\nCopyright (c) 2024 Civilware\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n",
+  "subDir": "",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 1e102728c813c9e4d016bd11117624455f9a4ac2b987d16c17b023a0e500784e",
+   "checkS": "S: 13a1135061aab15bd0c277b0e596283bef775572034448b455650763d37096f"
+  },
+  "headers": {
+   "nameHdr": "LICENSE",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-HTML-1",
+  "code": "\u003c!DOCTYPE HTML\u003e\n\u003chtml lang=\"en-US\"\u003e\n\n\u003chead\u003e\n    \u003ctitle\u003eTELA Demo Application\u003c/title\u003e\n    \u003cmeta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"\u003e\n    \u003cmeta name=\"keywords\" content=\"TELA, DERO Project, Civilware, DERO, $DERO\" /\u003e\n    \u003cmeta name=\"viewport\" content=\"width=device-width, initial-scale=1, maximum-scale=1\"\u003e\n    \u003clink rel=\"stylesheet\" type=\"text/css\" href=\"style.css\"\u003e\n    \u003clink id=\"favicon\" rel=\"icon\" href=\"\" type=\"image/x-icon\"\u003e\n\u003c/head\u003e\n\n\u003cbody\u003e\n    \u003cdiv style=\"position: sticky; top: 0px;\"\u003e\n        \u003cdiv id=\"greenIndicator\" class=\"status\"\u003e\u003c/div\u003e\n        \u003cdiv id=\"redIndicator\" class=\"status\"\u003e\u003c/div\u003e\n        \u003cdiv id=\"yellowIndicator\" class=\"status\"\u003e\u003c/div\u003e\n    \u003c/div\u003e\n\n    \u003cdiv class=\"connect\"\u003e\n        \u003cbutton class=\"connect-button\" id=\"connectButton\"\u003eConnect\u003c/button\u003e\n    \u003c/div\u003e\n\n    \u003cdiv id=\"svgCursor\"\u003e\n        \u003csvg id=\"svgCursorImg\" data-name=\"svgCursorImg\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 474.5 832.8\"\u003e\n            \u003cg id=\"Symbol\"\u003e\n                \u003crect class=\"cls-2\" y=\"714.2\" width=\"118.61\" height=\"118.61\" /\u003e\n                \u003crect class=\"cls-1\" x=\"355.9\" width=\"118.61\" height=\"118.61\" /\u003e\n            \u003c/g\u003e\n        \u003c/svg\u003e\n    \u003c/div\u003e\n\n    \u003cdiv class=\"container\"\u003e\n        \u003cdiv class=\"title\"\u003e\n            \u003csvg id=\"titleImg\" data-name=\"titleImg\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1784.46 832.8\"\u003e\n                \u003cg id=\"Text\"\u003e\n                    \u003cpolygon class=\"cls-3\"\n                        points=\".27 118.61 712.59 118.61 712.59 237.61 356.69 237.61 356.69 714.18 237.26 714.18 237.26 237.61 0 237.61 .27 118.61\" /\u003e\n                    \u003crect class=\"cls-3\" x=\"475.31\" y=\"356.72\" width=\"237.27\" height=\"119.41\" /\u003e\n                    \u003cpolygon class=\"cls-3\"\n                        points=\"475.27 594.79 831.2 594.79 831.2 118.61 950.62 118.61 950.62 594.79 1188.68 594.79 1188.68 118.61 1784.46 713.61 1615.41 713.61 1308.06 406.95 1308.06 713.61 475.27 713.61 475.27 594.79\" /\u003e\n                    \u003crect class=\"cls-2\" x=\"356.69\" y=\"714.2\" width=\"118.61\" height=\"118.61\" /\u003e\n                    \u003crect class=\"cls-1\" x=\"712.59\" width=\"118.61\" height=\"118.61\" /\u003e\n                \u003c/g\u003e\n            \u003c/svg\u003e\n        \u003c/div\u003e\n        \u003cdiv style=\"text-align: center;\"\u003e\n            \u003ch1\u003eTELA-DWEB\u003c/h1\u003e\n        \u003c/div\u003e\n        \u003cdiv class=\"marquee\"\u003e\n            \u003cp\u003eTELA Decentralized Web Standard Demo\u003c/p\u003e\n        \u003c/div\u003e\n        \u003cdiv class=\"description\"\u003e\n            This demo shows how a TELA application can be connected to a DERO wallet through XSWD.\u003cbr\u003e\n            Below are various request examples that can be tried if connected to a wallet.\u003cbr\u003e\n            The source code for this application can be found\n            \u003ca href=\"https://github.com/secretnamebasis/simple-tela/tree/main/tela_tests/app1\" target=\"_blank\"\n                rel=\"noreferrer noopener\"\u003ehere\u003c/a\u003e.\n        \u003c/div\u003e\n    \u003c/div\u003e\n\n    \u003cdiv class=\"typing-container\"\u003e\n        \u003cdiv class=\"display\"\u003e\u003ccode id=\"typingLabel\"\u003e\u003c/code\u003e\u003c/div\u003e\n    \u003c/div\u003e\n\n    \u003cdiv class=\"actions\"\u003e\n        \u003cselect id=\"selectCall\" onchange=\"requestParams();\"\u003e\n            \u003coptgroup label=\"DERO\"\u003e\n                \u003coption\u003eGetAddress\u003c/option\u003e\n                \u003coption\u003eGetBalance\u003c/option\u003e\n                \u003coption\u003eGetHeight\u003c/option\u003e\n            \u003c/optgroup\u003e\n            \u003coptgroup label=\"Enigma\"\u003e\n                \u003coption\u003eHandleTELALinks\u003c/option\u003e\n                \u003coption\u003eGetLastIndexHeight\u003c/option\u003e\n                \u003coption\u003eGetTxCount\u003c/option\u003e\n                \u003coption\u003eGetOwner\u003c/option\u003e\n                \u003coption\u003eGetAllOwnersAndSCIDs\u003c/option\u003e\n                \u003coption\u003eGetAllNormalTxWithSCIDByAddr\u003c/option\u003e\n                \u003coption\u003eGetAllNormalTxWithSCIDBySCID\u003c/option\u003e\n                \u003coption\u003eGetAllSCIDInvokeDetails\u003c/option\u003e\n                \u003coption\u003eGetAllSCIDInvokeDetailsByEntrypoint\u003c/option\u003e\n                \u003coption\u003eGetAllSCIDInvokeDetailsBySigner\u003c/option\u003e\n                \u003coption\u003eGetGetInfoDetails\u003c/option\u003e\n                \u003coption\u003eGetSCIDVariableDetailsAtTopoheight\u003c/option\u003e\n                \u003coption\u003eGetAllSCIDVariableDetails\u003c/option\u003e\n                \u003coption\u003eGetSCIDKeysByValue\u003c/option\u003e\n                \u003coption\u003eGetSCIDValuesByKey\u003c/option\u003e\n                \u003coption\u003eGetLiveSCIDKeysByValue\u003c/option\u003e\n                \u003coption\u003eGetLiveSCIDValuesByKey\u003c/option\u003e\n                \u003coption\u003eGetSCIDInteractionHeight\u003c/option\u003e\n                \u003coption\u003eGetInteractionIndex\u003c/option\u003e\n                \u003coption\u003eGetInvalidSCIDDeploys\u003c/option\u003e\n                \u003coption\u003eGetAllMiniblockDetails\u003c/option\u003e\n                \u003coption\u003eGetMiniblockDetailsByHash\u003c/option\u003e\n                \u003coption\u003eGetMiniblockCountByAddress\u003c/option\u003e\n                \u003coption\u003eGetSCIDInteractionByAddr\u003c/option\u003e\n            \u003c/optgroup\u003e\n            \u003coptgroup label=\"EPOCH\"\u003e\n                \u003coption\u003eAttemptEPOCH\u003c/option\u003e\n                \u003coption\u003eAttemptEPOCHWithAddr\u003c/option\u003e\n                \u003coption\u003eGetMaxHashesEPOCH\u003c/option\u003e\n                \u003coption\u003eGetAddressEPOCH\u003c/option\u003e\n                \u003coption\u003eGetSessionEPOCH\u003c/option\u003e\n            \u003c/optgroup\u003e\n        \u003c/select\u003e\n        \u003cdiv id=\"paramsContainer\"\u003e\u003c/div\u003e\n        \u003cbutton class=\"call-button\" onclick=\"callFor();\"\u003eCall\u003c/button\u003e\n    \u003c/div\u003e\n\n    \u003cdiv class=\"json-container\"\u003e\n        \u003cdiv class=\"json-display\" id=\"jsonDisplayBody\"\u003e\u003c/div\u003e\n        \u003cdiv class=\"arrow-18h\" style=\"border-left: 18px solid var(--green);\"\u003e\u003c/div\u003e\n        \u003cdiv class=\"arrow-20h\" style=\"border-left: 20px solid var(--text);\"\u003e\u003c/div\u003e\n        \u003cdiv class=\"arrow-18h\" style=\"border-left: 18px solid var(--red);\"\u003e\u003c/div\u003e\n        \u003cdiv class=\"json-display\" id=\"jsonDisplayResult\"\u003e\u003c/div\u003e\n    \u003c/div\u003e\n\n    \u003cdiv\u003e\n        \u003cdiv class=\"icon\"\u003e\n            \u003csvg id=\"footIcon\" data-name=\"footIcon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 474.5 832.8\"\u003e\n                \u003cg id=\"Symbol\"\u003e\n                    \u003crect class=\"cls-2\" y=\"714.2\" width=\"118.61\" height=\"118.61\" /\u003e\n                    \u003crect class=\"cls-1\" x=\"355.9\" width=\"118.61\" height=\"118.61\" /\u003e\n                    \u003cpath class=\"cls-3\"\n                        d=\"M355.9,118.61v119.44H.07L0,714.2h118.61v-119.47h355.9V118.61h-118.61ZM355.89,476.11H118.62v-119.41h237.27v119.41Z\" /\u003e\n                \u003c/g\u003e\n            \u003c/svg\u003e\n        \u003c/div\u003e\n    \u003c/div\u003e\n\n    \u003ca class=\"center-link\" href=\"https://dero.io\" target=\"_blank\" rel=\"noreferrer noopener\"\u003edero.io\u003c/a\u003e\n\n    \u003cfooter class=\"footer\"\u003e\n        \u003cdiv style=\"margin-top: 10px;\"\u003e\n            \u003cp\u003eCrafted by Civilware\u003c/p\u003e\n            \u003chr style=\"width: 100px;\"\u003e\n            \u003cp\u003e2024\u003c/p\u003e\n        \u003c/div\u003e\n    \u003c/footer\u003e\n\n    \u003cdiv\u003e\n        \u003cdiv class=\"wave\"\u003e\u003c/div\u003e\n        \u003cdiv class=\"wave\"\u003e\u003c/div\u003e\n        \u003cdiv class=\"wave\"\u003e\u003c/div\u003e\n    \u003c/div\u003e\n\n    \u003cdiv class=\"svg-container\"\u003e\n        \u003csvg class=\"ring-image\" id=\"ring1\" data-name=\"ring1\" xmlns=\"http://www.w3.org/2000/svg\"\n            viewBox=\"0 0 1947.86 1950.9\"\u003e\n            \u003cg id=\"ring1g\" data-name=\"ring1g\"\u003e\n                \u003cpath class=\"cls-r1\"\n                    d=\"M1273.76,214.16l57.58-145.46C1220.25,24.69,1099.16.5,972.41.5c-59.72,0-118.18,5.37-174.94,15.66l28.06,153.89c47.65-8.64,96.74-13.15,146.88-13.15,106.41,0,208.09,20.31,301.35,57.26ZM1786.84,439.31c-68.12-103.26-155.35-192.81-256.65-263.59l-89.48,128.29c85.05,59.43,158.29,134.61,215.48,221.31l130.65-86.01ZM1781.11,848.14l154.52-24.32c-13.4-85.88-38.02-168.04-72.31-244.94l-142.92,63.62c28.79,64.57,49.46,133.55,60.71,205.64ZM331.88,1485.15l-122.38,97.38c87.34,109.64,197.83,200.02,324.07,263.76,21.56-43.37,45.04-90.71,69.53-140.15-105.62-53.48-198.08-129.2-271.22-220.99ZM972.41,1794c-29.33,0-58.29-1.54-86.82-4.56l-13.99,155.81c33.14,3.41,66.77,5.15,100.81,5.15,141.3,0,275.59-30.06,396.8-84.14l-65.56-142.06c-101.27,44.88-213.35,69.8-331.24,69.8ZM165.2,1111.95c-54.48,9.22-106.56,18.05-154.23,26.15,20.64,122.91,64.27,238.01,126.33,340.74l133.97-80.76c-52.12-86.26-88.75-182.92-106.07-286.13ZM422.55,369.09l-105.06-115.86C138.93,415.24,20.71,642.56.54,897.47l155.91,12.51c16.93-214.02,116.18-404.87,266.1-540.89ZM1599.21,1501.91l120.81,99.35c43.16-51.49,81.08-107.5,112.98-167.23l-138.06-73.57c-26.99,50.55-59.13,97.93-95.73,141.45ZM1946.71,939.51l-156.3,5.77c.37,10.01.55,20.07.55,30.17,0,103.33-19.15,202.19-54.09,293.22l146.06,56.02c41.63-108.42,64.43-226.17,64.43-349.24,0-12.03-.22-24.01-.65-35.94Z\" /\u003e\n            \u003c/g\u003e\n        \u003c/svg\u003e\n    \u003c/div\u003e\n\n    \u003cdiv class=\"svg-container\"\u003e\n        \u003csvg class=\"ring-image2\" id=\"ring2\" data-name=\"ring2\" xmlns=\"http://www.w3.org/2000/svg\"\n            viewBox=\"0 0 1773.58 1769.19\"\u003e\n            \u003cg id=\"ring2g\" data-name=\"ring2g\"\u003e\n                \u003cpath class=\"cls-r1\"\n                    d=\"M608.88,293.31l-100.33-212.66c-164.57,77.77-301.35,204.73-391.36,361.89l204.14,116.67c66.13-115.48,166.63-208.76,287.55-265.9ZM821.24,234.46L797.57.55c-70.19,7.01-137.96,22.22-202.35,44.64l77.34,222.07c47.31-16.48,97.11-27.65,148.68-32.8ZM1257.72,77.24c-79.68-36.78-165.75-62.07-256.09-73.75l-30.46,233.13c66.37,8.58,129.61,27.16,188.16,54.18l98.39-213.56ZM1698.74,526.54c-33.08-75.37-76.35-145.26-128.06-207.91l-181.39,149.53c37.98,46.04,69.77,97.39,94.09,152.77l215.36-94.39ZM235.68,871.8l-235.06-3.82c-.08,4.8-.12,9.6-.12,14.42,0,218.68,79.2,418.86,210.49,573.43l179.25-152.1c-96.46-113.57-154.65-260.65-154.65-421.33,0-3.54.03-7.07.09-10.6ZM400.18,1623.27c86.78,57.12,184.19,99.39,288.61,123.21l52.52-229.19c-76.73-17.51-148.3-48.57-212.06-90.53l-129.07,196.51ZM886.79,1533.6c-16.67,0-33.2-.63-49.56-1.86l-17.89,234.42c22.26,1.68,44.76,2.53,67.45,2.53,189.84,0,365.74-59.69,509.96-161.33l-135.26-192.29c-105.97,74.67-235.21,118.53-374.7,118.53ZM1769.99,807.84l-234.28,19.78c1.51,18.06,2.28,36.33,2.28,54.78,0,114.73-29.67,222.54-81.77,316.16,78.79,44.01,151.06,84.58,204.98,115.21,71.27-127.67,111.88-274.78,111.88-431.37,0-25.11-1.04-49.98-3.09-74.56Z\" /\u003e\n            \u003c/g\u003e\n        \u003c/svg\u003e\n    \u003c/div\u003e\n\n    \u003cdiv class=\"svg-container\"\u003e\n        \u003csvg class=\"ring-image3\" id=\"ring3\" data-name=\"ring3\" xmlns=\"http://www.w3.org/2000/svg\"\n            viewBox=\"0 0 1705.29 1713.58\"\u003e\n            \u003cg id=\"ring3g\" data-name=\"ring3g\"\u003e\n                \u003cpath class=\"cls-r3\"\n                    d=\"M1440.76,229.83c-97.41-90.76-216-159.1-347.54-196.79l-45.99,157.15c106.05,30.24,201.71,85.1,280.43,158.01l113.09-118.38ZM1020.67,1530.39l40.57,158.64c197.21-48.28,367.64-164.83,484.77-323.18l-132.91-95.58c-95.04,127.65-232.95,221.47-392.43,260.12ZM1452.53,1211.21c47.53,27.31,95.21,54.72,141.96,81.61,53.74-90.71,91.21-192.18,108.43-300.41l-161.97-24.06c-14.15,87.53-44.71,169.57-88.41,242.86ZM856.79,1549.88c-90.11,0-176.22-17.2-255.21-48.5l-59.77,152.44c97.5,38.57,203.77,59.76,314.97,59.76,13.64,0,27.19-.32,40.68-.96l-9.03-163.46c-10.48.48-21.05.72-31.65.72ZM204.04,1090.34l-154.7,53.71c74.62,209.76,228.67,381.86,425.95,480.12l72.64-146.73c-159.1-79.32-283.42-218.03-343.9-387.09ZM163.7,856.79c0-64.31,8.76-126.57,25.15-185.66l-157.1-46.21C11.06,698.67,0,776.44,0,856.79c0,44.87,3.45,88.93,10.1,131.93l162-23.69c-5.54-35.26-8.41-71.41-8.41-108.24ZM497.06,264.24l-82.98-141.14c-135.56,81.96-246.57,200.44-319.4,341.79l144.66,76.71c58.62-114.61,148.2-210.73,257.72-277.36ZM567.52,50.06l53.28,154.86c73.66-26.68,153.13-41.22,235.99-41.22,26.29,0,52.24,1.47,77.77,4.32l18.79-162.64C921.66,1.83,889.44,0,856.79,0,755.28,0,657.88,17.65,567.52,50.06ZM1705.29,737.08c-9.07-64.87-25.4-127.4-48.15-186.76l-153.93,55.93c19.12,49.26,32.76,101.26,40.18,155.23l161.91-24.4Z\" /\u003e\n            \u003c/g\u003e\n        \u003c/svg\u003e\n    \u003c/div\u003e\n\n    \u003cscript src=\"main.js\"\u003e\u003c/script\u003e\n    \u003cscript\u003e\n        let mouseTimeout;\n        toggleIndicators(\"red\");\n        document.getElementById(\"connectButton\").addEventListener(\"click\", connectWebSocket);\n\n        const encodedSVG = encodeURIComponent(\n            `\u003csvg id=\"favIcon\" data-name=\"favIcon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 474.5 832.8\"\u003e\n                \u003cg id=\"Symbol\"\u003e\n                    \u003crect fill=\"#46b868\" y=\"714.2\" width=\"118.61\" height=\"118.61\" /\u003e\n                    \u003crect fill=\"#ed2024\" x=\"355.9\" width=\"118.61\" height=\"118.61\" /\u003e\n                    \u003cpath fill=\"black\"\n                        d=\"M355.9,118.61v119.44H.07L0,714.2h118.61v-119.47h355.9V118.61h-118.61ZM355.89,476.11H118.62v-119.41h237.27v119.41Z\" /\u003e\n                \u003c/g\u003e\n            \u003c/svg\u003e`\n        );\n        document.getElementById(\"favicon\").href = `data:image/svg+xml;charset=utf-8,${encodedSVG}`;\n\n        // Cursor effect\n        const svgCursor = document.getElementById(\"svgCursor\");\n        document.addEventListener(\"mousemove\", (event) =\u003e {\n            clearTimeout(mouseTimeout);\n            svgCursor.style.opacity = 1;\n            svgCursor.style.left = event.clientX - 12 + \"px\";\n            svgCursor.style.top = event.clientY - 15 + \"px\";\n            mouseTimeout = setTimeout(() =\u003e {\n                svgCursor.style.opacity = 0;\n            }, 200);\n        });\n    \u003c/script\u003e\n\u003c/body\u003e\n\n\u003c/html\u003e",
+  "subDir": "app1",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 1325790ddacbe3b2bbd0a03518f0e75bc3bf6160b254e4961df1bd393e4425e1",
+   "checkS": "S: 1a382a82660e8f7c3564cb25f1cf4263d2526ba1ff36e607cac2f6267f893e4b"
+  },
+  "headers": {
+   "nameHdr": "app1/index.html",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-JS-1",
+  "code": "// Global websocket\nlet socket;\n\n// XSWD application data\nconst applicationData = {\n    \"id\": \"71605a32e3b0c44298fc1c549afbf4c8496fb92427ae41e4649b934ca495991b\",\n    \"name\": \"TELA Demo Application\",\n    \"description\": \"Basic WS connection parts for TELA application\",\n    \"url\": \"http://localhost:\" + location.port, // Get the current port being used by server to set in our XSWD application data, must match origin URL\n};\n\nlet typed = 0;\nlet typeText = \"\";\nconst typeSpeed = 50;\n\nconst jsonBody = document.getElementById(\"jsonDisplayBody\");\nconst jsonResult = document.getElementById(\"jsonDisplayResult\");\n\n// Typing text effect\nfunction typeWriter(text) {\n    const html = document.getElementById(\"typingLabel\");\n    if (typed === 0) {\n        html.innerHTML = \"\";\n        typeText = text;\n    }\n\n    if (typed \u003c typeText.length) {\n        html.innerHTML += typeText.charAt(typed);\n        typed++;\n        setTimeout(typeWriter, typeSpeed);\n    }\n\n    if (typed === typeText.length) {\n        setTimeout(() =\u003e {\n            typed = 0;\n        }, typeSpeed);\n    }\n}\n\n// Function to send data\nfunction sendData(d) {\n    if (socket \u0026\u0026 socket.readyState === WebSocket.OPEN) {\n        try {\n            socket.send(JSON.stringify(d));\n            if (d.method) {\n                console.log(d.method, \"request sent to the server\");\n                if (jsonBody) jsonBody.innerHTML = JSON.stringify(d, null, 2);\n                if (jsonResult) jsonResult.innerHTML = \"\";\n            } else {\n                console.log(\"Connection request sent to the server\");\n            }\n        } catch (error) {\n            console.error(\"Failed to send data:\", error);\n            toggleIndicators(\"red\");\n        }\n    } else {\n        console.log(\"Web socket is not open. State:\", socket ? socket.readyState : \"N/A\");\n        toggleIndicators(\"red\");\n    }\n}\n\n// Handle web socket connection and listeners\nfunction connectWebSocket() {\n    // If we are already connected, disconnect\n    if (document.getElementById(\"connectButton\").textContent === \"Disconnect\") {\n        toggleIndicators(\"red\");\n        return;\n    }\n\n    // Connect to the web socket\n    socket = new WebSocket(\"ws://localhost:44326/xswd\");\n\n    // Listen for open\n    socket.addEventListener(\"open\", function (event) {\n        console.log(\"Web socket connection established:\", event);\n        toggleIndicators(\"yellow\");\n        typed = 0;\n        typeWriter(\"Waiting for wallet reply\");\n        sendData(applicationData); // Send ApplicationData after connection is established\n    });\n\n    let address = \"\";\n    let connecting = true;\n\n    // Listen for the messages\n    socket.addEventListener(\"message\", function (event) {\n        const response = JSON.parse(event.data);\n        console.log(\"Response received:\", response);\n        if (response.accepted) { // If connection is accepted, we will request to get address from wallet\n            console.log(\"Connected message received:\", response.message);\n            sendData({\n                jsonrpc: \"2.0\",\n                id: \"1\",\n                method: \"GetAddress\"\n            });\n        } else if (response.result) {\n            const res = response.result;\n            if (jsonResult) jsonResult.innerHTML = JSON.stringify(res, null, 2);\n            typed = 0;\n            if (res.address) { // If GetAddress is allowed by user\n                address = res.address;\n                console.log(\"Connected address:\", address);\n                toggleIndicators(\"green\");\n                connecting = false;\n                typeWriter(address);\n            } else if (res.unlocked_balance) { // Balance response\n                const bal = \"Balance: \" + (res.unlocked_balance / 100000).toFixed(5) + \" DERO\";\n                console.log(bal);\n                typeWriter(bal);\n            } else if (res.height) { // Height response\n                const height = \"Height: \" + res.height;\n                console.log(height);\n                typeWriter(height);\n            } else if (res.telaLinkResult) {  // TELA link response\n                const link = \"Opened TELA link: \" + res.telaLinkResult;\n                console.log(link);\n                typeWriter(link);\n            } else if (res.lastIndexHeight) { // Gnomon responses\n                const gnomon = \"Gnomon indexed height: \" + res.lastIndexHeight;\n                console.log(gnomon);\n                typeWriter(gnomon);\n            } else if (res.epochHashes) {  // EPOCH responses\n                const epoch = \"Hashes: \" + res.epochHashes + \" in \" + res.epochDuration + \"ms and submitted \" + res.epochSubmitted + \" as miniblocks\";\n                console.log(epoch);\n                typeWriter(epoch);\n            } else if (res.epochAddress) {\n                const epoch = \"EPOCH address: \" + res.epochAddress;\n                console.log(epoch);\n                typeWriter(epoch);\n            } else if (res.maxHashes) {\n                const epoch = \"EPOCH max hashes: \" + res.maxHashes;\n                console.log(epoch);\n                typeWriter(epoch);\n            } else if (res.sessionMinis) {\n                const epoch = \"EPOCH session hashes: \" + res.sessionHashes + \"  miniblocks: \" + res.sessionMinis;\n                console.log(epoch);\n                typeWriter(epoch);\n            }\n        } else if (response.error) { // Display error message\n            console.error(\"Error:\", response.error.message);\n            typed = 0;\n            typeWriter(\" \" + response.error.message);\n            document.getElementById(\"typingLabel\").innerHTML = \"\";\n            if (connecting) toggleIndicators(\"red\");\n        }\n    });\n\n    // Listen for errors\n    socket.addEventListener(\"error\", function (event) {\n        console.error(\"Web socket error:\", event);\n        typed = 0;\n        typeWriter(\" Web socket error: \" + event.target.url.toString());\n    });\n\n    // Listen for close\n    socket.addEventListener(\"close\", function (event) {\n        console.log(\"Web socket connection closed:\", event.code, event.reason);\n        toggleIndicators(\"red\");\n    });\n}\n\n// Change indictor color based on connection status\nfunction toggleIndicators(color) {\n    if (color === \"green\") {\n        document.getElementById(\"connectButton\").textContent = \"Disconnect\";\n        document.getElementById(\"greenIndicator\").style.display = \"block\";\n        document.getElementById(\"yellowIndicator\").style.display = \"none\";\n        document.getElementById(\"redIndicator\").style.display = \"none\";\n    } else if (color === \"yellow\") {\n        document.getElementById(\"connectButton\").textContent = \"Disconnect\";\n        document.getElementById(\"greenIndicator\").style.display = \"none\";\n        document.getElementById(\"yellowIndicator\").style.display = \"block\";\n        document.getElementById(\"redIndicator\").style.display = \"none\";\n    } else {\n        document.getElementById(\"connectButton\").textContent = \"Connect\";\n        document.getElementById(\"greenIndicator\").style.display = \"none\";\n        document.getElementById(\"yellowIndicator\").style.display = \"none\";\n        document.getElementById(\"redIndicator\").style.display = \"block\";\n        document.getElementById(\"typingLabel\").textContent = \"\";\n        if (socket) socket.close(), socket = null;\n    }\n}\n\n// Create new text input\nfunction newInput(p, n) {\n    const input = document.createElement(\"input\");\n    if (n) {\n        input.type = \"number\";\n        input.step = 1;\n        input.min = 0;\n    } else {\n        input.type = \"text\";\n    }\n\n    input.id = p;\n    input.placeholder = p + \":\";\n\n    return input;\n}\n\n// Create needed params for request\nfunction requestParams() {\n    const container = document.getElementById(\"paramsContainer\");\n    const select = document.getElementById(\"selectCall\");\n    container.innerHTML = \"\";\n    switch (select.value) {\n        case \"HandleTELALinks\":\n            container.appendChild(newInput(\"telaLink\")); break;\n        case \"GetTxCount\":\n            container.appendChild(newInput(\"txType\")); break;\n        case \"GetOwner\":\n        case \"GetAllNormalTxWithSCIDBySCID\":\n        case \"GetAllSCIDInvokeDetails\":\n        case \"GetAllSCIDVariableDetails\":\n        case \"GetSCIDInteractionHeight\":\n            container.appendChild(newInput(\"scid\")); break;\n        case \"GetAllNormalTxWithSCIDByAddr\":\n        case \"GetMiniblockCountByAddress\":\n        case \"GetSCIDInteractionByAddr\":\n            container.appendChild(newInput(\"address\")); break;\n        case \"GetAllSCIDInvokeDetailsByEntrypoint\":\n            container.appendChild(newInput(\"scid\"));\n            container.appendChild(newInput(\"entrypoint\")); break;\n        case \"GetAllSCIDInvokeDetailsBySigner\":\n            container.appendChild(newInput(\"scid\"));\n            container.appendChild(newInput(\"signer\")); break;\n        case \"GetSCIDVariableDetailsAtTopoheight\":\n            container.appendChild(newInput(\"scid\"));\n            container.appendChild(newInput(\"height\", true)); break;\n        case \"GetSCIDKeysByValue\":\n        case \"GetSCIDValuesByKey\":\n            container.appendChild(newInput(\"scid\"));\n            container.appendChild(newInput(\"height\", true));\n            if (select.value === \"GetSCIDKeysByValue\") {\n                container.appendChild(newInput(\"value\"));\n            } else {\n                container.appendChild(newInput(\"key\"));\n            }\n            break;\n        case \"GetLiveSCIDValuesByKey\":\n        case \"GetLiveSCIDKeysByValue\":\n            container.appendChild(newInput(\"scid\"));\n            if (select.value === \"GetLiveSCIDKeysByValue\") {\n                container.appendChild(newInput(\"value\"));\n            } else {\n                container.appendChild(newInput(\"key\"));\n            }\n            break;\n        case \"GetInteractionIndex\":\n            container.appendChild(newInput(\"topoheight\", true));\n            container.appendChild(newInput(\"height\", true)); break;\n        case \"GetMiniblockDetailsByHash\":\n            container.appendChild(newInput(\"blid\")); break;\n        case \"AttemptEPOCH\":\n            container.appendChild(newInput(\"hashes\", true)); break;\n        case \"AttemptEPOCHWithAddr\":\n            container.appendChild(newInput(\"address\"));\n            container.appendChild(newInput(\"hashes\", true)); break;\n    }\n}\n\n// Send call with params\nfunction callFor() {\n    if (!socket) {\n        typed = 0;\n        typeWriter(\"Wallet is not connected\");\n        return;\n    }\n\n    typed = 0;\n    document.getElementById(\"typingLabel\").innerHTML = \"\";\n\n    const select = document.getElementById(\"selectCall\");\n    let m = \"\";\n    if (select.selectedIndex \u003e 3 \u0026\u0026 !select.value.includes(\"EPOCH\")) {\n        m = \"Gnomon.\";\n    } else {\n        typeWriter(\"Waiting for wallet reply\");\n    }\n\n    const call = {\n        jsonrpc: \"2.0\",\n        id: \"1\",\n        method: m + select.value,\n        params: {},\n    };\n\n    switch (select.value) {\n        case \"HandleTELALinks\":\n            call.params.telaLink = document.getElementById(\"telaLink\").value; break;\n        case \"GetTxCount\":\n            call.params.txType = document.getElementById(\"txType\").value; break;\n        case \"GetOwner\":\n        case \"GetAllNormalTxWithSCIDBySCID\":\n        case \"GetAllSCIDInvokeDetails\":\n        case \"GetAllSCIDVariableDetails\":\n        case \"GetSCIDInteractionHeight\":\n            call.params.scid = document.getElementById(\"scid\").value; break;\n        case \"GetAllNormalTxWithSCIDByAddr\":\n        case \"GetMiniblockCountByAddress\":\n        case \"GetSCIDInteractionByAddr\":\n            call.params.address = document.getElementById(\"address\").value; break;\n        case \"GetAllSCIDInvokeDetailsByEntrypoint\":\n            call.params.scid = document.getElementById(\"scid\").value;\n            call.params.entrypoint = document.getElementById(\"entrypoint\").value; break;\n        case \"GetAllSCIDInvokeDetailsBySigner\":\n            call.params.scid = document.getElementById(\"scid\").value;\n            call.params.signer = document.getElementById(\"signer\").value; break;\n        case \"GetSCIDVariableDetailsAtTopoheight\":\n            call.params.scid = document.getElementById(\"scid\").value;\n            call.params.height = parseInt(document.getElementById(\"height\").value); break;\n        case \"GetSCIDKeysByValue\":\n        case \"GetSCIDValuesByKey\":\n            call.params.scid = document.getElementById(\"scid\").value;\n            call.params.height = parseInt(document.getElementById(\"height\").value);\n            if (select.value === \"GetSCIDKeysByValue\") {\n                call.params.value = document.getElementById(\"value\").value;\n            } else {\n                call.params.value = document.getElementById(\"key\").value;\n            }\n            break;\n        case \"GetLiveSCIDValuesByKey\":\n        case \"GetLiveSCIDKeysByValue\":\n            call.params.scid = document.getElementById(\"scid\").value;\n            if (select.value === \"GetLiveSCIDKeysByValue\") {\n                call.params.value = document.getElementById(\"value\").value;\n            } else {\n                call.params.value = document.getElementById(\"key\").value;\n            }\n            break;\n        case \"GetInteractionIndex\":\n            call.params.topoheight = parseInt(document.getElementById(\"topoheight\").value);\n            call.params.height = parseInt(document.getElementById(\"height\").value); break;\n        case \"GetMiniblockDetailsByHash\":\n            call.params.blid = document.getElementById(\"blid\").value; break;\n        case \"AttemptEPOCH\":\n            call.params.hashes = parseInt(document.getElementById(\"hashes\").value); break;\n        case \"AttemptEPOCHWithAddr\":\n            call.params.address = document.getElementById(\"address\").value;\n            call.params.hashes = parseInt(document.getElementById(\"hashes\").value); break;\n        default:\n            call.params = null; break;\n    }\n\n    sendData(call);\n}",
+  "subDir": "app1",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 5b2a230e9d43ee664c8c659995272e29cb2722a6ba97cc9830a6bbd2cdbec35",
+   "checkS": "S: 2937ea1b22035d12adeff7f7c0623d51fef0bdcde829012eab5418e439b38aae"
+  },
+  "headers": {
+   "nameHdr": "app1/main.js",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-CSS-1",
+  "code": "body {\n    display: flex;\n    height: 100vh;\n    margin: 0;\n    flex-direction: column;\n    box-sizing: border-box;\n    font-family: -apple-system, Arial, Helvetica, sans-serif, Apple Color Emoji, Segoe UI Emoji;\n    background-color: var(--background);\n    padding: 0 5px 5px 5px;\n}\n\na {\n    color: var(--link);\n}\n\na:hover {\n    color: var(--hover);\n}\n\nhr {\n    color: var(--gray);\n}\n\nselect,\ninput {\n    background-color: var(--background);\n    color: var(--text);\n    border: 3px outset var(--gray);\n    border-radius: 12px;\n    font-size: medium;\n    outline: none;\n}\n\ninput {\n    padding: 2px 5px;\n    width: 95%;\n    margin-top: 3px;\n}\n\nselect:focus,\ninput:focus {\n    outline: none !important;\n    border-color: var(--hover);\n}\n\ninput[type=number] {\n    -moz-appearance: textfield;\n    appearance: textfield;\n    margin: 0;\n}\n\ninput[type=number]::-webkit-inner-spin-button,\ninput[type=number]::-webkit-outer-spin-button {\n    -webkit-appearance: none;\n    margin: 0;\n}\n\nfooter {\n    text-align: center;\n    margin-top: 60px;\n    color: var(--text);\n    padding-bottom: 6vh;\n}\n\ncode {\n    font-size: large;\n    animation: typing 750ms linear infinite;\n    word-wrap: break-word;\n    overflow-wrap: break-word;\n    white-space: normal;\n}\n\n:root {\n    --green: #46b868;\n    --yellow: #fffb00;\n    --red: #ed2024;\n}\n\n#svgCursor {\n    position: fixed;\n    pointer-events: none;\n    width: 25px;\n    height: 25px;\n    opacity: 0;\n    transition: opacity 1s;\n    z-index: 9999;\n}\n\n.cls-1 {\n    fill: var(--red);\n}\n\n.cls-1,\n.cls-2,\n.cls-3 {\n    stroke-width: 0px;\n}\n\n.cls-2 {\n    fill: var(--green);\n}\n\n.cls-3 {\n    fill: var(--text);\n}\n\n.cls-r1 {\n    fill: var(--rings);\n}\n\n.cls-r3 {\n    fill: var(--background);\n}\n\n.svg-container {\n    position: fixed;\n    width: 100%;\n    height: 100vh;\n    display: flex;\n    justify-content: center;\n    align-items: center;\n    z-index: -100;\n}\n\n.ring-image {\n    width: 120%;\n    height: 120%;\n    animation: spin 120s ease-in infinite;\n}\n\n.ring-image2 {\n    width: 110%;\n    height: 110%;\n    animation: spin 96s ease infinite;\n}\n\n.ring-image3 {\n    width: 115%;\n    height: 115%;\n    animation: half-spin 75s ease-in-out infinite;\n}\n\n.marquee {\n    width: 50vw;\n    min-width: 280px;\n    line-height: 50px;\n    background-color: transparent;\n    color: var(--green);\n    white-space: nowrap;\n    overflow: hidden;\n    box-sizing: border-box;\n    margin: auto;\n    position: absolute;\n    left: 50%;\n    transform: translate(-50%, -50%);\n    padding-bottom: 20px;\n}\n\n.marquee p {\n    display: inline-block;\n    padding-left: 100%;\n    animation: marquee 20s linear infinite;\n    text-shadow: 0 0 5px var(--background);\n}\n\n.container {\n    width: 60vw;\n    min-width: 280px;\n    border-radius: 12px;\n    padding: 20px 20px 30px 20px;\n    margin: 20px auto;\n    background-color: transparent;\n    color: var(--text);\n    font-variant-caps: normal;\n    line-height: normal;\n    align-items: center;\n    overflow-x: visible;\n}\n\n.title,\n.icon {\n    margin: auto;\n}\n\n.title {\n    max-width: 500px;\n}\n\n.icon {\n    max-width: 100px;\n}\n\n.description {\n    margin-top: 3px;\n    text-align: center;\n    font-size: 1rem;\n    line-height: 1.5rem;\n    display: block;\n    flex-direction: row;\n    position: static;\n}\n\n.call-button,\n.connect-button {\n    position: relative;\n    color: var(--text);\n    background-color: var(--gray);\n    margin-top: 3px;\n    padding: 5px 10px;\n    font-size: 1rem;\n    border: 3px outset var(--gray);\n    border-radius: 12px;\n    min-width: 150px;\n    text-align: center;\n    transition-duration: 0.4s;\n    overflow: hidden;\n    cursor: pointer;\n    box-sizing: border-box;\n}\n\n.call-button:hover,\n.connect-button:hover {\n    border-color: var(--hover);\n    background-color: var(--hover);\n    color: var(--background);\n    transition: 0.2s;\n}\n\n.call-button:after,\n.connect-button:after {\n    content: \"\";\n    border-color: transparent;\n    background: var(--text);\n    display: block;\n    position: absolute;\n    padding-top: 300%;\n    padding-left: 350%;\n    margin-left: -20px !important;\n    margin-top: -120%;\n    opacity: 0;\n    transition: all 0.6s;\n}\n\n.call-button:active:after,\n.connect-button:active:after {\n    padding: 0;\n    margin: 0;\n    opacity: 1;\n    transition: 0s;\n}\n\n.json-container {\n    display: flex;\n    justify-content: center;\n    align-self: center;\n    min-height: 250px;\n    max-height: 30%;\n    width: 75%;\n    min-width: 60%;\n    padding-bottom: 30px;\n    margin: auto;\n    margin-bottom: 40px;\n    box-sizing: border-box;\n    z-index: 10;\n}\n\n.json-display {\n    min-height: 200px;\n    min-width: 100px;\n    background-color: var(--background);\n    flex: 1;\n    padding: 10px;\n    border: 3px outset var(--hover);\n    border-radius: 12px;\n    margin: 5px;\n    white-space: pre-wrap;\n    overflow: auto;\n    box-shadow:\n        0 0 3px 1px var(--background),\n        0 0 20px 10px var(--background);\n}\n\n.arrow-18h,\n.arrow-20h {\n    width: 0;\n    height: 0;\n    align-self: center;\n    z-index: 500;\n}\n\n.arrow-18h {\n    border-top: 9px solid transparent;\n    border-bottom: 9px solid transparent;\n}\n\n.arrow-20h {\n    border-top: 10px solid transparent;\n    border-bottom: 10px solid transparent;\n}\n\n.connect {\n    display: flex;\n    justify-content: flex-end;\n    align-items: flex-start;\n    flex-direction: row;\n    margin: 10px;\n    margin-top: 20px;\n}\n\n.status {\n    position: sticky;\n    line-height: 20px;\n    margin-top: -20px;\n    top: 50%;\n    transform: translate(-50%, -50%);\n    border: 1px solid transparent;\n    border-radius: 15px;\n}\n\n#greenIndicator {\n    background-color: var(--green);\n    display: none;\n    animation: pulseGreen 2100ms infinite;\n}\n\n#redIndicator {\n    background-color: var(--red);\n    display: none;\n    animation: pulseRed 2100ms infinite;\n}\n\n#yellowIndicator {\n    background-color: var(--yellow);\n    display: none;\n    animation: pulseYellow 2100ms infinite;\n}\n\n.typing-container {\n    align-self: center;\n    text-align: center;\n    max-height: 200px;\n    max-width: 80%;\n    padding-bottom: 10px;\n}\n\n.display {\n    color: var(--text);\n    padding: 10px;\n}\n\n.actions {\n    display: flex;\n    align-self: center;\n    flex-direction: column;\n    width: 80%;\n    max-width: 300px;\n    min-width: 260px;\n    min-height: 180px;\n    padding-bottom: 10px;\n}\n\n.center-link {\n    display: flex;\n    align-self: center;\n    text-align: center;\n    margin-top: 100px;\n    font-size: x-large;\n    width: auto;\n}\n\n.wave {\n    background: var(--wave);\n    border-radius: 1000% 1000% 0 0;\n    position: fixed;\n    width: 200%;\n    height: 12em;\n    animation: wave 10s -3s linear infinite;\n    transform: translate3d(0, 0, 0);\n    opacity: 0.7;\n    bottom: 0;\n    left: 0;\n    z-index: 300;\n    max-height: 5%;\n}\n\n.wave:nth-of-type(2) {\n    bottom: -1em;\n    animation: wave 21s linear reverse infinite;\n    opacity: 0.5;\n}\n\n.wave:nth-of-type(3) {\n    bottom: -2em;\n    animation: wave 24s -1s reverse infinite;\n    opacity: 0.6;\n}\n\n::-webkit-scrollbar {\n    width: 5px;\n    height: 5px;\n}\n\n::-webkit-scrollbar-track {\n    background: transparent;\n}\n\n::-webkit-scrollbar-thumb {\n    background: var(--hover);\n    border-radius: 10px;\n    border: 2px solid transparent;\n}\n\n::-webkit-scrollbar-thumb:hover {\n    background: var(--green);\n}\n\n@keyframes marquee {\n    0% {\n        transform: translate(0, 0);\n    }\n\n    100% {\n        transform: translate(-100%, 0);\n    }\n}\n\n@keyframes typing {\n    from {\n        border-right-color: var(--typing);\n    }\n\n    to {\n        border-right-color: transparent;\n    }\n}\n\n@keyframes spin {\n    0% {\n        transform: rotate(0deg);\n    }\n\n    100% {\n        transform: rotate(360deg);\n    }\n}\n\n@keyframes half-spin {\n    0% {\n        transform: rotate(0deg);\n    }\n\n    40% {\n        transform: rotate(180deg);\n    }\n\n    50% {\n        transform: rotate(175deg);\n    }\n\n    60%,\n    65% {\n        transform: rotate(190deg);\n    }\n\n    100% {\n        transform: rotate(360deg);\n    }\n}\n\n@keyframes pulseGreen {\n    0% {\n        transform: scale(0.95);\n        box-shadow: 0 0 0 0 var(--green);\n    }\n\n    50% {\n        transform: scale(1);\n        box-shadow: 0 0 0 10px rgba(0, 128, 0, 0);\n    }\n\n    100% {\n        transform: scale(0.95);\n        box-shadow: 0 0 0 0 rgba(0, 128, 0, 0);\n    }\n}\n\n@keyframes pulseRed {\n    0% {\n        transform: scale(0.95);\n        box-shadow: 0 0 0 0 var(--red);\n    }\n\n    50% {\n        transform: scale(1);\n        box-shadow: 0 0 0 10px rgba(0, 128, 0, 0);\n    }\n\n    100% {\n        transform: scale(0.95);\n        box-shadow: 0 0 0 0 rgba(0, 128, 0, 0);\n    }\n}\n\n@keyframes pulseYellow {\n    0% {\n        transform: scale(0.95);\n        box-shadow: 0 0 0 0 var(--yellow);\n    }\n\n    50% {\n        transform: scale(1);\n        box-shadow: 0 0 0 10px rgba(0, 128, 0, 0);\n    }\n\n    100% {\n        transform: scale(0.95);\n        box-shadow: 0 0 0 0 rgba(0, 128, 0, 0);\n    }\n}\n\n@keyframes wave {\n    2% {\n        transform: translateX(1);\n    }\n\n    25% {\n        transform: translateX(-25%);\n    }\n\n    50% {\n        transform: translateX(-50%);\n    }\n\n    75% {\n        transform: translateX(-25%);\n    }\n\n    100% {\n        transform: translateX(1);\n    }\n}\n\n@media screen and (max-width: 670px) {\n    .typing-container {\n        margin-top: -40px;\n        max-height: 280px;\n        max-width: 90%;\n    }\n\n    .display {\n        word-break: break-word;\n    }\n\n    .ring-image-2 {\n        width: 90%;\n        height: 90%;\n    }\n\n    .ring-image-3 {\n        width: 95%;\n        height: 95%;\n    }\n}\n\n@media (prefers-color-scheme: dark) {\n    :root {\n        --background: #0d1117;\n        --rings: #46b86815;\n        --wave: #d4d4d46b;\n        --typing: #ffffffbf;\n        --hover: #a5a5a5;\n        --text: white;\n        --link: #d4d4d4;\n        --gray: #7c7c7c;\n    }\n\n    body {\n        color: var(--text);\n        background-color: var(--background);\n    }\n\n    code {\n        border-right: solid 5px var(--typing);\n        color: #ffffffb3;\n    }\n}\n\n@media (prefers-color-scheme: light) {\n    :root {\n        --background: white;\n        --rings: #46b86823;\n        --wave: #27272762;\n        --typing: #000000bf;\n        --hover: #a0a0a0;\n        --text: black;\n        --link: #272727;\n        --gray: #dfdfdf;\n    }\n\n    body {\n        color: var(--text);\n        background-color: var(--color-canvas-default);\n    }\n\n    code {\n        border-right: solid 5px var(--typing);\n        color: #000000b3;\n    }\n}",
+  "subDir": "app1",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 127dd9c1e6054b43d49aa780601d457d533a5c262e81bc5fe9396c05fcf7fa5f",
+   "checkS": "S: 12a9cb924c7584696f340082bfd87f3b16b0fa40260dc0e1f178ae096ba29f27"
+  },
+  "headers": {
+   "nameHdr": "app1/style.css",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-HTML-1",
+  "code": "\u003c!DOCTYPE HTML\u003e\n\u003chtml lang=\"en-US\"\u003e\n\n\u003chead\u003e\n    \u003ctitle\u003eTELA Demo Application 2\u003c/title\u003e\n    \u003cmeta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"\u003e\n    \u003cmeta name=\"keywords\" content=\"TELA, DERO Project, Civilware, DERO, $DERO\" /\u003e\n    \u003cmeta name=\"viewport\" content=\"width=device-width, initial-scale=1, maximum-scale=1\"\u003e\n    \u003clink rel=\"stylesheet\" type=\"text/css\" href=\"css/style.css\"\u003e\n\u003c/head\u003e\n\n\u003cbody\u003e\n    \u003cdiv style=\"position: sticky; top: 0px;\"\u003e\n        \u003cdiv id=\"greenIndicator\" class=\"status\"\u003e\u003c/div\u003e\n        \u003cdiv id=\"redIndicator\" class=\"status\"\u003e\u003c/div\u003e\n        \u003cdiv id=\"yellowIndicator\" class=\"status\"\u003e\u003c/div\u003e\n    \u003c/div\u003e\n\n    \u003cdiv class=\"connect\"\u003e\n        \u003cbutton class=\"connect-button\" id=\"connectButton\"\u003eConnect\u003c/button\u003e\n    \u003c/div\u003e\n\n    \u003cdiv class=\"container\"\u003e\n        \u003cdiv class=\"title\"\u003e\n            \u003csvg id=\"titleImg\" data-name=\"titleImg\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1784.46 832.8\"\u003e\n                \u003cg id=\"Text\"\u003e\n                    \u003cpolygon class=\"cls-3\"\n                        points=\".27 118.61 712.59 118.61 712.59 237.61 356.69 237.61 356.69 714.18 237.26 714.18 237.26 237.61 0 237.61 .27 118.61\" /\u003e\n                    \u003crect class=\"cls-3\" x=\"475.31\" y=\"356.72\" width=\"237.27\" height=\"119.41\" /\u003e\n                    \u003cpolygon class=\"cls-3\"\n                        points=\"475.27 594.79 831.2 594.79 831.2 118.61 950.62 118.61 950.62 594.79 1188.68 594.79 1188.68 118.61 1784.46 713.61 1615.41 713.61 1308.06 406.95 1308.06 713.61 475.27 713.61 475.27 594.79\" /\u003e\n                    \u003crect class=\"cls-2\" x=\"356.69\" y=\"714.2\" width=\"118.61\" height=\"118.61\" /\u003e\n                    \u003crect class=\"cls-1\" x=\"712.59\" width=\"118.61\" height=\"118.61\" /\u003e\n                \u003c/g\u003e\n            \u003c/svg\u003e\n        \u003c/div\u003e\n    \u003c/div\u003e\n\n    \u003cdiv class=\"typing-container\"\u003e\n        \u003cdiv class=\"display\"\u003e\u003ccode id=\"typingLabel\"\u003e\u003c/code\u003e\u003c/div\u003e\n    \u003c/div\u003e\n\n    \u003ca class=\"center-link\" href=\"https://dero.io\" target=\"_blank\" rel=\"noreferrer noopener\"\u003edero.io\u003c/a\u003e\n\n    \u003cfooter class=\"footer\"\u003e\n        \u003cdiv style=\"margin-top: 10px;\"\u003e\n            \u003cp\u003eCrafted by Civilware\u003c/p\u003e\n            \u003chr style=\"width: 100px;\"\u003e\n            \u003cp\u003e2024\u003c/p\u003e\n        \u003c/div\u003e\n    \u003c/footer\u003e\n\n    \u003cscript src=\"js/main.js\"\u003e\u003c/script\u003e\n    \u003cscript\u003e\n        toggleIndicators(\"red\");\n        document.getElementById(\"connectButton\").addEventListener(\"click\", connectWebSocket);\n    \u003c/script\u003e\n\u003c/body\u003e\n\n\u003c/html\u003e",
+  "subDir": "app2",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 787e4dba018dc2b9b5ded6edcb9f877a85b4624ccddef8f7123797986aac521",
+   "checkS": "S: 62d5edaaf6b79db4d8790e46be50f13ae095735ac868ba238ac64b48020f9b4"
+  },
+  "headers": {
+   "nameHdr": "app2/index.html",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-STATIC-1",
+  "code": "// Test code for TELA parser, should be valid to parse with dvm.ParseSmartContract\nFunction Initialize(u Uint64, s String) String\n10 RETURN 0\nEnd Function\n\nFunction test()\n10 RETURN ! // ! hits add single operator\nEnd Function",
+  "subDir": "contracts",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 50332f4c0f91d6df0e78cf0a8a1283d7b21534caf276722aa647c6a10339138",
+   "checkS": "S: 187ac486786a6d7a9bdc1ba0f4d70cccf7d9d78c9932c24a704f85971dea2a3a"
+  },
+  "headers": {
+   "nameHdr": "contracts/test1.bas",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-STATIC-1",
+  "code": "// Test code for TELA parser, should error when parsing with dvm.ParseSmartContract\nFunction Initialize() bool // wrong return type errors dvm.ParseSmartContract()\n10 RETURN 0\nEnd Function",
+  "subDir": "contracts",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 2885b0dea26a24354d3304f869463a659cb5372ae6a7f8921700063f8c4d9db1",
+   "checkS": "S: 22a5effa8e07ab85b2a2510da06319f141ea9d212cdc027ed441c6def5f0ca1"
+  },
+  "headers": {
+   "nameHdr": "contracts/test2.bas",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-STATIC-1",
+  "code": "// Test code for TELA parser, should be valid to parse with dvm.ParseSmartContract\nFunction Initialize(u Uint64, s String) String\n10 RETURN 0\nEnd Function\n\nFunction test() Uint64\n10 IF EXISTS() THEN GOTO 10\nEnd Function",
+  "subDir": "contracts",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 200b781fa4269e9800a1ceff86457a2c09f4348c3e1ebf9cf12c9c1f4467a305",
+   "checkS": "S: 2b78a765e6dcf9ff390bb583873da716a7397c6fb5907fd64b4cbf4ad909c8f6"
+  },
+  "headers": {
+   "nameHdr": "contracts/test3.bas",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-STATIC-1",
+  "code": "// Test code for TELA parser, should be valid to parse with dvm.ParseSmartContract\nFunction Initialize(u Uint64, s String) String\n10 RETURN 0\nEnd Function\n\nFunction test()\n10 RETURN 0\nEnd Function",
+  "subDir": "contracts",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 1b318ccf6cf96b3216693120a47949f02bbafa9d1336ec90a7f6c5c687680e78",
+   "checkS": "S: 1adfc5930d6ba6cd8adc778796e57670704f51c1a38d63bd22a70f5ed37427b3"
+  },
+  "headers": {
+   "nameHdr": "contracts/test4.bas",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-STATIC-1",
+  "code": "// Test code for TELA parser, should be valid to parse with dvm.ParseSmartContract\nFunction Initialize(u Uint64, s String) String\n10 RETURN 0\nEnd Function\n\nFunction test()\n15 RETURN 0\nEnd Function",
+  "subDir": "contracts",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 2a94e54031aa932001c2d881bcb0692f97d5cea5a6cc582c359e71bcf5f6577f",
+   "checkS": "S: 1d0818b3a8d18862e87bae13f8389d7444d896f275ad3adb71611208426c4dbe"
+  },
+  "headers": {
+   "nameHdr": "contracts/test5.bas",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-STATIC-1",
+  "code": "// Test code for TELA parser, should be valid to parse with dvm.ParseSmartContract\nFunction Initialize(u Uint64, s String) String\n10 RETURN 0\nEnd Function\n\nFunction test2()\n10 RETURN 0\nEnd Function",
+  "subDir": "contracts",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 18a933976c84365d36381661d74412717912a7ac7507713f52436ba0c555d3a",
+   "checkS": "S: da2d5ff76497ac4ed70e70ef8e97bb951d56c996fc1b7776c00e66b0efe5b3d"
+  },
+  "headers": {
+   "nameHdr": "contracts/test6.bas",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-STATIC-1",
+  "code": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 474.5 832.8\"\u003e\n  \u003cdefs\u003e\n    \u003cstyle\u003e\n      .cls-1 {\n        fill: #ed2024;\n      }\n\n      .cls-1, .cls-2, .cls-3 {\n        stroke-width: 0px;\n      }\n\n      .cls-2 {\n        fill: #46b868;\n      }\n\n      .cls-3 {\n        fill: #fff;\n      }\n    \u003c/style\u003e\n  \u003c/defs\u003e\n  \u003cg id=\"Tela1\"\u003e\n    \u003crect class=\"cls-2\" y=\"714.2\" width=\"118.61\" height=\"118.61\"/\u003e\n    \u003crect class=\"cls-1\" x=\"355.9\" width=\"118.61\" height=\"118.61\"/\u003e\n    \u003cpath class=\"cls-3\" d=\"M355.9,118.61v119.44H.07L0,714.2h118.61v-119.47h355.9V118.61h-118.61ZM355.89,476.11H118.62v-119.41h237.27v119.41Z\"/\u003e\n  \u003c/g\u003e\n\u003c/svg\u003e",
+  "subDir": "images",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: 2bed64dd176391a9dd9d58490421d7c320439f54e67d98b6724f31bc366b648c",
+   "checkS": "S: 11c10261b2260e13c2f1e9a856ca81fbcc269c61b780836bdcf42dbe51fc4974"
+  },
+  "headers": {
+   "nameHdr": "images/test1.svg",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ },
+ {
+  "docType": "TELA-STATIC-1",
+  "code": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 474.5 595.59\"\u003e\n  \u003cg id=\"Tela2\"\u003e\n    \u003cpath style=\"fill:white\" d=\"M355.9,0v119.44H.07L0,595.59h118.61v-119.47h355.9V0h-118.61ZM355.89,357.5H118.62v-119.41h237.27v119.41Z\"/\u003e\n  \u003c/g\u003e\n\u003c/svg\u003e",
+  "subDir": "images",
+  "scid": "",
+  "author": "Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka",
+  "dURL": "simple.demo.tela",
+  "compression": "",
+  "version": {
+   "major": 1,
+   "minor": 0,
+   "patch": 0
+  },
+  "signature": {
+   "checkC": "C: ae56793a2e83ad5f930bc628d3f4728826b15727e6afcfed83630bc907e7d8c",
+   "checkS": "S: 237cb656e5ff2f2be89c7647e18cfb9994bf71671fd5355b71a772d76c810423"
+  },
+  "headers": {
+   "nameHdr": "images/test2.svg",
+   "descrHdr": "",
+   "iconHdr": ""
+  }
+ }
+]
