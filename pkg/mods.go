@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/deroproject/derohe/dvm"
-	"github.com/secretnamebasis/simple-tela/logger"
+	"github.com/secretnamebasis/simple-tela/pkg/logger"
 
 	_ "embed"
 )

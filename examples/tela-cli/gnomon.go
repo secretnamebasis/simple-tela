@@ -12,8 +12,8 @@ package main
 // 	"github.com/secretnamebasis/Gnomon/indexer"
 // 	"github.com/secretnamebasis/Gnomon/storage"
 // 	"github.com/secretnamebasis/Gnomon/structures"
-// 	"github.com/secretnamebasis/simple-tela/logger"
-// 	"github.com/secretnamebasis/simple-tela/shards"
+// 	"github.com/secretnamebasis/simple-tela/pkg/logger"
+// 	"github.com/secretnamebasis/simple-tela/pkg/shards"
 // )
 
 // type gnomes struct {

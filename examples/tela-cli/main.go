@@ -20,8 +20,8 @@ import (
 	"github.com/civilware/tela"
 	"github.com/deroproject/derohe/globals"
 	"github.com/deroproject/derohe/walletapi"
-	"github.com/secretnamebasis/simple-tela/logger"
-	"github.com/secretnamebasis/simple-tela/shards"
+	"github.com/secretnamebasis/simple-tela/pkg/logger"
+	"github.com/secretnamebasis/simple-tela/pkg/shards"
 )
 
 type tela_cli struct {

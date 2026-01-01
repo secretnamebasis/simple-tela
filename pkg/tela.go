@@ -27,8 +27,8 @@ import (
 	"github.com/deroproject/derohe/walletapi"
 	"github.com/gorilla/websocket"
 	"github.com/secretnamebasis/Gnomon/rwc"
-	"github.com/secretnamebasis/simple-tela/logger"
-	"github.com/secretnamebasis/simple-tela/shards"
+	"github.com/secretnamebasis/simple-tela/pkg/logger"
+	"github.com/secretnamebasis/simple-tela/pkg/shards"
 
 	_ "embed"
 )

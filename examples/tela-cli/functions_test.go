@@ -12,8 +12,8 @@ import (
 
 	"github.com/civilware/tela"
 	"github.com/deroproject/derohe/globals"
-	"github.com/secretnamebasis/simple-tela/logger"
-	"github.com/secretnamebasis/simple-tela/shards"
+	"github.com/secretnamebasis/simple-tela/pkg/logger"
+	"github.com/secretnamebasis/simple-tela/pkg/shards"
 	"github.com/stretchr/testify/assert"
 )
 
