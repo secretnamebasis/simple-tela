@@ -27,7 +27,7 @@ const (
 func appendDocCode(code, docCode string) (newCode string, err error) {
 	docSize := GetCodeSizeInKB(docCode)
 	if docSize > MAX_DOC_CODE_SIZE {
-		err = fmt.Errorf("docCode size is to large, max %.2fKB (%.5f)", MAX_DOC_CODE_SIZE, docSize)
+		err = fmt.Errorf("docCode size is too large, max %.2fKB (%.5f)", MAX_DOC_CODE_SIZE, docSize)
 		return
 	}
 
