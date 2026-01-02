@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 
 	"compress/gzip"
@@ -38,13 +39,7 @@ func IsCompressedExt(ext string) bool {
 		return false
 	}
 
-	for _, comp := range compressionFormats {
-		if ext == comp {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(compressionFormats, ext)
 }
 
 // Decompress TELA data using the given compression format, if compression is "" result will return the original data
