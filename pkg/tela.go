@@ -1442,55 +1442,55 @@ func MaxServers() int {
 }
 
 // // Create arguments for INDEX or DOC SC install
-// func NewInstallArgs(params interface{}) (args rpc.Arguments, err error) {
-// 	var code string
-// 	switch h := params.(type) {
-// 	case *INDEX:
-// 		indexTemplate := TELA_INDEX_1
-// 		if h.Mods != "" {
-// 			_, indexTemplate, err = Mods.InjectMODs(h.Mods, indexTemplate)
-// 			if err != nil {
-// 				err = fmt.Errorf("could not inject MODs: %s", err)
-// 				return
-// 			}
-// 		}
+func NewInstallArgs(params interface{}) (args rpc.Arguments, err error) {
+	var code string
+	switch h := params.(type) {
+	case *INDEX:
+		indexTemplate := TELA_INDEX_1
+		if h.Mods != "" {
+			_, indexTemplate, err = Mods.InjectMODs(h.Mods, indexTemplate)
+			if err != nil {
+				err = fmt.Errorf("could not inject MODs: %s", err)
+				return
+			}
+		}
 
-// 		code, err = ParseHeaders(indexTemplate, h)
-// 		if err != nil {
-// 			return
-// 		}
+		code, err = ParseHeaders(indexTemplate, h)
+		if err != nil {
+			return
+		}
 
-// 		kbSize := GetCodeSizeInKB(code)
-// 		if kbSize > MAX_INDEX_INSTALL_SIZE {
-// 			err = fmt.Errorf("contract exceeds max INDEX install size by %.2fKB", kbSize-MAX_INDEX_INSTALL_SIZE)
-// 			return
-// 		}
-// 	case *DOC:
-// 		code, err = ParseHeaders(TELA_DOC_1, h)
-// 		if err != nil {
-// 			return
-// 		}
+		kbSize := GetCodeSizeInKB(code)
+		if kbSize > MAX_INDEX_INSTALL_SIZE {
+			err = fmt.Errorf("contract exceeds max INDEX install size by %.2fKB", kbSize-MAX_INDEX_INSTALL_SIZE)
+			return
+		}
+	case *DOC:
+		code, err = ParseHeaders(TELA_DOC_1, h)
+		if err != nil {
+			return
+		}
+		code, err = appendDocCode(code, h.Code)
+		if err != nil {
+			return
+		}
 
-// 		code, err = appendDocCode(code, h.Code)
-// 		if err != nil {
-// 			return
-// 		}
-// 	case rpc.Arguments:
-// 		args = h
-// 		return
-// 	default:
-// 		err = fmt.Errorf("expecting params to be *INDEX or *DOC for install and got: %T", params)
+	case rpc.Arguments:
+		args = h
+		return
+	default:
+		err = fmt.Errorf("expecting params to be *INDEX or *DOC for install and got: %T", params)
 
-// 		return
-// 	}
+		return
+	}
 
-// 	args = rpc.Arguments{
-// 		rpc.Argument{Name: rpc.SCACTION, DataType: rpc.DataUint64, Value: uint64(rpc.SC_INSTALL)},
-// 		rpc.Argument{Name: rpc.SCCODE, DataType: rpc.DataString, Value: code},
-// 	}
+	args = rpc.Arguments{
+		rpc.Argument{Name: rpc.SCACTION, DataType: rpc.DataUint64, Value: uint64(rpc.SC_INSTALL)},
+		rpc.Argument{Name: rpc.SCCODE, DataType: rpc.DataString, Value: code},
+	}
 
-// 	return
-// }
+	return
+}
 
 // // Install TELA smart contracts with DERO walletapi
 // func Installer(wallet *walletapi.Wallet_Disk, ringsize uint64, params interface{}) (txid string, err error) {
