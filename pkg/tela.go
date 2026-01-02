@@ -512,76 +512,135 @@ func GetDefaultNetworkAddress() (network, destination string) {
 	return
 }
 
-// // Get DERO gas estimate for transfers and args
-// func GetGasEstimate(wallet *walletapi.Wallet_Disk, ringsize uint64, transfers []rpc.Transfer, args rpc.Arguments) (gasFees uint64, err error) {
-// 	if wallet == nil {
-// 		err = fmt.Errorf("no wallet for transfer")
-// 		return
-// 	}
+var limiter = rate.NewLimiter(9.0, 18) // 9 msg/sec, burst 18
+// Get DERO gas estimate for transfers and args
+func GetGasEstimate(connection *websocket.Conn, ringsize uint64, transfers []rpc.Transfer, args rpc.Arguments) (gasFees uint64, err error) {
+	if connection == nil {
+		err = fmt.Errorf("no wallet connection for transfer")
+		return
+	}
 
-// 	if ringsize < 2 {
-// 		ringsize = 2
-// 	} else if ringsize > 128 {
-// 		ringsize = 128
-// 	}
+	if ringsize < 2 {
+		ringsize = 2
+	} else if ringsize > 128 {
+		ringsize = 128
+	}
 
-// 	// Initialize a DERO transfer if none is provided
-// 	if transfers == nil || len(transfers) < 1 {
-// 		_, dest := GetDefaultNetworkAddress()
-// 		transfers = []rpc.Transfer{{Destination: dest, Amount: 0}}
-// 	}
+	// Initialize a DERO transfer if none is provided
+	if len(transfers) < 1 {
+		_, dest := GetDefaultNetworkAddress()
+		transfers = []rpc.Transfer{{Destination: dest, Amount: 0}}
+	}
 
-// 	// Validate all transfer addresses
-// 	for i, t := range transfers {
-// 		_, err = globals.ParseValidateAddress(t.Destination)
-// 		if err != nil {
-// 			err = fmt.Errorf("invalid transfer address %d: %s", i, err)
-// 			return
-// 		}
-// 	}
+	// Validate all transfer addresses
+	for i, t := range transfers {
+		_, err = globals.ParseValidateAddress(t.Destination)
+		if err != nil {
+			err = fmt.Errorf("invalid transfer address %d: %s", i, err)
+			return
+		}
+	}
 
-// 	var code string
-// 	if c, ok := args.Value(rpc.SCCODE, rpc.DataString).(string); ok {
-// 		code = c
-// 	}
+	var code string
+	if c, ok := args.Value(rpc.SCCODE, rpc.DataString).(string); ok {
+		code = c
+	}
 
-// 	// Get gas estimate for transfer
-// 	gasParams := rpc.GasEstimate_Params{
-// 		Transfers: transfers,
-// 		SC_Code:   code,
-// 		SC_Value:  0,
-// 		SC_RPC:    args,
-// 		Ringsize:  ringsize,
-// 	}
+	// Get gas estimate for transfer
+	gasParams := rpc.GasEstimate_Params{
+		Transfers: transfers,
+		SC_Code:   code,
+		SC_Value:  0,
+		SC_RPC:    args,
+		Ringsize:  ringsize,
+	}
 
-// 	if ringsize == 2 {
-// 		gasParams.Signer = wallet.GetAddress().String()
-// 	}
+	if ringsize == 2 {
+		// fmt.Println(estimate)
+		payload := map[string]any{
+			"jsonrpc": "2.0",
+			"id":      "GET ADDRESS",
+			"method":  "GetAddress",
+		}
+		jsonBytes, err := json.Marshal(payload)
+		if err != nil {
+			return 0, err
+		}
+		err = limiter.Wait(context.Background())
+		if err != nil {
+			panic(err)
+		}
 
-// 	endpoint := walletapi.Daemon_Endpoint_Active
-// 	tela.client.WS, _, err = websocket.DefaultDialer.Dial("ws://"+endpoint+"/ws", nil)
-// 	if err != nil {
-// 		err = fmt.Errorf("could not dial daemon endpoint %s: %s", endpoint, err)
-// 		return
-// 	}
+		err = connection.WriteMessage(websocket.TextMessage, jsonBytes)
+		if err != nil {
+			panic(err)
+		}
 
-// 	input_output := rwc.New(tela.client.WS)
-// 	tela.client.RPC = jrpc2.NewClient(channel.RawJSON(input_output, input_output), nil)
+		_, msg, err := connection.ReadMessage()
+		if err != nil {
+			panic(err)
+		}
 
-// 	var gasResult rpc.GasEstimate_Result
-// 	if err = tela.client.RPC.CallResult(context.Background(), "DERO.GetGasEstimate", gasParams, &gasResult); err != nil {
-// 		err = fmt.Errorf("could not estimate fees: %s", err)
-// 		return
-// 	}
+		type response struct {
+			Result rpc.GetAddress_Result
+		}
+		var r response
+		if err = json.Unmarshal(msg, &r); err != nil {
+			fmt.Println("Failed to unmarshal response:", err)
+			return 0, err
+		}
 
-// 	if gasResult.GasStorage < MINIMUM_GAS_FEE {
-// 		gasResult.GasStorage = MINIMUM_GAS_FEE
-// 	}
+		gasParams.Signer = r.Result.Address
+	}
+	fmt.Println(gasParams)
+	gasResult := getGasEstimate(connection, map[string]any{
+		"jsonrpc": "2.0",
+		"id":      "GAS ESTIMATE",
+		"method":  "DERO.GetGasEstimate",
+		"params":  gasParams,
+	})
+	if gasResult.GasStorage < MINIMUM_GAS_FEE {
+		gasResult.GasStorage = MINIMUM_GAS_FEE
+	}
 
-// 	gasFees = gasResult.GasStorage
+	gasFees = gasResult.GasStorage
 
-// 	return
-// }
+	return
+}
+func getGasEstimate(connection *websocket.Conn, payload map[string]any) rpc.GasEstimate_Result {
+
+	jsonBytes, err := json.Marshal(payload)
+	if err != nil {
+		fmt.Println("Failed to marshal payload:", err)
+		return rpc.GasEstimate_Result{}
+	}
+
+	err = limiter.Wait(context.Background())
+	if err != nil {
+		panic(err)
+	}
+
+	err = connection.WriteMessage(websocket.TextMessage, jsonBytes)
+	if err != nil {
+		panic(err)
+	}
+
+	_, msg, err := connection.ReadMessage()
+	if err != nil {
+		panic(err)
+	}
+
+	type response struct {
+		Result rpc.GasEstimate_Result
+	}
+	r := response{}
+	if err = json.Unmarshal(msg, &r); err != nil {
+		fmt.Println("Failed to unmarshal response:", err)
+		return rpc.GasEstimate_Result{}
+	}
+
+	return r.Result
+}
 
 // // transfer0 is used for executing TELA smart contract functions without a DEROVALUE or ASSETVALUE, it creates a transfer of 0 to a default address for the network
 // func transfer0(wallet *walletapi.Wallet_Disk, ringsize uint64, args rpc.Arguments) (txid string, err error) {
