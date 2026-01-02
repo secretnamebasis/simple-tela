@@ -324,6 +324,7 @@ func RenderGui() {
 		// }
 		os.Args = append(os.Args, ("--durl=" + dUrl.Text))
 		os.Args = append(os.Args, (`--src-file=` + filepath.Join("src", "docs.json")))
+		os.Args = append(os.Args, (`--network=` + network))
 		// os.Args = append(os.Args, ("--src-json=" + string(byts))) // the bytes aren't saved to a deployment
 
 		cmd.Run()
