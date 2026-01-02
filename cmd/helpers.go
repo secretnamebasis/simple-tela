@@ -129,3 +129,164 @@ func CompileDocs(dURL, base string, contents []string, signed_contents []string)
 	}
 	return
 }
+
+var fee_buffer = uint64(181)
+
+// Do not over-crowd the websocket
+var limiter = rate.NewLimiter(9.0, 18) // 9 msg/sec, burst 18
+func getGasEstimate(payload map[string]any) rpc.GasEstimate_Result {
+
+	jsonBytes, err := json.Marshal(payload)
+	if err != nil {
+		fmt.Println("Failed to marshal payload:", err)
+		return rpc.GasEstimate_Result{}
+	}
+
+	type response struct {
+		Result rpc.GasEstimate_Result
+	}
+	var r response
+	if err := json.Unmarshal(postBytes(jsonBytes), &r); err != nil {
+		fmt.Println("Failed to unmarshal response:", err)
+		return rpc.GasEstimate_Result{}
+	}
+	return r.Result
+}
+func getRandAddr() string {
+	jsonBytes, err := json.Marshal(map[string]any{
+		"jsonrpc": "2.0",
+		"id":      "RANDOM ADDRES",
+		"method":  "DERO.GetRandomAddress",
+	})
+	if err != nil {
+		fmt.Println("Failed to marshal payload:", err)
+		return ""
+	}
+
+	var r xswd.RPCResponse
+	// fmt.Println(string(respBody))
+	if err := json.Unmarshal(postBytes(jsonBytes), &r); err != nil {
+		fmt.Println("Failed to unmarshal:", err)
+		return ""
+	}
+	return r.Result.(map[string]any)["address"].([]any)[0].(string)
+}
+func installContract(code, address string, args rpc.Arguments) (string, error) {
+	addr := getRandAddr()
+	// // network, a := tela.GetDefaultNetworkAddress()
+
+	// // fmt.Println(network, a)
+	// // try_again:
+	payload := map[string]any{
+		"jsonrpc": "2.0",
+		"id":      "GAS ESTIMATE",
+		"method":  "DERO.GetGasEstimate",
+		"params": rpc.GasEstimate_Params{
+			Transfers: []rpc.Transfer{
+				{
+					SCID:        crypto.ZEROHASH,
+					Destination: addr,
+					Amount:      0,
+					Burn:        0,
+				},
+			},
+			SC_Code:  code,
+			Ringsize: 2,
+			SC_Value: 0,
+			Signer:   address,
+			SC_RPC:   args,
+		}}
+
+	estimate := getGasEstimate(payload)
+	if estimate.GasCompute == 0 && estimate.GasStorage == 0 {
+		log.Fatal("no gas", payload, estimate)
+	}
+	val1 := estimate.GasStorage
+	payload = map[string]any{
+		"jsonrpc": "2.0",
+		"id":      "CONTRACT INSTALL",
+		"method":  "transfer",
+		"params": rpc.Transfer_Params{
+			Transfers: []rpc.Transfer{
+				{
+					Destination: getRandAddr(),
+					Amount:      0,
+					Burn:        0,
+				},
+			},
+			Ringsize: 2,
+			Signer:   address,
+			Fees:     val1 + fee_buffer,
+			SC_RPC:   args,
+		},
+	}
+	jsonBytes, err := json.Marshal(payload)
+	if err != nil {
+		return "", err
+	}
+
+	var r xswd.RPCResponse
+	if err := json.Unmarshal(postBytes(jsonBytes), &r); err != nil {
+		return "", err
+	}
+	if r.Result == nil {
+		return "", errors.New("result is empty")
+	}
+	if r.Result.(map[string]any)["txid"].(string) == "" {
+		return "", errors.New("txid is blank")
+	}
+	// very important, becomes account_id, bucket_id
+	scid := r.Result.(map[string]any)["txid"].(string)
+	return scid, nil
+	// if !inPool(scid) {
+	// time.Sleep(target)
+	// }
+
+	// sc := getSC(scid)
+	// if sc.Code == codeSwitch(path) {
+	// 	fmt.Println("path", path, "txid", scid)
+	// 	return scid, nil
+	// }
+	// goto try_again // unfortunately, that means we sometimes install twice
+}
+func postBytes(b []byte) []byte {
+	err := limiter.Wait(context.Background())
+	if err != nil {
+		panic(err)
+	}
+
+	err = Xswd_conn.WriteMessage(websocket.TextMessage, b)
+	if err != nil {
+		panic(err)
+	}
+
+	_, msg, err := Xswd_conn.ReadMessage()
+	if err != nil {
+		panic(err)
+	}
+
+	return msg
+}
+
+func getSC(scid string) rpc.GetSC_Result {
+
+	type response struct {
+		Result rpc.GetSC_Result
+	}
+	var r response
+	// fmt.Println(string(body))
+	if err := json.Unmarshal(postBytes([]byte((`{
+		"jsonrpc": "2.0",
+		"id": "GET SC",
+		"method": "GetSC",
+		"params": {
+			"scid": "` + scid + `",
+			"code": true,
+			"variables": true
+		}
+	}`))), &r); err != nil {
+		fmt.Println("Failed to unmarshal response:", err)
+		return rpc.GetSC_Result{}
+	}
+	return r.Result
+}
