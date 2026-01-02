@@ -22,7 +22,7 @@ import (
 
 var network string = "simulator"
 var signature string //= rand.Text()
-var default_simulator_port = "2000"
+var default_simulator_port = "20000"
 var default_mainnet_port = "10102"
 var docs []tela.DOC
 var headers = []string{
