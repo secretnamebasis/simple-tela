@@ -241,9 +241,30 @@ func CompileDocs(dURL, base string, contents []string, code, signed_code []strin
 			SCVersion: &tela.GetContractVersions(true)[0],
 			Author:    addrResult.String(),
 		}
-
 		docs = append(docs, doc)
 	}
+	// order matters... the index is a required document
+	first := tela.DOC{}
+	cutset := []tela.DOC{}
+	for _, each := range docs {
+		if !strings.Contains(each.NameHdr, "index") {
+			cutset = append(cutset, each)
+			continue
+		}
+		if !strings.Contains(each.NameHdr, ".html") && !strings.Contains(each.NameHdr, ".php") {
+			cutset = append(cutset, each)
+			continue
+		}
+		// should always be first
+		first = each
+	}
+	if !strings.Contains(first.NameHdr, "index") {
+		fmt.Println(errors.New("index must be first"), first)
+		return
+	}
+	docs = []tela.DOC{first}
+	docs = append(docs, cutset...)
+
 	return
 }
 
