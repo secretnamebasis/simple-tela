@@ -269,7 +269,8 @@ func RenderGui() {
 			// var index tela.INDEX
 
 			fmt.Println("parsing contents of", src.Text)
-			signed_docs := []string{}
+			code_files := []string{}
+			signed_files := []string{}
 			for _, each := range table_contents {
 
 				fileBytes, err := os.ReadFile(each)
@@ -277,20 +278,22 @@ func RenderGui() {
 					fmt.Println(err)
 					continue
 				}
-				code := string(fileBytes)
-				r := signData(code) // it would be fun to put data in here for creating a signature
 
-				data := r.Result.(map[string]any)["signature"].(string)
-				signed_docs = append(signed_docs, data)
+				code := string(fileBytes)
+
+				r := signData(code) // it would be fun to put data in here for creating a signature
+				signature := r.Result.(map[string]any)["signature"].(string)
+
+				code_files = append(code_files, code)
+				signed_files = append(signed_files, signature)
 			}
 
-			docs = cmd.CompileDocs(dUrl.Text, src.Text, table_contents, signed_docs)
+			docs = cmd.CompileDocs(dUrl.Text, src.Text, table_contents, code_files, signed_files)
 			// // probably fun to integrate the concept of the appDataID here...
 			// // I think the deciding factor will be to determine if there is going to be an ws connect
 			// // we should parse the application data that we get and then find out...
 			// results.SetText(strings.Join(contents, "\n"))
 
-			xswd_conn.Close()
 		}
 
 		table.Refresh()
