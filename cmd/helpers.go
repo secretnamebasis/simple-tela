@@ -1,13 +1,22 @@
 package cmd
 
 import (
+	"context"
 	"encoding/base64"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/deroproject/derohe/cryptography/crypto"
+	"github.com/deroproject/derohe/rpc"
+	"github.com/deroproject/derohe/walletapi/xswd"
+	"github.com/gorilla/websocket"
 	tela "github.com/secretnamebasis/simple-tela/pkg"
+	"golang.org/x/time/rate"
 )
 
 func ignore(name string) bool {
@@ -41,7 +50,7 @@ func Walk(name string, paths []os.DirEntry, contents *[]string) {
 	}
 }
 
-func CompileDocs(dURL, base string, contents []string, signed_contents []string) (docs []tela.DOC) {
+func CompileDocs(dURL, base string, contents []string, code, signed_code []string) (docs []tela.DOC) {
 	for i, each := range contents {
 
 		name := strings.TrimPrefix(each, base)
@@ -72,7 +81,7 @@ func CompileDocs(dURL, base string, contents []string, signed_contents []string)
 
 		// fmt.Printf("doc-type: %13s file-ext: %7s file-name: %s\n", docType, fileEx, name)
 
-		b, err := base64.StdEncoding.DecodeString(signed_contents[i])
+		b, err := base64.StdEncoding.DecodeString(signed_code[i])
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -83,34 +92,57 @@ func CompileDocs(dURL, base string, contents []string, signed_contents []string)
 		sig_parts := strings.Split(result, "\n")
 
 		// begin := sig_parts[0]
-		address := sig_parts[1]
+		address := strings.Fields(sig_parts[1])[1]
+		address = strings.TrimSpace(address)
+		addrResult, err := rpc.NewAddress(address)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
 		c_value := sig_parts[2]
 		s_value := sig_parts[3]
-		empty := sig_parts[4]
+		// empty := sig_parts[4]
 		// end := sig_parts[5]
 
 		// the message is blank when the signature is empty
-		message := empty
-		if result != "" {
-			// end = sig_parts[6]
-			message = sig_parts[5]
-		}
+		// message := empty
+		// if result != "" {
+		// end = sig_parts[6]
+		// message = sig_parts[5]
+		// }
 
 		// fmt.Println(begin, address, c_value, s_value,
 		// 	empty,
 		// 	message,
 		// 	end,
 		// )
+		c := code[i]
+		compression := ""
+		value := tela.GetCodeSizeInKB(c)
+		if value >= tela.MAX_DOC_CODE_SIZE {
+			// apply compression?
+			c, err = tela.Compress([]byte(c), tela.COMPRESSION_GZIP)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			if c == "" {
+				fmt.Println(errors.New("code is empty"))
+				continue
+			}
+			compression = tela.COMPRESSION_GZIP
+			dURL += tela.COMPRESSION_GZIP
+		}
 
 		// I guess we could make a table to input all the data
 		doc := tela.DOC{
-			Code:    message, // this is the contents of the file
+			Code:    c, // this is the contents of the file, but it gets re-written at install
 			DocType: docType,
 			DURL:    dURL, // this is tricky because this is a name-space thing...
 			// in tela, .shards is a valid tld
 
-			SubDir: subdir, // this is tricky as well because it is a routing thing
-			// Compression: , // this really isn't all that tricky, are we compressing the data?
+			SubDir:      subdir,      // this is tricky as well because it is a routing thing
+			Compression: compression, // this really isn't all that tricky, are we compressing the data?
 			// what makes it tricky is the concept of sharding...
 			Headers: tela.Headers{
 				NameHdr: name, // On-chain name of SC. For TELA-DOCs, they are recreated using this as the file name, it should include the file extension
@@ -122,7 +154,7 @@ func CompileDocs(dURL, base string, contents []string, signed_contents []string)
 				CheckS: s_value,
 			},
 			SCVersion: &tela.GetContractVersions(true)[0],
-			Author:    address,
+			Author:    addrResult.String(),
 		}
 
 		docs = append(docs, doc)
