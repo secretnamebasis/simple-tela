@@ -216,7 +216,7 @@ func CompileDocs(dURL, base string, contents []string, code, signed_code []strin
 				continue
 			}
 			compression = tela.COMPRESSION_GZIP
-			dURL += tela.COMPRESSION_GZIP
+			name += tela.COMPRESSION_GZIP
 		}
 
 		// I guess we could make a table to input all the data
