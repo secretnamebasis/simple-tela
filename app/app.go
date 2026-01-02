@@ -220,12 +220,16 @@ func RenderGui() {
 
 			fmt.Println("asking for endpoint at xswd websocket connection")
 
-			if err := set_ws_conn(); err != nil {
-				dialog.ShowError(err, w)
-				fmt.Println(err)
-				return
-			}
+			// os.Args = append(os.Args, "--ws-address=")
+			if cmd.Xswd_conn == nil {
 
+				if err := cmd.Set_ws_conn(); err != nil {
+					dialog.ShowError(err, w)
+					fmt.Println(err)
+					return
+				}
+
+			}
 			d := getDaemonEndpoint()
 
 			if d.Endpoint == "" {
