@@ -246,6 +246,7 @@ func installContract(code, address string, args rpc.Arguments) (string, error) {
 					Burn:        0,
 				},
 			},
+			SC_Code:  code,
 			Ringsize: 2,
 			Signer:   address,
 			Fees:     val1 + fee_buffer,

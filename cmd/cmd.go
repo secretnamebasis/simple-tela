@@ -3,7 +3,9 @@ package cmd
 import (
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -50,6 +52,7 @@ var mainnet bool = false // the idea here is:
 // obviously checking to make sure... is the endpoint correct
 var request string = "demo-deployment"
 var dURL string = "demo.tela"
+var dst string
 var src_file string
 var src_json string
 
@@ -189,7 +192,7 @@ func Run() {
 		os.Mkdir("deployment", 0700)
 		// obviously, we'll likely need some kind of xswd connection
 		// typically, we are going to be using some other tool to write code, and test code
-		dst := filepath.Join("deployment", time.Now().Local().Format("2006.01.02.15_04_05")) + "_" + dURL + "_" + network
+		dst = filepath.Join("deployment", time.Now().Local().Format("2006.01.02.15_04_05")) + "_" + dURL + "_" + network
 		// first we need to create a new deployment
 		if err := os.Mkdir(dst, 0700); err != nil {
 			if !strings.Contains(err.Error(), "no such file or directory") {
@@ -217,12 +220,42 @@ func Run() {
 		return
 	}
 
-	var docs []tela.DOC
+	var docs []*tela.DOC
 
 	if err := json.Unmarshal([]byte(docs_json_data_string), &docs); err != nil {
 		fmt.Println(err)
 		return
 	}
+	// txids := []string{}
+	for _, each := range docs {
+		args, err := tela.NewInstallArgs(each)
+		if err != nil {
+			log.Fatal(err) // I guess I answered my own question
+			// if the file is too large, we have to apply compression... but let's not apply compression at run time
+			// let's do it at compiling
+		}
+		if code := args.Value(rpc.SCCODE, rpc.DataString).(string); code != "" {
 
-	fmt.Println(docs)
+			txid, err := installContract(code, each.Author, args)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Println(txid)
+			each.SCID = txid
+			// txids = append(txids, txid)
+		}
+	}
+	// now let's save those...
+	if dst != "" {
+		fileBytes, err := json.MarshalIndent(docs, "", " ")
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		if err := os.WriteFile(filepath.Join(dst, "docs.json"), fileBytes, 0644); err != nil {
+			fmt.Println(err)
+			return
+		}
+	}
+	// fmt.Println(docs)
 }
