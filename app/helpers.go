@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/deroproject/derohe/walletapi/xswd"
 	"github.com/gorilla/websocket"
+	"github.com/secretnamebasis/simple-tela/cmd"
 	"golang.org/x/time/rate"
 )
 
@@ -78,12 +78,12 @@ func getDaemonEndpoint() xswd.GetDaemon_Result {
 		return xswd.GetDaemon_Result{}
 	}
 
-	err = xswd_conn.WriteMessage(websocket.TextMessage, jsonBytes)
+	err = cmd.Xswd_conn.WriteMessage(websocket.TextMessage, jsonBytes)
 	if err != nil {
 		panic(err)
 	}
 
-	_, msg, err := xswd_conn.ReadMessage()
+	_, msg, err := cmd.Xswd_conn.ReadMessage()
 	if err != nil {
 		panic(err)
 	}
@@ -128,12 +128,12 @@ func signData(input string) xswd.RPCResponse {
 		panic(err)
 	}
 
-	err = xswd_conn.WriteMessage(websocket.TextMessage, jsonBytes)
+	err = cmd.Xswd_conn.WriteMessage(websocket.TextMessage, jsonBytes)
 	if err != nil {
 		panic(err)
 	}
 
-	_, msg, err := xswd_conn.ReadMessage()
+	_, msg, err := cmd.Xswd_conn.ReadMessage()
 	if err != nil {
 		panic(err)
 	}
