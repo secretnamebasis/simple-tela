@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"slices"
@@ -460,149 +461,139 @@ func getSCErrors(result string) bool {
 	return false
 }
 
-// // Get a string key from smart contract at endpoint
-// func getContractVar(scid, key, endpoint string) (variable string, err error) {
-// 	var params = rpc.GetSC_Params{SCID: scid, Variables: false, Code: false, KeysString: []string{key}}
-// 	var result rpc.GetSC_Result
+// Get a string key from smart contract at endpoint
+func getContractVar(xswd_connection *websocket.Conn, scid, key string) (variable string, err error) {
+	result := getSC(xswd_connection, rpc.GetSC_Params{SCID: scid, Variables: false, Code: false, KeysString: []string{key}})
 
-// 	tela.client.WS, _, err = websocket.DefaultDialer.Dial("ws://"+endpoint+"/ws", nil)
-// 	if err != nil {
-// 		return
-// 	}
+	res := result.ValuesString
+	if len(res) < 1 || res[0] == "" || getSCErrors(res[0]) {
+		err = fmt.Errorf("invalid string value for %q", key)
+		return
+	}
 
-// 	input_output := rwc.New(tela.client.WS)
-// 	tela.client.RPC = jrpc2.NewClient(channel.RawJSON(input_output, input_output), nil)
+	// uint values don't need to be decoded
+	if key == "likes" || key == "dislikes" {
+		variable = res[0]
+		return
+	}
 
-// 	err = tela.client.RPC.CallResult(context.Background(), "DERO.GetSC", params, &result)
-// 	if err != nil {
-// 		return
-// 	}
+	variable = decodeHexString(res[0])
 
-// 	res := result.ValuesString
-// 	if len(res) < 1 || res[0] == "" || getSCErrors(res[0]) {
-// 		err = fmt.Errorf("invalid string value for %q", key)
-// 		return
-// 	}
-
-// 	// uint values don't need to be decoded
-// 	if key == "likes" || key == "dislikes" {
-// 		variable = res[0]
-// 		return
-// 	}
-
-// 	variable = decodeHexString(res[0])
-
-// 	return
-// }
+	return
+}
 
 // // Get a TXID as hex from daemon endpoint
-// func getTXID(txid, endpoint string) (txidAsHex string, height int64, err error) {
-// 	var params = rpc.GetTransaction_Params{Tx_Hashes: []string{txid}}
-// 	var result rpc.GetTransaction_Result
+func getTXID(xswd_connection *websocket.Conn, txid string) (txidAsHex string, height int64, err error) {
+	payload := map[string]any{
+		"jsonrpc": "2.0",
+		"id":      "GET SC",
+		"method":  "DERO.GetTXID",
+		"params":  rpc.GetTransaction_Params{Tx_Hashes: []string{txid}},
+	}
+	jsonBytes, err := json.Marshal(payload)
+	if err != nil {
+		panic(err)
+	}
+	msg := postBytes(xswd_connection, jsonBytes)
+	type response struct {
+		Result rpc.GetTransaction_Result
+	}
+	r := response{}
 
-// 	tela.client.WS, _, err = websocket.DefaultDialer.Dial("ws://"+endpoint+"/ws", nil)
-// 	if err != nil {
-// 		return
-// 	}
+	if err := json.Unmarshal(msg, &r); err != nil {
+		panic(err)
+	}
 
-// 	input_output := rwc.New(tela.client.WS)
-// 	tela.client.RPC = jrpc2.NewClient(channel.RawJSON(input_output, input_output), nil)
+	res := r.Result.Txs_as_hex
+	if len(res) < 1 || res[0] == "" {
+		err = fmt.Errorf("no data found for TXID %s", txid)
+		return
+	}
 
-// 	err = tela.client.RPC.CallResult(context.Background(), "DERO.GetTransaction", params, &result)
-// 	if err != nil {
-// 		return
-// 	}
+	txidAsHex = res[0]
+	height = r.Result.Txs[0].Block_Height
 
-// 	res := result.Txs_as_hex
-// 	if len(res) < 1 || res[0] == "" {
-// 		err = fmt.Errorf("no data found for TXID %s", txid)
-// 		return
-// 	}
+	return
+}
+func postBytes(xswd_connection *websocket.Conn, jsonBytes []byte) []byte {
+	err := limiter.Wait(context.Background())
+	if err != nil {
+		panic(err)
+	}
 
-// 	txidAsHex = res[0]
-// 	height = result.Txs[0].Block_Height
+	err = xswd_connection.WriteMessage(websocket.TextMessage, jsonBytes)
+	if err != nil {
+		panic(err)
+	}
 
-// 	return
-// }
+	_, msg, err := xswd_connection.ReadMessage()
+	if err != nil {
+		panic(err)
+	}
+	return msg
+}
+func getSC(xswd_connection *websocket.Conn, params rpc.GetSC_Params) rpc.GetSC_Result {
+	payload := map[string]any{
+		"jsonrpc": "2.0",
+		"id":      "GET SC",
+		"method":  "DERO.GetSC",
+		"params":  params,
+	}
+	jsonBytes, err := json.Marshal(payload)
+	if err != nil {
+		panic(err)
+	}
+	msg := postBytes(xswd_connection, jsonBytes)
+	type response struct {
+		Result rpc.GetSC_Result
+	}
+	r := response{}
 
-// // Get the current state of all string keys in a smart contract
-// func getContractVars(scid, endpoint string) (vars map[string]interface{}, err error) {
-// 	var params = rpc.GetSC_Params{SCID: scid, Variables: true, Code: false}
-// 	var result rpc.GetSC_Result
+	if err := json.Unmarshal(msg, &r); err != nil {
+		panic(err)
+	}
+	return r.Result
+}
 
-// 	tela.client.WS, _, err = websocket.DefaultDialer.Dial("ws://"+endpoint+"/ws", nil)
-// 	if err != nil {
-// 		return
-// 	}
+// Get the current state of all string keys in a smart contract
+func getContractVars(xswd_connection *websocket.Conn, scid string) (vars map[string]interface{}, err error) {
 
-// 	input_output := rwc.New(tela.client.WS)
-// 	tela.client.RPC = jrpc2.NewClient(channel.RawJSON(input_output, input_output), nil)
+	result := getSC(xswd_connection, rpc.GetSC_Params{SCID: scid, Variables: true, Code: false})
 
-// 	err = tela.client.RPC.CallResult(context.Background(), "DERO.GetSC", params, &result)
-// 	if err != nil {
-// 		return
-// 	}
+	vars = result.VariableStringKeys
 
-// 	vars = result.VariableStringKeys
+	return
+}
 
-// 	return
-// }
+// Get the current code of a smart contract at endpoint
+func getContractCode(xswd_connection *websocket.Conn, scid string) (code string, err error) {
 
-// // Get the current code of a smart contract at endpoint
-// func getContractCode(scid, endpoint string) (code string, err error) {
-// 	var params = rpc.GetSC_Params{SCID: scid, Variables: false, Code: true}
-// 	var result rpc.GetSC_Result
+	result := getSC(xswd_connection, rpc.GetSC_Params{SCID: scid, Variables: false, Code: true})
 
-// 	tela.client.WS, _, err = websocket.DefaultDialer.Dial("ws://"+endpoint+"/ws", nil)
-// 	if err != nil {
-// 		return
-// 	}
+	if result.Code == "" {
+		err = fmt.Errorf("code is empty string")
+		return
+	}
 
-// 	input_output := rwc.New(tela.client.WS)
-// 	tela.client.RPC = jrpc2.NewClient(channel.RawJSON(input_output, input_output), nil)
+	code = result.Code
 
-// 	err = tela.client.RPC.CallResult(context.Background(), "DERO.GetSC", params, &result)
-// 	if err != nil {
-// 		return
-// 	}
+	return
+}
 
-// 	if result.Code == "" {
-// 		err = fmt.Errorf("code is empty string")
-// 		return
-// 	}
+// Get the code of a smart contract at height from endpoint
+func getContractCodeAtHeight(xswd_connection *websocket.Conn, height int64, scid string) (code string, err error) {
 
-// 	code = result.Code
+	result := getSC(xswd_connection, rpc.GetSC_Params{SCID: scid, Variables: false, Code: true, TopoHeight: height})
 
-// 	return
-// }
+	if result.Code == "" {
+		err = fmt.Errorf("code is empty string")
+		return
+	}
 
-// // Get the code of a smart contract at height from endpoint
-// func getContractCodeAtHeight(height int64, scid, endpoint string) (code string, err error) {
-// 	var params = rpc.GetSC_Params{SCID: scid, Variables: false, Code: true, TopoHeight: height}
-// 	var result rpc.GetSC_Result
+	code = result.Code
 
-// 	tela.client.WS, _, err = websocket.DefaultDialer.Dial("ws://"+endpoint+"/ws", nil)
-// 	if err != nil {
-// 		return
-// 	}
-
-// 	input_output := rwc.New(tela.client.WS)
-// 	tela.client.RPC = jrpc2.NewClient(channel.RawJSON(input_output, input_output), nil)
-
-// 	err = tela.client.RPC.CallResult(context.Background(), "DERO.GetSC", params, &result)
-// 	if err != nil {
-// 		return
-// 	}
-
-// 	if result.Code == "" {
-// 		err = fmt.Errorf("code is empty string")
-// 		return
-// 	}
-
-// 	code = result.Code
-
-// 	return
-// }
+	return
+}
 
 // Get a default DERO transfer address for the network defined by globals.Arguments --testnet and --simulator flags
 func GetDefaultNetworkAddress() (network, destination string) {
@@ -757,220 +748,237 @@ func getGasEstimate(connection *websocket.Conn, payload map[string]any) rpc.GasE
 }
 
 // // transfer0 is used for executing TELA smart contract functions without a DEROVALUE or ASSETVALUE, it creates a transfer of 0 to a default address for the network
-// func transfer0(wallet *walletapi.Wallet_Disk, ringsize uint64, args rpc.Arguments) (txid string, err error) {
-// 	return Transfer(wallet, ringsize, nil, args)
-// }
+func transfer0(xswd_conneciton *websocket.Conn, ringsize uint64, args rpc.Arguments) (txid string, err error) {
+	return Transfer(xswd_conneciton, ringsize, nil, args)
+}
 
-// // Transfer is used for executing TELA smart contract actions with DERO walletapi, if nil transfers is passed
-// // it initializes a transfer of 0 to a default address for the network using GetDefaultNetworkAddress()
-// func Transfer(wallet *walletapi.Wallet_Disk, ringsize uint64, transfers []rpc.Transfer, args rpc.Arguments) (txid string, err error) {
-// 	var gasFees uint64
-// 	gasFees, err = GetGasEstimate(wallet, ringsize, transfers, args)
-// 	if err != nil {
-// 		return
-// 	}
+// Transfer is used for executing TELA smart contract actions with DERO walletapi, if nil transfers is passed
+// it initializes a transfer of 0 to a default address for the network using GetDefaultNetworkAddress()
+func Transfer(xswd_conneciton *websocket.Conn, ringsize uint64, transfers []rpc.Transfer, args rpc.Arguments) (txid string, err error) {
+	var gasFees uint64
+	gasFees, err = GetGasEstimate(xswd_conneciton, ringsize, transfers, args)
+	if err != nil {
+		return
+	}
+	code := ""
+	if args.HasValue(rpc.SCCODE, rpc.DataString) {
+		c, ok := args.Value(rpc.SCCODE, rpc.DataString).(string)
+		if ok {
+			code = c
+		}
+	}
+	payload := map[string]any{
+		"id":     "Transfer",
+		"method": "transfer",
+		"params": rpc.Transfer_Params{
+			Transfers: transfers,
+			Ringsize:  ringsize,
+			Fees:      gasFees,
+			SC_RPC:    args,
+			SC_Code:   code,
+		},
+	}
+	jsonBytes, err := json.Marshal(payload)
+	if err != nil {
+		return "", err
+	}
+	msg := postBytes(xswd_conneciton, jsonBytes)
+	type response struct {
+		Result rpc.Transfer_Result
+	}
+	r := response{}
+	json.Unmarshal(msg, &r)
 
-// 	tx, err := wallet.TransferPayload0(transfers, ringsize, false, args, gasFees, false)
-// 	if err != nil {
-// 		err = fmt.Errorf("transfer build error: %s", err)
-// 		return
-// 	}
+	txid = r.Result.TXID
 
-// 	if err = wallet.SendTransaction(tx); err != nil {
-// 		err = fmt.Errorf("transfer dispatch error: %s", err)
-// 		return
-// 	}
+	return
+}
 
-// 	txid = tx.GetHash().String()
+// Clone a TELA-DOC SCID to path from endpoint
+func cloneDOC(xswd_connection *websocket.Conn, scid, docNum, path string) (clone Cloning, err error) {
+	if len(scid) != 64 {
+		err = fmt.Errorf("invalid DOC SCID: %s", scid)
+		return
+	}
 
-// 	return
-// }
+	var code string
+	code, err = getContractCode(xswd_connection, scid)
+	if err != nil {
+		err = fmt.Errorf("could not get SC code from %s: %s", scid, err)
+		return
+	}
 
-// // Clone a TELA-DOC SCID to path from endpoint
-// func cloneDOC(scid, docNum, path, endpoint string) (clone Cloning, err error) {
-// 	if len(scid) != 64 {
-// 		err = fmt.Errorf("invalid DOC SCID: %s", scid)
-// 		return
-// 	}
+	_, _, err = ValidDOCVersion(code)
+	if err != nil {
+		err = fmt.Errorf("scid does not parse as TELA-DOC-1: %s", err)
+		return
+	}
 
-// 	var code string
-// 	code, err = getContractCode(scid, endpoint)
-// 	if err != nil {
-// 		err = fmt.Errorf("could not get SC code from %s: %s", scid, err)
-// 		return
-// 	}
+	var docType string
+	docType, err = getContractVar(xswd_connection, scid, HEADER_DOCTYPE.Trim())
+	if err != nil {
+		err = fmt.Errorf("could not get docType from %s: %s", scid, err)
+		return
+	}
 
-// 	_, _, err = ValidDOCVersion(code)
-// 	if err != nil {
-// 		err = fmt.Errorf("scid does not parse as TELA-DOC-1: %s", err)
-// 		return
-// 	}
+	var fileName string
+	fileName, err = getContractVar(xswd_connection, scid, HEADER_NAME_V2.Trim())
+	if err != nil {
+		fileName, err = getContractVar(xswd_connection, scid, HEADER_NAME.Trim())
+		if err != nil {
+			err = fmt.Errorf("could not get nameHdr from %s", scid)
+			return
+		}
+	}
 
-// 	var docType string
-// 	docType, err = getContractVar(scid, HEADER_DOCTYPE.Trim(), endpoint)
-// 	if err != nil {
-// 		err = fmt.Errorf("could not get docType from %s: %s", scid, err)
-// 		return
-// 	}
+	var compression string
+	ext := filepath.Ext(fileName)
+	if IsCompressedExt(ext) {
+		compression = ext
+	}
 
-// 	var fileName string
-// 	fileName, err = getContractVar(scid, HEADER_NAME_V2.Trim(), endpoint)
-// 	if err != nil {
-// 		fileName, err = getContractVar(scid, HEADER_NAME.Trim(), endpoint)
-// 		if err != nil {
-// 			err = fmt.Errorf("could not get nameHdr from %s", scid)
-// 			return
-// 		}
-// 	}
+	recreate := strings.TrimSuffix(fileName, compression)
 
-// 	var compression string
-// 	ext := filepath.Ext(fileName)
-// 	if IsCompressedExt(ext) {
-// 		compression = ext
-// 	}
+	// Set entrypoint DOC
+	isDOC1 := Header(docNum) == HEADER_DOCUMENT.Number(1)
+	if isDOC1 {
+		clone.Entrypoint = recreate
+	}
 
-// 	recreate := strings.TrimSuffix(fileName, compression)
+	// Check if DOC is to be placed in subDir
+	var subDir string
+	subDir, err = getContractVar(xswd_connection, scid, HEADER_SUBDIR.Trim())
+	if err != nil && !strings.Contains(err.Error(), "invalid string value for") { // only return on RPC error
+		err = fmt.Errorf("could not get subDir for %s: %s", fileName, err)
+		return
+	}
 
-// 	// Set entrypoint DOC
-// 	isDOC1 := Header(docNum) == HEADER_DOCUMENT.Number(1)
-// 	if isDOC1 {
-// 		clone.Entrypoint = recreate
-// 	}
+	// If a valid subDir was decoded add it to path for this DOC
+	if subDir != "" {
+		// Split all subDir to create path
+		split := strings.Split(subDir, "/")
+		for _, s := range split {
+			path = filepath.Join(path, s)
+		}
 
-// 	// Check if DOC is to be placed in subDir
-// 	var subDir string
-// 	subDir, err = getContractVar(scid, HEADER_SUBDIR.Trim(), endpoint)
-// 	if err != nil && !strings.Contains(err.Error(), "invalid string value for") { // only return on RPC error
-// 		err = fmt.Errorf("could not get subDir for %s: %s", fileName, err)
-// 		return
-// 	}
+		// If serving from subDir point to it
+		if isDOC1 {
+			clone.ServePath = fmt.Sprintf("/%s", subDir)
+		}
+	}
 
-// 	// If a valid subDir was decoded add it to path for this DOC
-// 	if subDir != "" {
-// 		// Split all subDir to create path
-// 		split := strings.Split(subDir, "/")
-// 		for _, s := range split {
-// 			path = filepath.Join(path, s)
-// 		}
+	filePath := filepath.Join(path, recreate)
+	if _, err = os.Stat(filePath); !os.IsNotExist(err) {
+		err = fmt.Errorf("file %s already exists", filePath)
+		return
+	}
 
-// 		// If serving from subDir point to it
-// 		if isDOC1 {
-// 			clone.ServePath = fmt.Sprintf("/%s", subDir)
-// 		}
-// 	}
+	if !IsAcceptedLanguage(docType) {
+		err = fmt.Errorf("%s is not an accepted language for DOC %s", docType, fileName)
+		return
+	}
 
-// 	filePath := filepath.Join(path, recreate)
-// 	if _, err = os.Stat(filePath); !os.IsNotExist(err) {
-// 		err = fmt.Errorf("file %s already exists", filePath)
-// 		return
-// 	}
+	err = parseAndSaveTELADoc(filePath, code, docType, compression)
+	if err != nil {
+		err = fmt.Errorf("error saving %s: %s", fileName, err)
+		return
+	}
 
-// 	if !IsAcceptedLanguage(docType) {
-// 		err = fmt.Errorf("%s is not an accepted language for DOC %s", docType, fileName)
-// 		return
-// 	}
+	return
+}
 
-// 	err = parseAndSaveTELADoc(filePath, code, docType, compression)
-// 	if err != nil {
-// 		err = fmt.Errorf("error saving %s: %s", fileName, err)
-// 		return
-// 	}
+// Clone a TELA-INDEX SCID to path from endpoint creating all DOCs embedded within the INDEX
+func cloneINDEX(xswd_connection *websocket.Conn, scid, dURL, path string) (clone Cloning, err error) {
+	if len(scid) != 64 {
+		err = fmt.Errorf("invalid INDEX SCID: %s", scid)
+		return
+	}
 
-// 	return
-// }
+	tagErr := fmt.Sprintf("cloning %s@%s was not successful:", dURL, scid)
 
-// // Clone a TELA-INDEX SCID to path from endpoint creating all DOCs embedded within the INDEX
-// func cloneINDEX(scid, dURL, path, endpoint string) (clone Cloning, err error) {
-// 	if len(scid) != 64 {
-// 		err = fmt.Errorf("invalid INDEX SCID: %s", scid)
-// 		return
-// 	}
+	hash, err := getContractVar(xswd_connection, scid, "hash")
+	if err != nil {
+		err = fmt.Errorf("%s could not get commit hash: %s", tagErr, err)
+		return
+	}
 
-// 	tagErr := fmt.Sprintf("cloning %s@%s was not successful:", dURL, scid)
+	tagCommit := fmt.Sprintf("%s@%s", dURL, hash)
 
-// 	hash, err := getContractVar(scid, "hash", endpoint)
-// 	if err != nil {
-// 		err = fmt.Errorf("%s could not get commit hash: %s", tagErr, err)
-// 		return
-// 	}
+	// If the user does not want updated content
+	if !tela.updates && scid != hash {
+		err = fmt.Errorf("%s user defined no updates and content has been updated to %s", tagErr, tagCommit)
+		return
+	}
 
-// 	tagCommit := fmt.Sprintf("%s@%s", dURL, hash)
+	code, err := getContractCode(xswd_connection, scid)
+	if err != nil {
+		err = fmt.Errorf("%s could not get SC code: %s", tagErr, err)
+		return
+	}
 
-// 	// If the user does not want updated content
-// 	if !tela.updates && scid != hash {
-// 		err = fmt.Errorf("%s user defined no updates and content has been updated to %s", tagErr, tagCommit)
-// 		return
-// 	}
+	var modTag string // mods store can be empty so don't return error
+	if storedMods, err := getContractVar(xswd_connection, scid, "mods"); err == nil {
+		modTag = storedMods
+	}
 
-// 	code, err := getContractCode(scid, endpoint)
-// 	if err != nil {
-// 		err = fmt.Errorf("%s could not get SC code: %s", tagErr, err)
-// 		return
-// 	}
+	// Only clone contracts matching TELA standard
+	sc, _, err := ValidINDEXVersion(code, modTag)
+	if err != nil {
+		err = fmt.Errorf("%s does not parse as TELA-INDEX-1: %s", tagErr, err)
+		return
+	}
 
-// 	var modTag string // mods store can be empty so don't return error
-// 	if storedMods, err := getContractVar(scid, "mods", endpoint); err == nil {
-// 		modTag = storedMods
-// 	}
+	// TELA-INDEX entrypoint, this will be nameHdr of DOC1
+	entrypoint := ""
+	// Path where file will be stored
+	basePath := filepath.Join(path, dURL)
+	// Path to entrypoint
+	servePath := ""
 
-// 	// Only clone contracts matching TELA standard
-// 	sc, _, err := ValidINDEXVersion(code, modTag)
-// 	if err != nil {
-// 		err = fmt.Errorf("%s does not parse as TELA-INDEX-1: %s", tagErr, err)
-// 		return
-// 	}
+	// If INDEX contains DocShards to be constructed
+	if strings.HasSuffix(dURL, TAG_DOC_SHARDS) {
+		err = cloneDocShards(xswd_connection, sc, basePath)
+		if err != nil {
+			err = fmt.Errorf("%s %s", tagErr, err)
+			return
+		}
+	} else {
+		// Parse INDEX SC for valid DOCs
+		entrypoint, servePath, err = parseAndCloneINDEXForDOCs(xswd_connection, sc, 0, basePath)
+		if err != nil {
+			// If all of the files were not cloned successfully, any residual files are removed if they did not exist already
+			err = fmt.Errorf("%s %s", tagErr, err)
+			if !strings.Contains(err.Error(), "already exists") {
+				os.RemoveAll(basePath)
+			}
+			return
+		}
+	}
 
-// 	// TELA-INDEX entrypoint, this will be nameHdr of DOC1
-// 	entrypoint := ""
-// 	// Path where file will be stored
-// 	basePath := filepath.Join(path, dURL)
-// 	// Path to entrypoint
-// 	servePath := ""
+	clone.DURL = dURL
+	clone.BasePath = basePath
+	clone.ServePath = servePath
+	clone.Entrypoint = entrypoint
 
-// 	// If INDEX contains DocShards to be constructed
-// 	if strings.HasSuffix(dURL, TAG_DOC_SHARDS) {
-// 		err = cloneDocShards(sc, basePath, endpoint)
-// 		if err != nil {
-// 			err = fmt.Errorf("%s %s", tagErr, err)
-// 			return
-// 		}
-// 	} else {
-// 		// Parse INDEX SC for valid DOCs
-// 		entrypoint, servePath, err = parseAndCloneINDEXForDOCs(sc, 0, basePath, endpoint)
-// 		if err != nil {
-// 			// If all of the files were not cloned successfully, any residual files are removed if they did not exist already
-// 			err = fmt.Errorf("%s %s", tagErr, err)
-// 			if !strings.Contains(err.Error(), "already exists") {
-// 				os.RemoveAll(basePath)
-// 			}
-// 			return
-// 		}
-// 	}
+	return
+}
 
-// 	clone.DURL = dURL
-// 	clone.BasePath = basePath
-// 	clone.ServePath = servePath
-// 	clone.Entrypoint = entrypoint
+// cloneDocShards takes a TELA-INDEX SC and parses its DOCs, creating them as DocShards which get recreated as a single file
+func cloneDocShards(xwsd_connection *websocket.Conn, sc dvm.SmartContract, basePath string) (err error) {
+	docShards, recreate, compression, err := parseDocShards(xwsd_connection, sc, basePath)
+	if err != nil {
+		err = fmt.Errorf("could not clone DocShards: %s", err)
+		return
+	}
 
-// 	return
-// }
+	err = ConstructFromShards(docShards, recreate, basePath, compression)
+	if err != nil {
+		err = fmt.Errorf("could not construct DocShards: %s", err)
+		return
+	}
 
-// // cloneDocShards takes a TELA-INDEX SC and parses its DOCs, creating them as DocShards which get recreated as a single file
-// func cloneDocShards(sc dvm.SmartContract, basePath, endpoint string) (err error) {
-// 	docShards, recreate, compression, err := parseDocShards(sc, basePath, endpoint)
-// 	if err != nil {
-// 		err = fmt.Errorf("could not clone DocShards: %s", err)
-// 		return
-// 	}
-
-// 	err = ConstructFromShards(docShards, recreate, basePath, compression)
-// 	if err != nil {
-// 		err = fmt.Errorf("could not construct DocShards: %s", err)
-// 		return
-// 	}
-
-// 	return
-// }
+	return
+}
 
 // Get the total amount of shards that would be created if data is used to CreateShardFiles
 func GetTotalShards(data []byte) (totalShards int, fileSize int64) {
@@ -1125,95 +1133,95 @@ func CreateShardFiles(filePath, compression string, content []byte) (err error) 
 }
 
 // // Clone a TELA-INDEX SCID at commit TXID to path from endpoint creating all DOCs embedded within the INDEX at the commit height
-// func cloneINDEXAtCommit(height int64, scid, txid, path, endpoint string) (clone Cloning, err error) {
-// 	if len(scid) != 64 {
-// 		err = fmt.Errorf("invalid INDEX SCID: %s", scid)
-// 		return
-// 	}
+func cloneINDEXAtCommit(xswd_conneciton *websocket.Conn, height int64, scid, txid, path string) (clone Cloning, err error) {
+	if len(scid) != 64 {
+		err = fmt.Errorf("invalid INDEX SCID: %s", scid)
+		return
+	}
 
-// 	// TXID only needed on first INDEX
-// 	if height == 0 && len(txid) != 64 {
-// 		err = fmt.Errorf("invalid INDEX commit TXID: %s", txid)
-// 		return
-// 	}
+	// TXID only needed on first INDEX
+	if height == 0 && len(txid) != 64 {
+		err = fmt.Errorf("invalid INDEX commit TXID: %s", txid)
+		return
+	}
 
-// 	dURL, err := getContractVar(scid, HEADER_DURL.Trim(), endpoint)
-// 	if err != nil {
-// 		err = fmt.Errorf("could not get dURL from %s: %s", scid, err)
-// 		return
-// 	}
+	dURL, err := getContractVar(xswd_conneciton, scid, HEADER_DURL.Trim())
+	if err != nil {
+		err = fmt.Errorf("could not get dURL from %s: %s", scid, err)
+		return
+	}
 
-// 	tagErr := fmt.Sprintf("cloning %s@%s was not successful:", dURL, txid)
+	tagErr := fmt.Sprintf("cloning %s@%s was not successful:", dURL, txid)
 
-// 	var code, modTag string
-// 	if height > 0 {
-// 		// If more then one INDEX embed, use height from commit TXID to get docCode at commit height
-// 		code, err = getContractCodeAtHeight(height, scid, endpoint)
-// 		if err != nil {
-// 			return
-// 		}
+	var code, modTag string
+	if height > 0 {
+		// If more then one INDEX embed, use height from commit TXID to get docCode at commit height
+		code, err = getContractCodeAtHeight(xswd_conneciton, height, scid)
+		if err != nil {
+			return
+		}
 
-// 		modTag = extractModTagFromCode(code)
-// 	} else {
-// 		// First INDEX get commit height and code from TXID
-// 		txidAsHex, commitHeight, errr := getTXID(txid, endpoint)
-// 		if errr != nil {
-// 			err = fmt.Errorf("%s could not get TXID: %s", tagErr, errr)
-// 			return
-// 		}
+		modTag = extractModTagFromCode(code)
+	} else {
+		// First INDEX get commit height and code from TXID
+		txidAsHex, commitHeight, errr := getTXID(xswd_conneciton, txid)
+		if errr != nil {
+			err = fmt.Errorf("%s could not get TXID: %s", tagErr, errr)
+			return
+		}
 
-// 		height = commitHeight
+		height = commitHeight
 
-// 		code, err = extractCodeFromTXID(txidAsHex)
-// 		if err != nil {
-// 			err = fmt.Errorf("%s could not get SC code: %s", tagErr, err)
-// 			return
-// 		}
+		code, err = extractCodeFromTXID(txidAsHex)
+		if err != nil {
+			err = fmt.Errorf("%s could not get SC code: %s", tagErr, err)
+			return
+		}
 
-// 		modTag = extractModTagFromCode(code)
-// 	}
+		modTag = extractModTagFromCode(code)
+	}
 
-// 	// Only clone contracts matching TELA standard
-// 	sc, _, err := ValidINDEXVersion(code, modTag)
-// 	if err != nil {
-// 		err = fmt.Errorf("%s does not parse as TELA-INDEX-1: %s", tagErr, err)
-// 		return
-// 	}
+	// Only clone contracts matching TELA standard
+	sc, _, err := ValidINDEXVersion(code, modTag)
+	if err != nil {
+		err = fmt.Errorf("%s does not parse as TELA-INDEX-1: %s", tagErr, err)
+		return
+	}
 
-// 	// TELA-INDEX entrypoint, this will be nameHdr of DOC1
-// 	entrypoint := ""
-// 	// Path where file will be stored
-// 	basePath := filepath.Join(path, dURL)
-// 	// Path to entrypoint
-// 	servePath := ""
+	// TELA-INDEX entrypoint, this will be nameHdr of DOC1
+	entrypoint := ""
+	// Path where file will be stored
+	basePath := filepath.Join(path, dURL)
+	// Path to entrypoint
+	servePath := ""
 
-// 	// If INDEX contains DocShards to be constructed
-// 	if strings.HasSuffix(dURL, TAG_DOC_SHARDS) {
-// 		err = cloneDocShards(sc, basePath, endpoint)
-// 		if err != nil {
-// 			err = fmt.Errorf("%s %s", tagErr, err)
-// 			return
-// 		}
-// 	} else {
-// 		// Parse INDEX SC for valid DOCs
-// 		entrypoint, servePath, err = parseAndCloneINDEXForDOCs(sc, height, basePath, endpoint)
-// 		if err != nil {
-// 			// If all of the files were not cloned successfully, any residual files are removed if they did not exist already
-// 			err = fmt.Errorf("%s %s", tagErr, err)
-// 			if !strings.Contains(err.Error(), "already exists") {
-// 				os.RemoveAll(basePath)
-// 			}
-// 			return
-// 		}
-// 	}
+	// If INDEX contains DocShards to be constructed
+	if strings.HasSuffix(dURL, TAG_DOC_SHARDS) {
+		err = cloneDocShards(xswd_conneciton, sc, basePath)
+		if err != nil {
+			err = fmt.Errorf("%s %s", tagErr, err)
+			return
+		}
+	} else {
+		// Parse INDEX SC for valid DOCs
+		entrypoint, servePath, err = parseAndCloneINDEXForDOCs(xswd_conneciton, sc, height, basePath)
+		if err != nil {
+			// If all of the files were not cloned successfully, any residual files are removed if they did not exist already
+			err = fmt.Errorf("%s %s", tagErr, err)
+			if !strings.Contains(err.Error(), "already exists") {
+				os.RemoveAll(basePath)
+			}
+			return
+		}
+	}
 
-// 	clone.DURL = dURL
-// 	clone.BasePath = basePath
-// 	clone.ServePath = servePath
-// 	clone.Entrypoint = entrypoint
+	clone.DURL = dURL
+	clone.BasePath = basePath
+	clone.ServePath = servePath
+	clone.Entrypoint = entrypoint
 
-// 	return
-// }
+	return
+}
 
 // // Clone TELA content at SCID from endpoint
 // func Clone(scid, endpoint string) (err error) {
@@ -1666,20 +1674,20 @@ func NewInstallArgs(params interface{}) (args rpc.Arguments, err error) {
 }
 
 // // Install TELA smart contracts with DERO walletapi
-// func Installer(wallet *walletapi.Wallet_Disk, ringsize uint64, params interface{}) (txid string, err error) {
-// 	if wallet == nil {
-// 		err = fmt.Errorf("no wallet for TELA Installer")
-// 		return
-// 	}
+func Installer(xswd_connection *websocket.Conn, ringsize uint64, params interface{}) (txid string, err error) {
+	if xswd_connection == nil {
+		err = fmt.Errorf("no wallet for TELA Installer")
+		return
+	}
 
-// 	var args rpc.Arguments
-// 	args, err = NewInstallArgs(params)
-// 	if err != nil {
-// 		return
-// 	}
+	var args rpc.Arguments
+	args, err = NewInstallArgs(params)
+	if err != nil {
+		return
+	}
 
-// 	return transfer0(wallet, ringsize, args)
-// }
+	return transfer0(xswd_connection, ringsize, args)
+}
 
 // // Create arguments for INDEX SC UpdateCode call
 // func NewUpdateArgs(params interface{}) (args rpc.Arguments, err error) {
@@ -2123,244 +2131,244 @@ func (tag MetaTag) ExtractAttribute(attribute string) (value string) {
 	return tagStr[start+1 : start+1+end]
 }
 
-// // ValidateImageURL will return error if the imageURL is not a valid URL or a valid image smart contract
-// func ValidateImageURL(imageURL, endpoint string) (svgCode string, err error) {
-// 	if imageURL == "" {
-// 		// Empty is valid
-// 		return
-// 	}
+// ValidateImageURL will return error if the imageURL is not a valid URL or a valid image smart contract
+func ValidateImageURL(xswd_conneciton *websocket.Conn, imageURL string) (svgCode string, err error) {
+	if imageURL == "" {
+		// Empty is valid
+		return
+	}
 
-// 	// Try to validate as URI first
-// 	_, err = url.ParseRequestURI(imageURL)
-// 	if err != nil {
-// 		if len(imageURL) != 64 {
-// 			return
-// 		}
+	// Try to validate as URI first
+	_, err = url.ParseRequestURI(imageURL)
+	if err != nil {
+		if len(imageURL) != 64 {
+			return
+		}
 
-// 		// Check if it is a TELA DOC SC
-// 		var doc DOC
-// 		doc, err = GetDOCInfo(imageURL, endpoint)
-// 		if err != nil {
-// 			return
-// 		}
+		// Check if it is a TELA DOC SC
+		var doc DOC
+		doc, err = GetDOCInfo(xswd_conneciton, imageURL)
+		if err != nil {
+			return
+		}
 
-// 		// Check if the DocCode is SVG
-// 		svgCode, err = doc.ExtractAsSVG()
-// 	}
+		// Check if the DocCode is SVG
+		svgCode, err = doc.ExtractAsSVG()
+	}
 
-// 	return
-// }
+	return
+}
 
-// // Get TELA-DOC info from scid at endpoint
-// func GetDOCInfo(scid, endpoint string) (doc DOC, err error) {
-// 	vars, err := getContractVars(scid, endpoint)
-// 	if err != nil {
-// 		return
-// 	}
+// Get TELA-DOC info from scid at endpoint
+func GetDOCInfo(xswd_conneciton *websocket.Conn, scid string) (doc DOC, err error) {
+	vars, err := getContractVars(xswd_conneciton, scid)
+	if err != nil {
+		return
+	}
 
-// 	// SC code, dURL and docType are required, otherwise values can be empty
-// 	c, ok := vars["C"].(string)
-// 	if !ok {
-// 		err = fmt.Errorf("could not get SC code from %s", scid)
-// 		return
-// 	}
+	// SC code, dURL and docType are required, otherwise values can be empty
+	c, ok := vars["C"].(string)
+	if !ok {
+		err = fmt.Errorf("could not get SC code from %s", scid)
+		return
+	}
 
-// 	code := decodeHexString(c)
-// 	_, version, err := ValidDOCVersion(code)
-// 	if err != nil {
-// 		err = fmt.Errorf("scid does not parse as TELA-DOC-1: %s", err)
-// 		return
-// 	}
+	code := decodeHexString(c)
+	_, version, err := ValidDOCVersion(code)
+	if err != nil {
+		err = fmt.Errorf("scid does not parse as TELA-DOC-1: %s", err)
+		return
+	}
 
-// 	dT, ok := vars[HEADER_DOCTYPE.Trim()].(string)
-// 	if !ok {
-// 		err = fmt.Errorf("could not get docType from %s", scid)
-// 		return
-// 	}
+	dT, ok := vars[HEADER_DOCTYPE.Trim()].(string)
+	if !ok {
+		err = fmt.Errorf("could not get docType from %s", scid)
+		return
+	}
 
-// 	docType := decodeHexString(dT)
-// 	if !IsAcceptedLanguage(docType) {
-// 		err = fmt.Errorf("could not validate docType %q", docType)
-// 		return
-// 	}
+	docType := decodeHexString(dT)
+	if !IsAcceptedLanguage(docType) {
+		err = fmt.Errorf("could not validate docType %q", docType)
+		return
+	}
 
-// 	d, ok := vars[HEADER_DURL.Trim()].(string)
-// 	if !ok {
-// 		err = fmt.Errorf("could not get dURL from %s", scid)
-// 		return
-// 	}
+	d, ok := vars[HEADER_DURL.Trim()].(string)
+	if !ok {
+		err = fmt.Errorf("could not get dURL from %s", scid)
+		return
+	}
 
-// 	dURL := decodeHexString(d)
+	dURL := decodeHexString(d)
 
-// 	var nameHdr, descrHdr, iconHdr, subDir, checkC, checkS, compression string
-// 	name, ok := vars[HEADER_NAME_V2.Trim()].(string)
-// 	if ok {
-// 		nameHdr = decodeHexString(name)
-// 	} else {
-// 		name, ok := vars[HEADER_NAME.Trim()].(string)
-// 		if ok {
-// 			nameHdr = decodeHexString(name)
-// 		}
-// 	}
+	var nameHdr, descrHdr, iconHdr, subDir, checkC, checkS, compression string
+	name, ok := vars[HEADER_NAME_V2.Trim()].(string)
+	if ok {
+		nameHdr = decodeHexString(name)
+	} else {
+		name, ok := vars[HEADER_NAME.Trim()].(string)
+		if ok {
+			nameHdr = decodeHexString(name)
+		}
+	}
 
-// 	desc, ok := vars[HEADER_DESCRIPTION_V2.Trim()].(string)
-// 	if ok {
-// 		descrHdr = decodeHexString(desc)
-// 	} else {
-// 		desc, ok := vars[HEADER_DESCRIPTION.Trim()].(string)
-// 		if ok {
-// 			descrHdr = decodeHexString(desc)
-// 		}
-// 	}
+	desc, ok := vars[HEADER_DESCRIPTION_V2.Trim()].(string)
+	if ok {
+		descrHdr = decodeHexString(desc)
+	} else {
+		desc, ok := vars[HEADER_DESCRIPTION.Trim()].(string)
+		if ok {
+			descrHdr = decodeHexString(desc)
+		}
+	}
 
-// 	ic, ok := vars[HEADER_ICON_URL_V2.Trim()].(string)
-// 	if ok {
-// 		iconHdr = decodeHexString(ic)
-// 	} else {
-// 		ic, ok := vars[HEADER_ICON_URL.Trim()].(string)
-// 		if ok {
-// 			iconHdr = decodeHexString(ic)
-// 		}
-// 	}
+	ic, ok := vars[HEADER_ICON_URL_V2.Trim()].(string)
+	if ok {
+		iconHdr = decodeHexString(ic)
+	} else {
+		ic, ok := vars[HEADER_ICON_URL.Trim()].(string)
+		if ok {
+			iconHdr = decodeHexString(ic)
+		}
+	}
 
-// 	sd, ok := vars[HEADER_SUBDIR.Trim()].(string)
-// 	if ok {
-// 		subDir = decodeHexString(sd)
-// 	}
+	sd, ok := vars[HEADER_SUBDIR.Trim()].(string)
+	if ok {
+		subDir = decodeHexString(sd)
+	}
 
-// 	author := "anon"
-// 	addr, ok := vars[HEADER_OWNER.Trim()].(string)
-// 	if ok {
-// 		author = decodeHexString(addr)
-// 	}
+	author := "anon"
+	addr, ok := vars[HEADER_OWNER.Trim()].(string)
+	if ok {
+		author = decodeHexString(addr)
+	}
 
-// 	fC, ok := vars[HEADER_CHECK_C.Trim()].(string)
-// 	if ok {
-// 		checkC = decodeHexString(fC)
-// 	}
+	fC, ok := vars[HEADER_CHECK_C.Trim()].(string)
+	if ok {
+		checkC = decodeHexString(fC)
+	}
 
-// 	fS, ok := vars[HEADER_CHECK_S.Trim()].(string)
-// 	if ok {
-// 		checkS = decodeHexString(fS)
-// 	}
+	fS, ok := vars[HEADER_CHECK_S.Trim()].(string)
+	if ok {
+		checkS = decodeHexString(fS)
+	}
 
-// 	ext := filepath.Ext(nameHdr)
-// 	if IsCompressedExt(ext) {
-// 		compression = ext
-// 	}
+	ext := filepath.Ext(nameHdr)
+	if IsCompressedExt(ext) {
+		compression = ext
+	}
 
-// 	doc = DOC{
-// 		DocType:     docType,
-// 		Code:        code,
-// 		SubDir:      subDir,
-// 		SCID:        scid,
-// 		Author:      author,
-// 		DURL:        dURL,
-// 		Compression: compression,
-// 		SCVersion:   &version,
-// 		Signature: Signature{
-// 			CheckC: checkC,
-// 			CheckS: checkS,
-// 		},
-// 		Headers: Headers{
-// 			NameHdr:  nameHdr,
-// 			DescrHdr: descrHdr,
-// 			IconHdr:  iconHdr,
-// 		},
-// 	}
+	doc = DOC{
+		DocType:     docType,
+		Code:        code,
+		SubDir:      subDir,
+		SCID:        scid,
+		Author:      author,
+		DURL:        dURL,
+		Compression: compression,
+		SCVersion:   &version,
+		Signature: Signature{
+			CheckC: checkC,
+			CheckS: checkS,
+		},
+		Headers: Headers{
+			NameHdr:  nameHdr,
+			DescrHdr: descrHdr,
+			IconHdr:  iconHdr,
+		},
+	}
 
-// 	return
-// }
+	return
+}
 
-// // Get TELA-INDEX info from scid at endpoint
-// func GetINDEXInfo(scid, endpoint string) (index INDEX, err error) {
-// 	vars, err := getContractVars(scid, endpoint)
-// 	if err != nil {
-// 		return
-// 	}
+// Get TELA-INDEX info from scid at endpoint
+func GetINDEXInfo(xswd_connection *websocket.Conn, scid string) (index INDEX, err error) {
+	vars, err := getContractVars(xswd_connection, scid)
+	if err != nil {
+		return
+	}
 
-// 	// SC code and dURL are required, otherwise values can be empty
-// 	c, ok := vars["C"].(string)
-// 	if !ok {
-// 		err = fmt.Errorf("could not get SC code from %s", scid)
-// 		return
-// 	}
+	// SC code and dURL are required, otherwise values can be empty
+	c, ok := vars["C"].(string)
+	if !ok {
+		err = fmt.Errorf("could not get SC code from %s", scid)
+		return
+	}
 
-// 	var modTag string
-// 	storedMods, ok := vars["mods"].(string)
-// 	if ok {
-// 		modTag = decodeHexString(storedMods)
-// 	}
+	var modTag string
+	storedMods, ok := vars["mods"].(string)
+	if ok {
+		modTag = decodeHexString(storedMods)
+	}
 
-// 	code := decodeHexString(c)
-// 	sc, version, err := ValidINDEXVersion(code, modTag)
-// 	if err != nil {
-// 		err = fmt.Errorf("scid does not parse as TELA-INDEX-1: %s", err)
-// 		return
-// 	}
+	code := decodeHexString(c)
+	sc, version, err := ValidINDEXVersion(code, modTag)
+	if err != nil {
+		err = fmt.Errorf("scid does not parse as TELA-INDEX-1: %s", err)
+		return
+	}
 
-// 	d, ok := vars[HEADER_DURL.Trim()].(string)
-// 	if !ok {
-// 		err = fmt.Errorf("could not get dURL from %s", scid)
-// 		return
-// 	}
+	d, ok := vars[HEADER_DURL.Trim()].(string)
+	if !ok {
+		err = fmt.Errorf("could not get dURL from %s", scid)
+		return
+	}
 
-// 	dURL := decodeHexString(d)
+	dURL := decodeHexString(d)
 
-// 	var nameHdr, descrHdr, iconHdr string
-// 	name, ok := vars[HEADER_NAME_V2.Trim()].(string)
-// 	if ok {
-// 		nameHdr = decodeHexString(name)
-// 	} else {
-// 		name, ok := vars[HEADER_NAME.Trim()].(string)
-// 		if ok {
-// 			nameHdr = decodeHexString(name)
-// 		}
-// 	}
+	var nameHdr, descrHdr, iconHdr string
+	name, ok := vars[HEADER_NAME_V2.Trim()].(string)
+	if ok {
+		nameHdr = decodeHexString(name)
+	} else {
+		name, ok := vars[HEADER_NAME.Trim()].(string)
+		if ok {
+			nameHdr = decodeHexString(name)
+		}
+	}
 
-// 	desc, ok := vars[HEADER_DESCRIPTION_V2.Trim()].(string)
-// 	if ok {
-// 		descrHdr = decodeHexString(desc)
-// 	} else {
-// 		desc, ok := vars[HEADER_DESCRIPTION.Trim()].(string)
-// 		if ok {
-// 			descrHdr = decodeHexString(desc)
-// 		}
-// 	}
+	desc, ok := vars[HEADER_DESCRIPTION_V2.Trim()].(string)
+	if ok {
+		descrHdr = decodeHexString(desc)
+	} else {
+		desc, ok := vars[HEADER_DESCRIPTION.Trim()].(string)
+		if ok {
+			descrHdr = decodeHexString(desc)
+		}
+	}
 
-// 	ic, ok := vars[HEADER_ICON_URL_V2.Trim()].(string)
-// 	if ok {
-// 		iconHdr = decodeHexString(ic)
-// 	} else {
-// 		ic, ok := vars[HEADER_ICON_URL.Trim()].(string)
-// 		if ok {
-// 			iconHdr = decodeHexString(ic)
-// 		}
-// 	}
+	ic, ok := vars[HEADER_ICON_URL_V2.Trim()].(string)
+	if ok {
+		iconHdr = decodeHexString(ic)
+	} else {
+		ic, ok := vars[HEADER_ICON_URL.Trim()].(string)
+		if ok {
+			iconHdr = decodeHexString(ic)
+		}
+	}
 
-// 	author := "anon"
-// 	addr, ok := vars[HEADER_OWNER.Trim()].(string)
-// 	if ok {
-// 		author = decodeHexString(addr)
-// 	}
+	author := "anon"
+	addr, ok := vars[HEADER_OWNER.Trim()].(string)
+	if ok {
+		author = decodeHexString(addr)
+	}
 
-// 	// Get all DOCs from contract code
-// 	docs := parseINDEXForDOCs(sc)
+	// Get all DOCs from contract code
+	docs := parseINDEXForDOCs(sc)
 
-// 	index = INDEX{
-// 		Mods:      modTag,
-// 		SCID:      scid,
-// 		Author:    author,
-// 		DURL:      dURL,
-// 		DOCs:      docs,
-// 		SCVersion: &version,
-// 		SC:        sc,
-// 		Headers: Headers{
-// 			NameHdr:  nameHdr,
-// 			DescrHdr: descrHdr,
-// 			IconHdr:  iconHdr,
-// 		},
-// 	}
+	index = INDEX{
+		Mods:      modTag,
+		SCID:      scid,
+		Author:    author,
+		DURL:      dURL,
+		DOCs:      docs,
+		SCVersion: &version,
+		SC:        sc,
+		Headers: Headers{
+			NameHdr:  nameHdr,
+			DescrHdr: descrHdr,
+			IconHdr:  iconHdr,
+		},
+	}
 
-// 	return
-// }
+	return
+}
