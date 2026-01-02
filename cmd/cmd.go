@@ -134,6 +134,8 @@ func Run() {
 				// 	signature = value
 				case "--durl":
 					dURL = value
+				case "--network":
+					network = value
 				case "--src-file":
 					src_file = value
 				case "--src-json":
@@ -160,9 +162,24 @@ func Run() {
 		return
 	}
 
-	if mainnet {
-		network = "mainnet"
+	// because these aren't initialized anywhere
+	fmt.Println(network)
+	switch network {
+	case "mainnet":
+		globals.Arguments["--testnet"] = false
+		globals.Arguments["--simulator"] = false
+	case "testnet":
+		globals.Arguments["--testnet"] = true
+		globals.Arguments["--simulator"] = false
+	case "simulator":
+		globals.Arguments["--testnet"] = true
+		globals.Arguments["--simulator"] = true
 	}
+	globals.InitNetwork()
+
+	// if mainnet {
+	// 	network = "mainnet"
+	// }
 
 	docs_json_data_string := "'"
 
