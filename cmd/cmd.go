@@ -11,6 +11,32 @@ import (
 	tela "github.com/secretnamebasis/simple-tela/pkg"
 )
 
+var appID = "6df99f80bc8b17340c21fa9c7613e9837cf641b1a1168433e8343337c752073c"
+var appSig = `-----BEGIN DERO SIGNED MESSAGE-----
+Address: dero1qyc96tgvz8fz623snpfwjgdhlqznamcsuh8rahrh2yvsf2gqqxdljqg9a9kka
+C: d30f486cc66f6d6571112fcb3aacba4f076aba439e9bd0e84bef94b06e5c851
+S: 2d839f4432e1c7a2da391dd01ed9efec64831b2bbc99a47ab4a04b283005080a
+
+NmRmOTlmODBiYzhiMTczNDBjMjFmYTljNzYxM2U5ODM3Y2Y2NDFiMWExMTY4NDMz
+ZTgzNDMzMzdjNzUyMDczYw==
+-----END DERO SIGNED MESSAGE-----`
+var Xswd_conn *websocket.Conn
+var AppData = xswd.ApplicationData{
+	Id:          appID,
+	Signature:   []byte(appSig),
+	Name:        "simple-tela-deploymnet-manager",
+	Description: "Creating deployments on must be simple and fun! :)",
+	Url:         "http://localhost:8080",
+	Permissions: map[string]xswd.Permission{
+		"transfer":              xswd.Ask, // ask for every transfer?
+		"SignData":              xswd.AlwaysAllow,
+		"GetAddress":            xswd.AlwaysAllow,
+		"DERO.GetGasEstimate":   xswd.AlwaysAllow,
+		"DERO.GetSC":            xswd.AlwaysAllow,
+		"DERO.GetRandomAddress": xswd.AlwaysAllow,
+	},
+}
+
 var network string = "simulator"
 var mainnet bool = false // the idea here is:
 // deploy under simulation as much and as often as needed
