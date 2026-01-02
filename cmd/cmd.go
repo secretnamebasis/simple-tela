@@ -24,6 +24,7 @@ var mainnet bool = false // the idea here is:
 var request string = "demo-deployment"
 var dURL string = "demo.tela"
 var dst string
+var index_headers string
 var src_file string
 var src_json string
 
@@ -45,8 +46,12 @@ func Run() {
 			case 1:
 			case 2:
 				switch key {
-				// case "--signature":
-				// 	signature = value
+				case "--headers":
+					// just in case
+					value = strings.TrimPrefix(value, `"`)
+					value = strings.TrimSuffix(value, `"`)
+
+					index_headers = value
 				case "--durl":
 					dURL = value
 				case "--network":
@@ -138,7 +143,7 @@ func Run() {
 		fmt.Println(err)
 		return
 	}
-	// txids := []string{}
+	txids := []string{}
 	for _, each := range docs {
 		args, err := tela.NewInstallArgs(each)
 		if err != nil {
@@ -154,7 +159,7 @@ func Run() {
 			}
 			fmt.Println(txid)
 			each.SCID = txid
-			// txids = append(txids, txid)
+			txids = append(txids, txid)
 		}
 	}
 	// now let's save those...
@@ -169,5 +174,49 @@ func Run() {
 			return
 		}
 	}
+	headers := strings.Split(index_headers, ";")
+	if len(headers) != 3 {
+		fmt.Println(errors.New("headers are invalid"), headers)
+		return
+	}
+	nameHdr := headers[0]
+	descHdr := headers[1]
+	iconHdr := headers[2]
+	index := &tela.INDEX{
+		Author:    docs[0].Author,
+		DURL:      dURL,
+		DOCs:      txids,
+		SCVersion: &tela.GetContractVersions(false)[1],
+		Headers:   tela.Headers{NameHdr: nameHdr, DescrHdr: descHdr, IconHdr: iconHdr},
+	}
+	args, err := tela.NewInstallArgs(index)
+	if err != nil {
+		log.Fatal(err) // I guess I answered my own question
+		// if the file is too large, we have to apply compression... but let's not apply compression at run time
+		// let's do it at compiling
+	}
+
+	if code := args.Value(rpc.SCCODE, rpc.DataString).(string); code != "" {
+		txid, err := installContract(code, index.Author, args)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(txid)
+		index.SCID = txid
+	}
+
+	if dst != "" {
+
+		fileBytes, err := json.MarshalIndent(index, "", " ")
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		if err := os.WriteFile(filepath.Join(dst, "index.json"), fileBytes, 0644); err != nil {
+			fmt.Println(err)
+			return
+		}
+	}
+
 	// fmt.Println(docs)
 }
