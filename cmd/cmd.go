@@ -1,12 +1,18 @@
 package cmd
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/deroproject/derohe/globals"
+	"github.com/deroproject/derohe/rpc"
+	"github.com/deroproject/derohe/walletapi/xswd"
+	"github.com/gorilla/websocket"
 
 	tela "github.com/secretnamebasis/simple-tela/pkg"
 )
@@ -56,8 +62,64 @@ func isValidTLD(tld string) bool {
 	}
 }
 
+var websocket_endpoint string = "ws://127.0.0.1:44326/xswd"
+
+func Set_ws_conn() error {
+
+	for _, each := range os.Args {
+		if !strings.Contains(each, "--ws-address=") {
+			continue
+		}
+		endpoint := strings.Split(each, "=")[1]
+		websocket_endpoint = "ws://" + endpoint + "/xswd"
+	}
+
+	var err error
+
+	fmt.Printf("Connecting to %s\n", websocket_endpoint)
+
+	dialer := websocket.Dialer{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // allow self-signed certs
+	}
+
+	conn, _, err := dialer.Dial(websocket_endpoint, nil)
+	Xswd_conn = conn
+
+	if err != nil {
+		return err
+	}
+	fmt.Println("WebSocket xswd_connected")
+
+	if err := Xswd_conn.WriteJSON(AppData); err != nil {
+		panic(err)
+	}
+	fmt.Println("Auth handshake sent")
+
+	_, msg, err := Xswd_conn.ReadMessage()
+	if err != nil {
+		return err
+	}
+
+	var res xswd.AuthorizationResponse
+	if err := json.Unmarshal(msg, &res); err != nil {
+		return err
+	}
+
+	if !res.Accepted {
+		return (errors.New("app not accepted"))
+	}
+
+	return nil
+}
+
 // the purpose of this application is to make the deployment process of tela simple
 func Run() {
+	if Xswd_conn == nil {
+		if err := Set_ws_conn(); err != nil {
+			fmt.Println(err)
+			return
+		}
+	}
 
 	for _, each := range os.Args {
 		if strings.Contains(each, "=") {
