@@ -38,7 +38,7 @@ var headers = []string{
 func RenderGui() {
 	a := app.NewWithID("simple-tela" + rand.Text())
 	w := a.NewWindow("simple-tela")
-	w.Resize(fyne.NewSize(1200, 300))
+	w.Resize(fyne.NewSize(1200, 600))
 	var table *widget.Table
 	length := func() (rows int, cols int) {
 		return len(docs), len(headers)
@@ -152,6 +152,32 @@ func RenderGui() {
 		}
 		return nil
 	}
+	nameHdr := widget.NewEntry()
+	nameHdr.SetPlaceHolder("tela name")
+
+	// this one is mandatory
+	nameHdr.Validator = func(s string) error {
+		if s == "" {
+			return errors.New("empty " + nameHdr.PlaceHolder)
+		}
+		return nil
+	}
+	descHdr := widget.NewEntry()
+	descHdr.SetPlaceHolder("tela description")
+	// descHdr.Validator = func(s string) error {
+	// 	if s == "" {
+	// 		return errors.New("empty " + descHdr.PlaceHolder)
+	// 	}
+	// 	return nil
+	// }
+	iconHdr := widget.NewEntry()
+	iconHdr.SetPlaceHolder("tela icon")
+	// iconHdr.Validator = func(s string) error {
+	// 	if s == "" {
+	// 		return errors.New("empty " + iconHdr.PlaceHolder)
+	// 	}
+	// 	return nil
+	// }
 	table_contents := []string{}
 	src := widget.NewEntry()
 	src.SetPlaceHolder("source file for deployment")
@@ -298,7 +324,7 @@ func RenderGui() {
 
 		table.Refresh()
 	}
-	src.ActionItem = widget.NewButtonWithIcon("compile docs", theme.FileIcon(), compile)
+	compileBtn := widget.NewButtonWithIcon("compile docs", theme.FileIcon(), compile)
 	src.Disable()
 
 	install := func() {
@@ -307,6 +333,14 @@ func RenderGui() {
 			dUrl.SetText("")
 		}
 		if err := dUrl.Validate(); err != nil {
+			fmt.Println(err)
+			return
+		}
+		if nameHdr.Text == "" {
+			nameHdr.SetText(" ")
+			nameHdr.SetText("")
+		}
+		if err := nameHdr.Validate(); err != nil {
 			fmt.Println(err)
 			return
 		}
@@ -325,6 +359,7 @@ func RenderGui() {
 		os.Args = append(os.Args, ("--durl=" + dUrl.Text))
 		os.Args = append(os.Args, (`--src-file=` + filepath.Join("src", "docs.json")))
 		os.Args = append(os.Args, (`--network=` + network))
+		os.Args = append(os.Args, (`--headers="` + nameHdr.Text + ";" + descHdr.Text + ";" + iconHdr.Text + `"`))
 		// os.Args = append(os.Args, ("--src-json=" + string(byts))) // the bytes aren't saved to a deployment
 
 		cmd.Run()
@@ -355,7 +390,7 @@ func RenderGui() {
 	}
 	import_docs := widget.NewButton("or, import docs.json", importDocs)
 	install_docs := widget.NewButton("install docs", install)
-	content := container.NewBorder(container.NewVBox(container.NewVBox(dUrl, src), container.NewAdaptiveGrid(3, choose_folder, import_docs, install_docs)), nil, nil, nil, table)
+	content := container.NewBorder(container.NewVBox(container.NewVBox(dUrl, src, container.NewAdaptiveGrid(2, choose_folder, import_docs)), container.NewAdaptiveGrid(1, compileBtn)), container.NewVBox(container.NewAdaptiveGrid(3, nameHdr, descHdr, iconHdr), install_docs), nil, nil, table)
 	w.SetContent(content)
 	w.ShowAndRun()
 }
