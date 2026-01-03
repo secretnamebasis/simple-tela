@@ -417,7 +417,7 @@ func getSC(scid string) rpc.GetSC_Result {
 	if err := json.Unmarshal(postBytes([]byte((`{
 		"jsonrpc": "2.0",
 		"id": "GET SC",
-		"method": "GetSC",
+		"method": "DERO.GetSC",
 		"params": {
 			"scid": "` + scid + `",
 			"code": true,
