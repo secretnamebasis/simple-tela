@@ -365,7 +365,7 @@ func RenderGui() {
 		cmd.Run()
 	}
 	src.OnSubmitted = func(s string) { compile() }
-	choose_folder := widget.NewButton("choose folder", upload_folder) // at this point, when we hit install, we are validating the docs
+	choose_folder := widget.NewButton("import with folder", upload_folder) // at this point, when we hit install, we are validating the docs
 	importDocs := func() {
 		if dUrl.Text == "" {
 			dUrl.SetText(" ")
@@ -388,9 +388,48 @@ func RenderGui() {
 		fo.Resize(fyne.NewSize(800, 300))
 		fo.Show()
 	}
-	import_docs := widget.NewButton("or, import docs.json", importDocs)
+	scid := widget.NewEntry()
+	scid.SetPlaceHolder("tela index scid")
+	importScids := func() {
+		docs = []tela.DOC{}
+		dialog.ShowCustomConfirm("import docs from index scid", "confirm", "dismiss", scid, func(b bool) {
+			if !b {
+				return
+			}
+			// os.Args = append(os.Args, "--ws-address=")
+			if cmd.Xswd_conn == nil {
+
+				if err := cmd.Set_ws_conn(); err != nil {
+					dialog.ShowError(err, w)
+					fmt.Println(err)
+					return
+				}
+
+			}
+			index, err := tela.GetINDEXInfo(cmd.Xswd_conn, scid.Text)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			dUrl.SetText(index.DURL)
+			src.SetText(index.SCID)
+			nameHdr.SetText(index.NameHdr)
+			descHdr.SetText(index.DescrHdr)
+			iconHdr.SetText(index.IconHdr)
+			for _, each := range index.DOCs {
+				doc, err := tela.GetDOCInfo(cmd.Xswd_conn, each)
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+				docs = append(docs, doc)
+			}
+		}, w)
+	}
+	import_json := widget.NewButton("import with docs.json", importDocs)
+	import_scid := widget.NewButton("import with scid", importScids)
 	install_docs := widget.NewButton("install docs", install)
-	content := container.NewBorder(container.NewVBox(container.NewVBox(dUrl, src, container.NewAdaptiveGrid(2, choose_folder, import_docs)), container.NewAdaptiveGrid(1, compileBtn)), container.NewVBox(container.NewAdaptiveGrid(3, nameHdr, descHdr, iconHdr), install_docs), nil, nil, table)
+	content := container.NewBorder(container.NewVBox(container.NewVBox(dUrl, src, container.NewAdaptiveGrid(3, choose_folder, import_json, import_scid)), container.NewAdaptiveGrid(1, compileBtn)), container.NewVBox(container.NewAdaptiveGrid(3, nameHdr, descHdr, iconHdr), install_docs), nil, nil, table)
 	w.SetContent(content)
 	w.ShowAndRun()
 }
