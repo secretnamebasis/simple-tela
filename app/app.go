@@ -344,6 +344,20 @@ func RenderGui() {
 			fmt.Println(err)
 			return
 		}
+		ok := make(chan bool, 1)
+		if network != "simulator" {
+			dialog.ShowConfirm("MAINNET LAUNCH", "This install will occur on mainnet, please be advised.", func(b bool) {
+				if !b {
+					ok <- false
+					return
+				}
+				ok <- true
+			}, w)
+			if !<-ok {
+				fmt.Println("launch cancelled")
+				return
+			}
+		}
 		jsonBytes, err := json.MarshalIndent(docs, "", " ")
 		if err != nil {
 			fmt.Println(err)
