@@ -1223,81 +1223,81 @@ func cloneINDEXAtCommit(xswd_conneciton *websocket.Conn, height int64, scid, txi
 	return
 }
 
-// // Clone TELA content at SCID from endpoint
-// func Clone(scid, endpoint string) (err error) {
-// 	var valid string
-// 	_, err = getContractVar(scid, HEADER_DOCTYPE.Trim(), endpoint)
-// 	if err == nil {
-// 		valid = "DOC"
-// 	}
+// Clone TELA content at SCID from endpoint
+func Clone(xswd_connection *websocket.Conn, scid string) (err error) {
+	var valid string
+	_, err = getContractVar(xswd_connection, scid, HEADER_DOCTYPE.Trim())
+	if err == nil {
+		valid = "DOC"
+	}
 
-// 	if valid == "" {
-// 		_, err = getContractVar(scid, HEADER_DOCUMENT.Number(1).Trim(), endpoint)
-// 		if err == nil {
-// 			valid = "INDEX"
-// 		}
-// 	}
+	if valid == "" {
+		_, err = getContractVar(xswd_connection, scid, HEADER_DOCUMENT.Number(1).Trim())
+		if err == nil {
+			valid = "INDEX"
+		}
+	}
 
-// 	dURL, err := getContractVar(scid, HEADER_DURL.Trim(), endpoint)
-// 	if err != nil {
-// 		err = fmt.Errorf("could not get dURL from %s: %s", scid, err)
-// 		return
-// 	}
+	dURL, err := getContractVar(xswd_connection, scid, HEADER_DURL.Trim())
+	if err != nil {
+		err = fmt.Errorf("could not get dURL from %s: %s", scid, err)
+		return
+	}
 
-// 	path := tela.path.clone()
+	path := tela.path.clone()
 
-// 	switch valid {
-// 	case "INDEX":
-// 		_, err = cloneINDEX(scid, dURL, path, endpoint)
-// 	case "DOC":
-// 		// Store DOCs in respective dURL directories
-// 		_, err = cloneDOC(scid, "", filepath.Join(path, dURL), endpoint)
-// 	default:
-// 		err = fmt.Errorf("could not validate %s as TELA INDEX or DOC", scid)
-// 	}
+	switch valid {
+	case "INDEX":
+		_, err = cloneINDEX(xswd_connection, scid, dURL, path)
+	case "DOC":
+		// Store DOCs in respective dURL directories
+		_, err = cloneDOC(xswd_connection, scid, "", filepath.Join(path, dURL))
+	default:
+		err = fmt.Errorf("could not validate %s as TELA INDEX or DOC", scid)
+	}
 
-// 	return
-// }
+	return
+}
 
-// // Clone a TELA-INDEX SC at a commit TXID from endpoint
-// func CloneAtCommit(scid, txid, endpoint string) (err error) {
-// 	_, err = getContractVar(scid, HEADER_DOCUMENT.Number(1).Trim(), endpoint)
-// 	if err != nil {
-// 		return
-// 	}
+// Clone a TELA-INDEX SC at a commit TXID from endpoint
+func CloneAtCommit(xswd_connection *websocket.Conn, scid, txid string) (err error) {
+	_, err = getContractVar(xswd_connection, scid, HEADER_DOCUMENT.Number(1).Trim())
+	if err != nil {
+		return
+	}
 
-// 	path := tela.path.clone()
+	path := tela.path.clone()
 
-// 	_, err = cloneINDEXAtCommit(0, scid, txid, path, endpoint)
+	_, err = cloneINDEXAtCommit(xswd_connection, 0, scid, txid, path)
 
-// 	return
-// }
+	return
+}
 
-// // Before serving check if dURL has any known tags that indicate it should not be served
-// func checkIfAbleToServe(scid, endpoint string) (dURL string, err error) {
-// 	dURL, err = getContractVar(scid, HEADER_DURL.Trim(), endpoint)
-// 	if err != nil {
-// 		err = fmt.Errorf("could not get INDEX dURL from %s: %s", scid, err)
-// 		return
-// 	}
+// Before serving check if dURL has any known tags that indicate it should not be served
+func checkIfAbleToServe(xswd_connection *websocket.Conn, scid string) (dURL string, err error) {
+	dURL, err = getContractVar(xswd_connection, scid, HEADER_DURL.Trim())
+	if err != nil {
+		err = fmt.Errorf("could not get INDEX dURL from %s: %s", scid, err)
+		return
+	}
 
-// 	if strings.HasSuffix(dURL, TAG_LIBRARY) {
-// 		err = fmt.Errorf("%q is a library and cannot be served", dURL)
-// 		return
-// 	}
+	if strings.HasSuffix(dURL, TAG_LIBRARY) {
+		err = fmt.Errorf("%q is a library and cannot be served", dURL)
+		return
+	}
 
-// 	if strings.HasSuffix(dURL, TAG_DOC_SHARDS) {
-// 		err = fmt.Errorf("%q is DocShards and cannot be served", dURL)
-// 		return
-// 	}
+	if strings.HasSuffix(dURL, TAG_DOC_SHARDS) {
+		err = fmt.Errorf("%q is DocShards and cannot be served", dURL)
+		return
+	}
 
-// 	if strings.HasSuffix(dURL, TAG_BOOTSTRAP) {
-// 		err = fmt.Errorf("%q is a bootstrap and cannot be served", dURL)
-// 		return
-// 	}
+	if strings.HasSuffix(dURL, TAG_BOOTSTRAP) {
+		err = fmt.Errorf("%q is a bootstrap and cannot be served", dURL)
+		return
+	}
 
-// 	return
-// }
+	return
+}
 
 // serveTELA serves cloned TELA content returning a link to the running TELA server if successful
 func serveTELA(scid string, clone Cloning) (link string, err error) {
@@ -1315,7 +1315,7 @@ func serveTELA(scid string, clone Cloning) (link string, err error) {
 	server.Handler = fs
 
 	// Serve on this address:port
-	link = fmt.Sprintf("http://localhost%s/%s", server.Addr+clone.ServePath, clone.Entrypoint)
+	link = fmt.Sprintf("http://localhost%s/%s", (server.Addr + clone.ServePath), clone.Entrypoint)
 
 	if tela.servers == nil {
 		tela.servers = make(map[ServerInfo]*http.Server)
@@ -1343,117 +1343,117 @@ func serveTELA(scid string, clone Cloning) (link string, err error) {
 }
 
 // // ServeTELA clones and serves a TELA-INDEX-1 SC from endpoint and returns a link to the running TELA server if successful
-// func ServeTELA(scid, endpoint string) (link string, err error) {
-// 	tela.Lock()
-// 	defer tela.Unlock()
+func ServeTELA(xswd_connection *websocket.Conn, scid string) (link string, err error) {
+	tela.Lock()
+	defer tela.Unlock()
 
-// 	dURL, err := checkIfAbleToServe(scid, endpoint)
-// 	if err != nil {
-// 		return
-// 	}
+	dURL, err := checkIfAbleToServe(xswd_connection, scid)
+	if err != nil {
+		return
+	}
 
-// 	clone, err := cloneINDEX(scid, dURL, tela.path.tela(), endpoint)
-// 	if err != nil {
-// 		os.RemoveAll(clone.BasePath)
-// 		return
-// 	}
+	clone, err := cloneINDEX(xswd_connection, scid, dURL, tela.path.tela())
+	if err != nil {
+		os.RemoveAll(clone.BasePath)
+		return
+	}
 
-// 	return serveTELA(scid, clone)
-// }
+	return serveTELA(scid, clone)
+}
 
 // // ServeAtCommit clones and serves a TELA-INDEX-1 SC from endpoint at commit TXID if the SC code from that commit can be decoded,
 // // ensure AllowUpdates is set true prior to calling ServeAtCommit otherwise it will return error
-// func ServeAtCommit(scid, txid, endpoint string) (link string, err error) {
-// 	tela.Lock()
-// 	defer tela.Unlock()
+func ServeAtCommit(xswd_connection *websocket.Conn, scid, txid string) (link string, err error) {
+	tela.Lock()
+	defer tela.Unlock()
 
-// 	if !tela.updates {
-// 		err = fmt.Errorf("cannot serve %s at commit as AllowUpdates is set false", scid)
-// 		return
-// 	}
+	if !tela.updates {
+		err = fmt.Errorf("cannot serve %s at commit as AllowUpdates is set false", scid)
+		return
+	}
 
-// 	_, err = checkIfAbleToServe(scid, endpoint)
-// 	if err != nil {
-// 		return
-// 	}
+	_, err = checkIfAbleToServe(xswd_connection, scid)
+	if err != nil {
+		return
+	}
 
-// 	clone, err := cloneINDEXAtCommit(0, scid, txid, tela.path.tela(), endpoint)
-// 	if err != nil {
-// 		os.RemoveAll(clone.BasePath)
-// 		return
-// 	}
+	clone, err := cloneINDEXAtCommit(xswd_connection, 0, scid, txid, tela.path.tela())
+	if err != nil {
+		os.RemoveAll(clone.BasePath)
+		return
+	}
 
-// 	return serveTELA(scid, clone)
-// }
+	return serveTELA(scid, clone)
+}
 
 // // OpenTELALink will open content from a telaLink formatted as tela://open/<scid>/subDir/../..
 // // if no server exists for that content it will try starting one using ServeTELA()
-// func OpenTELALink(telaLink, endpoint string) (link string, err error) {
-// 	target, args, err := ParseTELALink(telaLink)
-// 	if err != nil {
-// 		err = fmt.Errorf("could not parse tela link: %s", err)
-// 		return
-// 	}
+func OpenTELALink(xswd_connection *websocket.Conn, telaLink, endpoint string) (link string, err error) {
+	target, args, err := ParseTELALink(telaLink)
+	if err != nil {
+		err = fmt.Errorf("could not parse tela link: %s", err)
+		return
+	}
 
-// 	if target != "tela" {
-// 		err = fmt.Errorf("%q target required for OpenTELALink", "tela")
-// 		return
-// 	}
+	if target != "tela" {
+		err = fmt.Errorf("%q target required for OpenTELALink", "tela")
+		return
+	}
 
-// 	if len(args) < 2 || args[0] != "open" {
-// 		err = fmt.Errorf("%q is invalid tela link format for OpenTELALink", telaLink)
-// 		return
-// 	}
+	if len(args) < 2 || args[0] != "open" {
+		err = fmt.Errorf("%q is invalid tela link format for OpenTELALink", telaLink)
+		return
+	}
 
-// 	var exists bool
-// 	link, err = ServeTELA(args[1], endpoint)
-// 	if err != nil {
-// 		if !strings.Contains(err.Error(), "already exists") {
-// 			err = fmt.Errorf("could not serve tela link: %s", err)
-// 			return
-// 		}
+	var exists bool
+	link, err = ServeTELA(xswd_connection, args[1])
+	if err != nil {
+		if !strings.Contains(err.Error(), "already exists") {
+			err = fmt.Errorf("could not serve tela link: %s", err)
+			return
+		}
 
-// 		// Find the server that already exists
-// 		for _, s := range GetServerInfo() {
-// 			if s.SCID == args[1] {
-// 				link = fmt.Sprintf("http://localhost%s", s.Address)
-// 				break
-// 			}
-// 		}
+		// Find the server that already exists
+		for _, s := range GetServerInfo() {
+			if s.SCID == args[1] {
+				link = fmt.Sprintf("http://localhost%s", s.Address)
+				break
+			}
+		}
 
-// 		if link == "" {
-// 			err = fmt.Errorf("could not find active server to create tela link")
-// 			return
-// 		}
+		if link == "" {
+			err = fmt.Errorf("could not find active server to create tela link")
+			return
+		}
 
-// 		err = nil
-// 		exists = true
-// 	}
+		err = nil
+		exists = true
+	}
 
-// 	// TELA will serve with entrypoint if server did not exist
-// 	if !exists && len(args) > 2 {
-// 		var entrypoint string
-// 		for _, s := range GetServerInfo() {
-// 			if s.SCID == args[1] {
-// 				entrypoint = fmt.Sprintf("/%s", s.Entrypoint)
-// 				break
-// 			}
-// 		}
+	// TELA will serve with entrypoint if server did not exist
+	if !exists && len(args) > 2 {
+		var entrypoint string
+		for _, s := range GetServerInfo() {
+			if s.SCID == args[1] {
+				entrypoint = fmt.Sprintf("/%s", s.Entrypoint)
+				break
+			}
+		}
 
-// 		link = strings.TrimSuffix(link, entrypoint)
-// 	}
+		link = strings.TrimSuffix(link, entrypoint)
+	}
 
-// 	// Add link path
-// 	for i, a := range args {
-// 		if i < 2 {
-// 			continue
-// 		}
+	// Add link path
+	for i, a := range args {
+		if i < 2 {
+			continue
+		}
 
-// 		link = fmt.Sprintf("%s/%s", link, a)
-// 	}
+		link = fmt.Sprintf("%s/%s", link, a)
+	}
 
-// 	return
-// }
+	return
+}
 
 // ShutdownTELA shuts down all TELA servers and cleans up directory
 func ShutdownTELA() {
