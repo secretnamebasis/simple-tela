@@ -748,15 +748,15 @@ func getGasEstimate(connection *websocket.Conn, payload map[string]any) rpc.GasE
 }
 
 // // transfer0 is used for executing TELA smart contract functions without a DEROVALUE or ASSETVALUE, it creates a transfer of 0 to a default address for the network
-func transfer0(xswd_conneciton *websocket.Conn, ringsize uint64, args rpc.Arguments) (txid string, err error) {
-	return Transfer(xswd_conneciton, ringsize, nil, args)
+func transfer0(xswd_connection *websocket.Conn, ringsize uint64, args rpc.Arguments) (txid string, err error) {
+	return Transfer(xswd_connection, ringsize, nil, args)
 }
 
 // Transfer is used for executing TELA smart contract actions with DERO walletapi, if nil transfers is passed
 // it initializes a transfer of 0 to a default address for the network using GetDefaultNetworkAddress()
-func Transfer(xswd_conneciton *websocket.Conn, ringsize uint64, transfers []rpc.Transfer, args rpc.Arguments) (txid string, err error) {
+func Transfer(xswd_connection *websocket.Conn, ringsize uint64, transfers []rpc.Transfer, args rpc.Arguments) (txid string, err error) {
 	var gasFees uint64
-	gasFees, err = GetGasEstimate(xswd_conneciton, ringsize, transfers, args)
+	gasFees, err = GetGasEstimate(xswd_connection, ringsize, transfers, args)
 	if err != nil {
 		return
 	}
@@ -782,7 +782,7 @@ func Transfer(xswd_conneciton *websocket.Conn, ringsize uint64, transfers []rpc.
 	if err != nil {
 		return "", err
 	}
-	msg := postBytes(xswd_conneciton, jsonBytes)
+	msg := postBytes(xswd_connection, jsonBytes)
 	type response struct {
 		Result rpc.Transfer_Result
 	}
@@ -1133,7 +1133,7 @@ func CreateShardFiles(filePath, compression string, content []byte) (err error) 
 }
 
 // // Clone a TELA-INDEX SCID at commit TXID to path from endpoint creating all DOCs embedded within the INDEX at the commit height
-func cloneINDEXAtCommit(xswd_conneciton *websocket.Conn, height int64, scid, txid, path string) (clone Cloning, err error) {
+func cloneINDEXAtCommit(xswd_connection *websocket.Conn, height int64, scid, txid, path string) (clone Cloning, err error) {
 	if len(scid) != 64 {
 		err = fmt.Errorf("invalid INDEX SCID: %s", scid)
 		return
@@ -1145,7 +1145,7 @@ func cloneINDEXAtCommit(xswd_conneciton *websocket.Conn, height int64, scid, txi
 		return
 	}
 
-	dURL, err := getContractVar(xswd_conneciton, scid, HEADER_DURL.Trim())
+	dURL, err := getContractVar(xswd_connection, scid, HEADER_DURL.Trim())
 	if err != nil {
 		err = fmt.Errorf("could not get dURL from %s: %s", scid, err)
 		return
@@ -1156,7 +1156,7 @@ func cloneINDEXAtCommit(xswd_conneciton *websocket.Conn, height int64, scid, txi
 	var code, modTag string
 	if height > 0 {
 		// If more then one INDEX embed, use height from commit TXID to get docCode at commit height
-		code, err = getContractCodeAtHeight(xswd_conneciton, height, scid)
+		code, err = getContractCodeAtHeight(xswd_connection, height, scid)
 		if err != nil {
 			return
 		}
@@ -1164,7 +1164,7 @@ func cloneINDEXAtCommit(xswd_conneciton *websocket.Conn, height int64, scid, txi
 		modTag = extractModTagFromCode(code)
 	} else {
 		// First INDEX get commit height and code from TXID
-		txidAsHex, commitHeight, errr := getTXID(xswd_conneciton, txid)
+		txidAsHex, commitHeight, errr := getTXID(xswd_connection, txid)
 		if errr != nil {
 			err = fmt.Errorf("%s could not get TXID: %s", tagErr, errr)
 			return
@@ -1197,14 +1197,14 @@ func cloneINDEXAtCommit(xswd_conneciton *websocket.Conn, height int64, scid, txi
 
 	// If INDEX contains DocShards to be constructed
 	if strings.HasSuffix(dURL, TAG_DOC_SHARDS) {
-		err = cloneDocShards(xswd_conneciton, sc, basePath)
+		err = cloneDocShards(xswd_connection, sc, basePath)
 		if err != nil {
 			err = fmt.Errorf("%s %s", tagErr, err)
 			return
 		}
 	} else {
 		// Parse INDEX SC for valid DOCs
-		entrypoint, servePath, err = parseAndCloneINDEXForDOCs(xswd_conneciton, sc, height, basePath)
+		entrypoint, servePath, err = parseAndCloneINDEXForDOCs(xswd_connection, sc, height, basePath)
 		if err != nil {
 			// If all of the files were not cloned successfully, any residual files are removed if they did not exist already
 			err = fmt.Errorf("%s %s", tagErr, err)
@@ -1689,77 +1689,77 @@ func Installer(xswd_connection *websocket.Conn, ringsize uint64, params interfac
 	return transfer0(xswd_connection, ringsize, args)
 }
 
-// // Create arguments for INDEX SC UpdateCode call
-// func NewUpdateArgs(params interface{}) (args rpc.Arguments, err error) {
-// 	var version *Version
-// 	var code, scid, mods string
-// 	switch h := params.(type) {
-// 	case *INDEX:
-// 		indexTemplate := TELA_INDEX_1
-// 		if h.Mods != "" {
-// 			_, indexTemplate, err = Mods.InjectMODs(h.Mods, indexTemplate)
-// 			if err != nil {
-// 				err = fmt.Errorf("could not inject MODs: %s", err)
-// 				return
-// 			}
-// 		}
+// Create arguments for INDEX SC UpdateCode call
+func NewUpdateArgs(params interface{}) (args rpc.Arguments, err error) {
+	var version *Version
+	var code, scid, mods string
+	switch h := params.(type) {
+	case *INDEX:
+		indexTemplate := TELA_INDEX_1
+		if h.Mods != "" {
+			_, indexTemplate, err = Mods.InjectMODs(h.Mods, indexTemplate)
+			if err != nil {
+				err = fmt.Errorf("could not inject MODs: %s", err)
+				return
+			}
+		}
 
-// 		code, err = ParseHeaders(indexTemplate, h)
-// 		if err != nil {
-// 			return
-// 		}
+		code, err = ParseHeaders(indexTemplate, h)
+		if err != nil {
+			return
+		}
 
-// 		scid = h.SCID
-// 		mods = h.Mods
-// 		if h.SCVersion == nil {
-// 			// Use latest version if not provided
-// 			latestV := GetLatestContractVersion(false)
-// 			version = &latestV
-// 		} else {
-// 			version = h.SCVersion
-// 		}
-// 	case rpc.Arguments:
-// 		args = h
-// 		return
-// 	default:
-// 		err = fmt.Errorf("expecting params to be *INDEX for update and got: %T", params)
+		scid = h.SCID
+		mods = h.Mods
+		if h.SCVersion == nil {
+			// Use latest version if not provided
+			latestV := GetLatestContractVersion(false)
+			version = &latestV
+		} else {
+			version = h.SCVersion
+		}
+	case rpc.Arguments:
+		args = h
+		return
+	default:
+		err = fmt.Errorf("expecting params to be *INDEX for update and got: %T", params)
 
-// 		return
-// 	}
+		return
+	}
 
-// 	args = rpc.Arguments{
-// 		rpc.Argument{Name: "entrypoint", DataType: rpc.DataString, Value: "UpdateCode"},
-// 		rpc.Argument{Name: "code", DataType: rpc.DataString, Value: code},
-// 		rpc.Argument{Name: rpc.SCID, DataType: rpc.DataHash, Value: crypto.HashHexToHash(scid)},
-// 		rpc.Argument{Name: rpc.SCACTION, DataType: rpc.DataUint64, Value: uint64(rpc.SC_CALL)},
-// 	}
+	args = rpc.Arguments{
+		rpc.Argument{Name: "entrypoint", DataType: rpc.DataString, Value: "UpdateCode"},
+		rpc.Argument{Name: "code", DataType: rpc.DataString, Value: code},
+		rpc.Argument{Name: rpc.SCID, DataType: rpc.DataHash, Value: crypto.HashHexToHash(scid)},
+		rpc.Argument{Name: rpc.SCACTION, DataType: rpc.DataUint64, Value: uint64(rpc.SC_CALL)},
+	}
 
-// 	// Handle any version specific params that need to be added
-// 	switch {
-// 	case !version.LessThan(Version{1, 1, 0}):
-// 		args = append(args, rpc.Argument{Name: "mods", DataType: rpc.DataString, Value: mods})
-// 	default:
-// 		// nothing, use 1.0.0
-// 	}
+	// Handle any version specific params that need to be added
+	switch {
+	case !version.LessThan(Version{1, 1, 0}):
+		args = append(args, rpc.Argument{Name: "mods", DataType: rpc.DataString, Value: mods})
+	default:
+		// nothing, use 1.0.0
+	}
 
-// 	return
-// }
+	return
+}
 
-// // Update a TELA INDEX SC with DERO walletapi, requires wallet to be owner of SC
-// func Updater(wallet *walletapi.Wallet_Disk, params interface{}) (txid string, err error) {
-// 	if wallet == nil {
-// 		err = fmt.Errorf("no wallet for TELA Updater")
-// 		return
-// 	}
+// Update a TELA INDEX SC with DERO walletapi, requires wallet to be owner of SC
+func Updater(xswd_connection *websocket.Conn, params interface{}) (txid string, err error) {
+	if xswd_connection == nil {
+		err = fmt.Errorf("no wallet for TELA Updater")
+		return
+	}
 
-// 	var args rpc.Arguments
-// 	args, err = NewUpdateArgs(params)
-// 	if err != nil {
-// 		return
-// 	}
+	var args rpc.Arguments
+	args, err = NewUpdateArgs(params)
+	if err != nil {
+		return
+	}
 
-// 	return transfer0(wallet, 2, args)
-// }
+	return transfer0(xswd_connection, 2, args)
+}
 
 // Create arguments for TELA Rate SC call
 func NewRateArgs(scid string, rating uint64) (args rpc.Arguments, err error) {
@@ -2132,7 +2132,7 @@ func (tag MetaTag) ExtractAttribute(attribute string) (value string) {
 }
 
 // ValidateImageURL will return error if the imageURL is not a valid URL or a valid image smart contract
-func ValidateImageURL(xswd_conneciton *websocket.Conn, imageURL string) (svgCode string, err error) {
+func ValidateImageURL(xswd_connection *websocket.Conn, imageURL string) (svgCode string, err error) {
 	if imageURL == "" {
 		// Empty is valid
 		return
@@ -2147,7 +2147,7 @@ func ValidateImageURL(xswd_conneciton *websocket.Conn, imageURL string) (svgCode
 
 		// Check if it is a TELA DOC SC
 		var doc DOC
-		doc, err = GetDOCInfo(xswd_conneciton, imageURL)
+		doc, err = GetDOCInfo(xswd_connection, imageURL)
 		if err != nil {
 			return
 		}
@@ -2160,8 +2160,8 @@ func ValidateImageURL(xswd_conneciton *websocket.Conn, imageURL string) (svgCode
 }
 
 // Get TELA-DOC info from scid at endpoint
-func GetDOCInfo(xswd_conneciton *websocket.Conn, scid string) (doc DOC, err error) {
-	vars, err := getContractVars(xswd_conneciton, scid)
+func GetDOCInfo(xswd_connection *websocket.Conn, scid string) (doc DOC, err error) {
+	vars, err := getContractVars(xswd_connection, scid)
 	if err != nil {
 		return
 	}
