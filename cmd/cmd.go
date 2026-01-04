@@ -245,10 +245,22 @@ func Run() {
 		}
 
 		// we are trying to find out if any of the current docs satisfy the incoming changes
-		doc_map := map[string]tela.DOC{}
-		for _, each := range docs {
-			// we turn them each into args
-			args, err := tela.NewInstallArgs(each)
+		doc_map := make(map[string]tela.DOC, len(docs_on_file))
+		for _, each := range docs_on_file {
+			// in case of duplicates? //
+			if _, ok := doc_map[each.Code]; !ok {
+				doc_map[each.Code] = each
+			}
+		}
+
+		order := []tela.DOC{}
+		for _, doc := range docs {
+			if _, ok := doc_map[doc.Code]; ok {
+				order = append(order, *doc)
+				continue
+			}
+
+			args, err := tela.NewInstallArgs(doc)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -258,44 +270,6 @@ func Run() {
 				continue
 			}
 
-			// incase of duplicates?
-			if _, ok := doc_map[code]; ok {
-				continue
-			}
-
-			doc_map[code] = *each
-
-		}
-
-		order := []tela.DOC{}
-		for code, doc := range doc_map {
-			hasSCID := false
-
-			for _, document := range docs_on_file {
-				// if the code is already in the doc map... update
-				// var doc tela.DOC
-				_, hasSCID = doc_map[document.Code]
-
-				if hasSCID {
-					fmt.Println("scid already exists", document.SCID)
-					break
-				}
-			}
-
-			if hasSCID {
-				continue
-			}
-
-			// don't need to install
-			if doc.SCID != "" {
-				continue
-			}
-
-			args, err := tela.NewInstallArgs(&doc)
-			if err != nil {
-				log.Fatal(err)
-			}
-
 			// now install the document
 			txid, err := installContract(code, doc.Author, args)
 			if err != nil {
@@ -303,7 +277,7 @@ func Run() {
 			}
 			doc.SCID = txid
 
-			order = append(order, doc)
+			order = append(order, *doc)
 		}
 		corrected := []tela.DOC{}
 		cutset := []tela.DOC{}

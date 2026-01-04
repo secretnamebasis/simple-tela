@@ -246,7 +246,6 @@ func RenderGui() {
 			table.Refresh()
 			return
 		} else {
-			docs = []tela.DOC{}
 
 			fmt.Println("asking for endpoint at xswd websocket connection")
 
@@ -317,15 +316,55 @@ func RenderGui() {
 				code_files = append(code_files, code)
 				signed_files = append(signed_files, signature)
 			}
+			compiled := cmd.CompileDocs(dUrl.Text, src.Text, table_contents, code_files, signed_files)
 
-			docs = cmd.CompileDocs(dUrl.Text, src.Text, table_contents, code_files, signed_files)
-			// // probably fun to integrate the concept of the appDataID here...
-			// // I think the deciding factor will be to determine if there is going to be an ws connect
-			// // we should parse the application data that we get and then find out...
-			// results.SetText(strings.Join(contents, "\n"))
+			if len(docs) == 0 {
+				docs = compiled
+			} else {
+				doc_map := make(map[string]tela.DOC, len(docs))
+				for _, this := range docs {
+					start := strings.Index(this.Code, "/*")
+					end := strings.Index(this.Code, "*/")
+
+					if start == -1 || end == -1 {
+						fmt.Println("could not parse multiline comment", this)
+						return
+					}
+
+					doc_check := this.Code[start+2:]
+					doc_check = strings.TrimSpace(strings.TrimSuffix(doc_check, "*/"))
+					doc_map[doc_check] = this
+				}
+
+				ordered := []tela.DOC{}
+
+				// check so see if the application code is the same as CheckC & CheckS have changed...
+				for _, each := range compiled {
+					code_check := strings.TrimSpace(each.Code)
+					if this, ok := doc_map[code_check]; ok {
+						fmt.Println("in doc map found", this.CheckC, this.CheckS)
+						ordered = append(ordered, this)
+						continue
+					}
+					fmt.Println("not in doc map", each.CheckC, each.CheckS)
+					ordered = append(ordered, each)
+				}
+
+				first := tela.DOC{}
+				docs = []tela.DOC{}
+				for _, each := range ordered {
+					if strings.Contains(each.NameHdr, "index") {
+						fmt.Println("first found", each.CheckC, each.CheckS)
+						first = each
+					} else {
+						docs = append(docs, each)
+					}
+				}
+				docs = append([]tela.DOC{first}, docs...)
+			}
 
 		}
-
+		fmt.Println("length of docs", len(docs))
 		table.Refresh()
 	}
 	update := func(id widget.TableCellID, co fyne.CanvasObject) {
@@ -505,6 +544,7 @@ func RenderGui() {
 					continue
 				}
 				fmt.Println("prepared doc:", doc.SCID)
+
 				docs = append(docs, doc)
 			}
 		}, w)
