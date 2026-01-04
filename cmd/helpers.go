@@ -265,6 +265,14 @@ func CompileDocs(dURL, base string, contents []string, code, signed_code []strin
 	docs = []tela.DOC{first}
 	docs = append(docs, cutset...)
 
+	fmt.Println("length of docs", len(docs))
+	jsonBytes, err := json.MarshalIndent(docs, "", " ")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	os.WriteFile(filepath.Join("src", "docs.json"), jsonBytes, 0644)
+
 	return
 }
 

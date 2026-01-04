@@ -197,13 +197,6 @@ func RenderGui() {
 					return
 				}
 			}
-			jsonBytes, err := json.MarshalIndent(docs, "", " ")
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-			os.WriteFile(filepath.Join("src", "docs.json"), jsonBytes, 0644)
-
 			// byts, err := json.Marshal(docs)
 			// if err != nil {
 			// 	fmt.Println(err)
@@ -364,7 +357,6 @@ func RenderGui() {
 			}
 
 		}
-		fmt.Println("length of docs", len(docs))
 		table.Refresh()
 	}
 	update := func(id widget.TableCellID, co fyne.CanvasObject) {
