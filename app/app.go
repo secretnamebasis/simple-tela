@@ -54,96 +54,6 @@ func RenderGui() {
 
 		return container.NewStack(e, l)
 	}
-
-	update := func(id widget.TableCellID, co fyne.CanvasObject) {
-		if id.Row < 0 || id.Row >= len(docs) {
-			return
-		}
-
-		template := co.(*fyne.Container)
-
-		// capture components
-		entry := template.Objects[0].(*widget.Entry)
-		link := template.Objects[1].(*widget.Hyperlink)
-		row := id.Row
-
-		// model updaters
-		updateDescrHdr := func(s string) {
-			docs[row].DescrHdr = s
-		}
-		updateIconHdr := func(s string) {
-			docs[row].IconHdr = s
-		}
-
-		codeDialog := func() {
-			w := a.NewWindow("code-viewer")
-			content := container.NewBorder(nil, nil, nil, nil, container.NewScroll(widget.NewLabel(docs[row].Code)))
-			w.Resize(fyne.NewSize(800, 300))
-			w.SetContent(content)
-			w.Show()
-		}
-
-		// Reset reused widgets
-		entry.Disable()
-		entry.OnChanged = nil
-		entry.SetText("")
-		entry.Hide()
-
-		link.OnTapped = nil
-		link.SetText("")
-		link.Hide()
-
-		switch id.Col {
-		case 0:
-			entry.Show()
-			entry.SetText(docs[row].DocType)
-
-		case 1:
-			link.Show()
-			link.SetText("view code")
-			link.OnTapped = codeDialog
-
-		case 2:
-			entry.Show()
-			entry.SetText(docs[row].SubDir)
-
-		case 3:
-			entry.Show()
-			entry.SetText(docs[row].DURL)
-
-		case 4:
-			entry.Show()
-			entry.SetText(docs[row].NameHdr)
-
-		case 5:
-			entry.Show()
-			entry.Enable()
-			entry.SetText(docs[row].DescrHdr)
-			entry.OnChanged = updateDescrHdr
-
-		case 6:
-			entry.Show()
-			entry.Enable()
-			entry.SetText(docs[row].IconHdr)
-			entry.OnChanged = updateIconHdr
-		}
-	}
-
-	table = widget.NewTable(length, create, update)
-
-	table.ShowHeaderRow = true
-	table.CreateHeader = func() fyne.CanvasObject { return widget.NewLabel("") }
-	table.UpdateHeader = func(id widget.TableCellID, template fyne.CanvasObject) {
-		label := template.(*widget.Label)
-		if id.Row < 0 {
-			label.SetText(headers[id.Col])
-			return
-		}
-
-	}
-	for i := range len(headers) {
-		table.SetColumnWidth(i, 150)
-	}
 	dUrl := widget.NewEntry()
 	dUrl.SetPlaceHolder("DURL of deployment")
 	dUrl.Validator = func(s string) error {
@@ -196,27 +106,121 @@ func RenderGui() {
 		// now we need to select what we want to deploy...
 		table_contents = contents
 	}
-	upload_folder := func() {
+	install := func() {
 		if dUrl.Text == "" {
 			dUrl.SetText(" ")
 			dUrl.SetText("")
 		}
 		if err := dUrl.Validate(); err != nil {
+			fmt.Println(err)
 			return
 		}
-		fo := dialog.NewFolderOpen(func(lu fyne.ListableURI, err error) {
+		if nameHdr.Text == "" {
+			nameHdr.SetText(" ")
+			nameHdr.SetText("")
+		}
+		if err := nameHdr.Validate(); err != nil {
+			fmt.Println(err)
+			return
+		}
+		ok := make(chan bool, 1)
+		if network != "simulator" {
+			dialog.ShowConfirm("MAINNET LAUNCH", "This install will occur on mainnet, please be advised.", func(b bool) {
+				if !b {
+					ok <- false
+					return
+				}
+				ok <- true
+			}, w)
+			if !<-ok {
+				fmt.Println("launch cancelled")
+				return
+			}
+		}
+		jsonBytes, err := json.MarshalIndent(docs, "", " ")
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		os.WriteFile(filepath.Join("src", "docs.json"), jsonBytes, 0644)
+
+		// byts, err := json.Marshal(docs)
+		// if err != nil {
+		// 	fmt.Println(err)
+		// 	return
+		// }
+		os.Args = append(os.Args, ("--durl=" + dUrl.Text))
+		os.Args = append(os.Args, (`--src-file=` + filepath.Join("src", "docs.json")))
+		os.Args = append(os.Args, (`--network=` + network))
+		os.Args = append(os.Args, (`--headers="` + nameHdr.Text + ";" + descHdr.Text + ";" + iconHdr.Text + `"`))
+		// os.Args = append(os.Args, ("--src-json=" + string(byts))) // the bytes aren't saved to a deployment
+
+		cmd.Run()
+	}
+	install_docs := widget.NewButton("install docs", install)
+	updateIndex := func() {
+		fmt.Println("edit stuff")
+		new_src := widget.NewEntry()
+		new_src.SetPlaceHolder("input index to update")
+		dialog.ShowCustomConfirm("edit scid", "confirm", "dismiss", container.NewVBox(new_src), func(b bool) {
+			if !b {
+				return
+			}
+
+			if dUrl.Text == "" {
+				dUrl.SetText(" ")
+				dUrl.SetText("")
+			}
+			if err := dUrl.Validate(); err != nil {
+				fmt.Println(err)
+				return
+			}
+			if nameHdr.Text == "" {
+				nameHdr.SetText(" ")
+				nameHdr.SetText("")
+			}
+			if err := nameHdr.Validate(); err != nil {
+				fmt.Println(err)
+				return
+			}
+			ok := make(chan bool, 1)
+			if network != "simulator" {
+				dialog.ShowConfirm("MAINNET LAUNCH", "This install will occur on mainnet, please be advised.", func(b bool) {
+					if !b {
+						ok <- false
+						return
+					}
+					ok <- true
+				}, w)
+				if !<-ok {
+					fmt.Println("launch cancelled")
+					return
+				}
+			}
+			jsonBytes, err := json.MarshalIndent(docs, "", " ")
 			if err != nil {
 				fmt.Println(err)
 				return
 			}
-			if lu == nil {
-				return
-			}
-			src.SetText(lu.Path())
+			os.WriteFile(filepath.Join("src", "docs.json"), jsonBytes, 0644)
+
+			// byts, err := json.Marshal(docs)
+			// if err != nil {
+			// 	fmt.Println(err)
+			// 	return
+			// }
+			os.Args = append(os.Args, (`--scid=` + new_src.Text))
+			os.Args = append(os.Args, ("--durl=" + dUrl.Text))
+			os.Args = append(os.Args, (`--src-file=` + filepath.Join("src", "docs.json")))
+			os.Args = append(os.Args, (`--network=` + network))
+			os.Args = append(os.Args, (`--headers="` + nameHdr.Text + ";" + descHdr.Text + ";" + iconHdr.Text + `"`))
+			// os.Args = append(os.Args, ("--src-json=" + string(byts))) // the bytes aren't saved to a deployment
+
+			cmd.Run()
 		}, w)
-		fo.Resize(fyne.NewSize(800, 300))
-		fo.Show()
+
 	}
+	update_index := widget.NewButton("update index", updateIndex)
 	compile := func() {
 		if dUrl.Text == "" {
 			dUrl.SetText(" ")
@@ -324,60 +328,124 @@ func RenderGui() {
 
 		table.Refresh()
 	}
-	compileBtn := widget.NewButtonWithIcon("compile docs", theme.FileIcon(), compile)
-	src.Disable()
+	update := func(id widget.TableCellID, co fyne.CanvasObject) {
+		if id.Row < 0 || id.Row >= len(docs) {
+			return
+		}
+		// c2cad7563d77abe4b8ceacd835484a594b381a990801862ecc25a5969142f1ef
+		template := co.(*fyne.Container)
 
-	install := func() {
+		// capture components
+		entry := template.Objects[0].(*widget.Entry)
+		link := template.Objects[1].(*widget.Hyperlink)
+		row := id.Row
+
+		// model updaters
+		updateDescrHdr := func(s string) {
+			docs[row].DescrHdr = s
+		}
+		updateIconHdr := func(s string) {
+			docs[row].IconHdr = s
+		}
+
+		codeDialog := func() {
+			w := a.NewWindow("code-viewer")
+			content := container.NewBorder(nil, nil, nil, nil, container.NewScroll(widget.NewLabel(docs[row].Code)))
+			w.Resize(fyne.NewSize(800, 300))
+			w.SetContent(content)
+			w.Show()
+		}
+
+		// Reset reused widgets
+		entry.Disable()
+		entry.OnChanged = nil
+		entry.SetText("")
+		entry.Hide()
+
+		link.OnTapped = nil
+		link.SetText("")
+		link.Hide()
+
+		// action_bar.Hide()
+
+		switch id.Col {
+		case 0:
+			entry.Show()
+			entry.SetText(docs[row].DocType)
+
+		case 1:
+			link.Show()
+			link.SetText("view code")
+			link.OnTapped = codeDialog
+
+		case 2:
+			entry.Show()
+			entry.SetText(docs[row].SubDir)
+
+		case 3:
+			entry.Show()
+			entry.SetText(docs[row].DURL)
+
+		case 4:
+			entry.Show()
+			entry.SetText(docs[row].NameHdr)
+
+		case 5:
+			entry.Show()
+			entry.Enable()
+			entry.SetText(docs[row].DescrHdr)
+			entry.OnChanged = updateDescrHdr
+
+		case 6:
+			entry.Show()
+			entry.Enable()
+			entry.SetText(docs[row].IconHdr)
+			entry.OnChanged = updateIconHdr
+
+		}
+	}
+
+	table = widget.NewTable(length, create, update)
+
+	table.ShowHeaderRow = true
+	table.CreateHeader = func() fyne.CanvasObject { return widget.NewLabel("") }
+	table.UpdateHeader = func(id widget.TableCellID, template fyne.CanvasObject) {
+		label := template.(*widget.Label)
+		if id.Row < 0 {
+			label.SetText(headers[id.Col])
+			return
+		}
+
+	}
+	for i := range len(headers) {
+		table.SetColumnWidth(i, 150)
+	}
+
+	upload_folder := func() {
 		if dUrl.Text == "" {
 			dUrl.SetText(" ")
 			dUrl.SetText("")
 		}
 		if err := dUrl.Validate(); err != nil {
-			fmt.Println(err)
 			return
 		}
-		if nameHdr.Text == "" {
-			nameHdr.SetText(" ")
-			nameHdr.SetText("")
-		}
-		if err := nameHdr.Validate(); err != nil {
-			fmt.Println(err)
-			return
-		}
-		ok := make(chan bool, 1)
-		if network != "simulator" {
-			dialog.ShowConfirm("MAINNET LAUNCH", "This install will occur on mainnet, please be advised.", func(b bool) {
-				if !b {
-					ok <- false
-					return
-				}
-				ok <- true
-			}, w)
-			if !<-ok {
-				fmt.Println("launch cancelled")
+		fo := dialog.NewFolderOpen(func(lu fyne.ListableURI, err error) {
+			if err != nil {
+				fmt.Println(err)
 				return
 			}
-		}
-		jsonBytes, err := json.MarshalIndent(docs, "", " ")
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		os.WriteFile(filepath.Join("src", "docs.json"), jsonBytes, 0644)
-
-		// byts, err := json.Marshal(docs)
-		// if err != nil {
-		// 	fmt.Println(err)
-		// 	return
-		// }
-		os.Args = append(os.Args, ("--durl=" + dUrl.Text))
-		os.Args = append(os.Args, (`--src-file=` + filepath.Join("src", "docs.json")))
-		os.Args = append(os.Args, (`--network=` + network))
-		os.Args = append(os.Args, (`--headers="` + nameHdr.Text + ";" + descHdr.Text + ";" + iconHdr.Text + `"`))
-		// os.Args = append(os.Args, ("--src-json=" + string(byts))) // the bytes aren't saved to a deployment
-
-		cmd.Run()
+			if lu == nil {
+				return
+			}
+			src.SetText(lu.Path())
+		}, w)
+		fo.Resize(fyne.NewSize(800, 300))
+		fo.Show()
 	}
+
+	compileBtn := widget.NewButtonWithIcon("compile docs", theme.FileIcon(), compile)
+	src.Disable()
+
 	src.OnSubmitted = func(s string) { compile() }
 	choose_folder := widget.NewButton("import with folder", upload_folder) // at this point, when we hit install, we are validating the docs
 	importDocs := func() {
@@ -436,14 +504,15 @@ func RenderGui() {
 					fmt.Println(err)
 					continue
 				}
+				fmt.Println("prepared doc:", doc.SCID)
 				docs = append(docs, doc)
 			}
 		}, w)
 	}
 	import_json := widget.NewButton("import with docs.json", importDocs)
 	import_scid := widget.NewButton("import with scid", importScids)
-	install_docs := widget.NewButton("install docs", install)
-	content := container.NewBorder(container.NewVBox(container.NewVBox(dUrl, src, container.NewAdaptiveGrid(3, choose_folder, import_json, import_scid)), container.NewAdaptiveGrid(1, compileBtn)), container.NewVBox(container.NewAdaptiveGrid(3, nameHdr, descHdr, iconHdr), install_docs), nil, nil, table)
+
+	content := container.NewBorder(container.NewVBox(container.NewVBox(dUrl, src, container.NewAdaptiveGrid(3, choose_folder, import_json, import_scid)), container.NewAdaptiveGrid(1, compileBtn)), container.NewVBox(container.NewAdaptiveGrid(3, nameHdr, descHdr, iconHdr), container.NewAdaptiveGrid(2, install_docs, update_index)), nil, nil, table)
 	w.SetContent(content)
 	w.ShowAndRun()
 }

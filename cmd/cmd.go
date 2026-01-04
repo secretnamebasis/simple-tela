@@ -24,6 +24,7 @@ var mainnet bool = false // the idea here is:
 var request string = "demo-deployment"
 var dURL string = "demo.tela"
 var dst string
+var index_scid string
 var index_headers string
 var src_file string
 var src_json string
@@ -56,6 +57,8 @@ func Run() {
 					dURL = value
 				case "--network":
 					network = value
+				case "--scid":
+					index_scid = value
 				case "--src-file":
 					src_file = value
 				case "--src-json":
@@ -143,70 +146,223 @@ func Run() {
 		fmt.Println(err)
 		return
 	}
-	txids := []string{}
-	for _, each := range docs {
-		args, err := tela.NewInstallArgs(each)
+	if len(docs) == 0 {
+		fmt.Println(errors.New("doc length is 0"))
+		return
+	}
+	switch index_scid {
+	case "":
+		txids := []string{}
+		for _, each := range docs {
+			args, err := tela.NewInstallArgs(each)
+			if err != nil {
+				log.Fatal(err) // I guess I answered my own question
+				// if the file is too large, we have to apply compression... but let's not apply compression at run time
+				// let's do it at compiling
+			}
+
+			if code := args.Value(rpc.SCCODE, rpc.DataString).(string); code != "" {
+
+				txid, err := installContract(code, each.Author, args)
+				if err != nil {
+					log.Fatal(err)
+				}
+				fmt.Println(txid)
+				each.SCID = txid
+				txids = append(txids, txid)
+			}
+		}
+		// now let's save those...
+		if dst != "" {
+			fileBytes, err := json.MarshalIndent(docs, "", " ")
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			if err := os.WriteFile(filepath.Join(dst, "docs.json"), fileBytes, 0644); err != nil {
+				fmt.Println(err)
+				return
+			}
+		}
+		headers := strings.Split(index_headers, ";")
+		if len(headers) != 3 {
+			fmt.Println(errors.New("headers are invalid"), headers)
+			return
+		}
+		nameHdr := headers[0]
+		descHdr := headers[1]
+		iconHdr := headers[2]
+		index := &tela.INDEX{
+			Author:    docs[0].Author,
+			DURL:      dURL,
+			DOCs:      txids,
+			SCVersion: &tela.GetContractVersions(false)[1],
+			Headers:   tela.Headers{NameHdr: nameHdr, DescrHdr: descHdr, IconHdr: iconHdr},
+		}
+		args, err := tela.NewInstallArgs(index)
 		if err != nil {
 			log.Fatal(err) // I guess I answered my own question
 			// if the file is too large, we have to apply compression... but let's not apply compression at run time
 			// let's do it at compiling
 		}
-		if code := args.Value(rpc.SCCODE, rpc.DataString).(string); code != "" {
 
-			txid, err := installContract(code, each.Author, args)
+		if code := args.Value(rpc.SCCODE, rpc.DataString).(string); code != "" {
+			txid, err := installContract(code, index.Author, args)
 			if err != nil {
 				log.Fatal(err)
 			}
 			fmt.Println(txid)
-			each.SCID = txid
-			txids = append(txids, txid)
+			index.SCID = txid
 		}
-	}
-	// now let's save those...
-	if dst != "" {
-		fileBytes, err := json.MarshalIndent(docs, "", " ")
+
+		saveIndex(index)
+	default:
+		fmt.Println("updating:", index_scid)
+		// obviously, we are updating something
+		r := getSC(index_scid)
+		if r.Code == "" {
+			fmt.Println(errors.New("code of index is empty"))
+			return
+		}
+		_, _, err := tela.ValidINDEXVersion(r.Code, "")
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-		if err := os.WriteFile(filepath.Join(dst, "docs.json"), fileBytes, 0644); err != nil {
+		current_index, err := tela.GetINDEXInfo(Xswd_conn, index_scid)
+		if err != nil {
 			fmt.Println(err)
 			return
 		}
+		docs_on_file := []tela.DOC{}
+		for _, each := range current_index.DOCs {
+			doc, err := tela.GetDOCInfo(Xswd_conn, each)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			docs_on_file = append(docs_on_file, doc)
+		}
+
+		// we are trying to find out if any of the current docs satisfy the incoming changes
+		doc_map := map[string]tela.DOC{}
+		for _, each := range docs {
+			// we turn them each into args
+			args, err := tela.NewInstallArgs(each)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			code := args.Value(rpc.SCCODE, rpc.DataString).(string)
+			if code == "" { // which it does
+				continue
+			}
+
+			// incase of duplicates?
+			if _, ok := doc_map[code]; ok {
+				continue
+			}
+
+			doc_map[code] = *each
+
+		}
+
+		order := []tela.DOC{}
+		for code, doc := range doc_map {
+			hasSCID := false
+
+			for _, document := range docs_on_file {
+				// if the code is already in the doc map... update
+				// var doc tela.DOC
+				_, hasSCID = doc_map[document.Code]
+
+				if hasSCID {
+					fmt.Println("scid already exists", document.SCID)
+					break
+				}
+			}
+
+			if hasSCID {
+				continue
+			}
+
+			// don't need to install
+			if doc.SCID != "" {
+				continue
+			}
+
+			args, err := tela.NewInstallArgs(&doc)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			// now install the document
+			txid, err := installContract(code, doc.Author, args)
+			if err != nil {
+				log.Fatal(err)
+			}
+			doc.SCID = txid
+
+			order = append(order, doc)
+		}
+		corrected := []tela.DOC{}
+		cutset := []tela.DOC{}
+		for _, each := range order {
+			if !strings.Contains(each.NameHdr, "index") {
+				cutset = append(cutset, each)
+				continue
+			}
+			if !strings.Contains(each.NameHdr, ".html") || !strings.Contains(each.NameHdr, ".php") {
+				cutset = append(cutset, each)
+				continue
+			}
+			corrected = []tela.DOC{each}
+		}
+		corrected = append(corrected, cutset...)
+		order = corrected
+
+		scids := []string{}
+		for _, each := range order {
+			scids = append(scids, each.SCID)
+		}
+
+		index := &tela.INDEX{
+			SCID:      index_scid,
+			Author:    docs[0].Author,
+			DURL:      dURL,
+			DOCs:      scids,
+			SCVersion: &tela.GetContractVersions(false)[1],
+			Headers:   tela.Headers{NameHdr: current_index.NameHdr, DescrHdr: current_index.DescrHdr, IconHdr: current_index.IconHdr},
+		}
+
+		// args, err := tela.NewUpdateArgs()
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
+
+		txid, err := tela.Updater(Xswd_conn, index)
+
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		if txid == "" {
+			fmt.Println("failed to produce a txid")
+			return
+		}
+
+		saveIndex(index)
 	}
-	headers := strings.Split(index_headers, ";")
-	if len(headers) != 3 {
-		fmt.Println(errors.New("headers are invalid"), headers)
+
+	// fmt.Println(docs)
+}
+
+func saveIndex(index *tela.INDEX) {
+	if index == nil {
 		return
 	}
-	nameHdr := headers[0]
-	descHdr := headers[1]
-	iconHdr := headers[2]
-	index := &tela.INDEX{
-		Author:    docs[0].Author,
-		DURL:      dURL,
-		DOCs:      txids,
-		SCVersion: &tela.GetContractVersions(false)[1],
-		Headers:   tela.Headers{NameHdr: nameHdr, DescrHdr: descHdr, IconHdr: iconHdr},
-	}
-	args, err := tela.NewInstallArgs(index)
-	if err != nil {
-		log.Fatal(err) // I guess I answered my own question
-		// if the file is too large, we have to apply compression... but let's not apply compression at run time
-		// let's do it at compiling
-	}
-
-	if code := args.Value(rpc.SCCODE, rpc.DataString).(string); code != "" {
-		txid, err := installContract(code, index.Author, args)
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println(txid)
-		index.SCID = txid
-	}
-
 	if dst != "" {
-
 		fileBytes, err := json.MarshalIndent(index, "", " ")
 		if err != nil {
 			fmt.Println(err)
@@ -217,6 +373,4 @@ func Run() {
 			return
 		}
 	}
-
-	// fmt.Println(docs)
 }
