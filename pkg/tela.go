@@ -768,8 +768,9 @@ func Transfer(xswd_connection *websocket.Conn, ringsize uint64, transfers []rpc.
 		}
 	}
 	payload := map[string]any{
-		"id":     "Transfer",
-		"method": "transfer",
+		"jsonrpc": "2.0",
+		"id":      "Transfer",
+		"method":  "transfer",
 		"params": rpc.Transfer_Params{
 			Transfers: transfers,
 			Ringsize:  ringsize,
