@@ -340,6 +340,9 @@ func installContract(code, address string, args rpc.Arguments) (string, error) {
 		log.Fatal("no gas", payload, estimate)
 	}
 	val1 := estimate.GasStorage
+	if args.HasValue(rpc.SCACTION, rpc.DataUint64) && args.Value(rpc.SCACTION, rpc.DataUint64).(uint64) == uint64(rpc.SC_CALL) {
+		val1 += estimate.GasCompute
+	}
 	payload = map[string]any{
 		"jsonrpc": "2.0",
 		"id":      "CONTRACT INSTALL",
@@ -403,7 +406,6 @@ func postBytes(b []byte) []byte {
 	if err != nil {
 		panic(err)
 	}
-
 	return msg
 }
 
