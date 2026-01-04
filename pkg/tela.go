@@ -788,7 +788,9 @@ func Transfer(xswd_connection *websocket.Conn, ringsize uint64, transfers []rpc.
 		Result rpc.Transfer_Result
 	}
 	r := response{}
-	json.Unmarshal(msg, &r)
+	if err := json.Unmarshal(msg, &r); err != nil {
+		return "", err
+	}
 
 	txid = r.Result.TXID
 
