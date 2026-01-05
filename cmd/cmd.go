@@ -288,10 +288,15 @@ func Run() {
 
 			doc_check := code[start+2:]
 			doc_check = strings.TrimSpace(strings.TrimSuffix(doc_check, "*/"))
-			if _, ok := doc_map[doc_check]; ok {
+
+			// if the code is already in the contract... don't install again
+			if document, ok := doc_map[doc_check]; ok {
+				order = append(order, document)
 				continue
 			}
-			// now install the document
+
+			// if it isn't on file...
+			// install the document
 			txid, err := installContract(code, doc.Author, args)
 			if err != nil {
 				log.Fatal(err)
