@@ -146,8 +146,7 @@ func CompileDocs(dURL, base string, contents []string, code, signed_code []strin
 		name = filepath.ToSlash(name)
 
 		// now remove the first element, the root
-		root := 1
-		name = name[root:]
+		name = strings.TrimPrefix(name, "/")
 
 		subdir := ""
 		// we are going to make an assumption that a file this/file.txt doesn't work
