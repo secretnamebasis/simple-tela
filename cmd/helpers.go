@@ -433,16 +433,22 @@ func getSC(scid string) rpc.GetSC_Result {
 	}
 	var r response
 	// fmt.Println(string(body))
-	if err := json.Unmarshal(postBytes([]byte((`{
+	payload := map[string]any{
 		"jsonrpc": "2.0",
-		"id": "GET SC",
-		"method": "DERO.GetSC",
-		"params": {
-			"scid": "` + scid + `",
-			"code": true,
-			"variables": true
-		}
-	}`))), &r); err != nil {
+		"id":      "GET SC",
+		"method":  "DERO.GetSC",
+		"params": rpc.GetSC_Params{
+			SCID:      scid,
+			Code:      true,
+			Variables: true,
+		},
+	}
+	byt, err := json.Marshal(payload)
+	if err != nil {
+		fmt.Println("failed to marshal payload", err)
+		return rpc.GetSC_Result{}
+	}
+	if err := json.Unmarshal(postBytes(byt), &r); err != nil {
 		fmt.Println("Failed to unmarshal response:", err)
 		return rpc.GetSC_Result{}
 	}
