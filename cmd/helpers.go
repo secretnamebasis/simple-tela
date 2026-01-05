@@ -244,7 +244,7 @@ func CompileDocs(dURL, base string, contents []string, code, signed_code []strin
 		docs = append(docs, doc)
 	}
 	// order matters... the index is a required document
-	first := tela.DOC{}
+	corrected := []tela.DOC{}
 	cutset := []tela.DOC{}
 	for _, each := range docs {
 		if !strings.Contains(each.NameHdr, "index") {
@@ -256,14 +256,13 @@ func CompileDocs(dURL, base string, contents []string, code, signed_code []strin
 			continue
 		}
 		// should always be first
-		first = each
+		corrected = []tela.DOC{each}
 	}
-	if !strings.Contains(first.NameHdr, "index") {
-		fmt.Println(errors.New("index must be first"), first)
-		return
+
+	docs = cutset
+	if len(corrected) > 0 {
+		docs = append(corrected, docs...)
 	}
-	docs = []tela.DOC{first}
-	docs = append(docs, cutset...)
 
 	fmt.Println("length of docs", len(docs))
 	jsonBytes, err := json.MarshalIndent(docs, "", " ")
