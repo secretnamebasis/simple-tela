@@ -271,7 +271,16 @@ func CompileDocs(dURL, base string, contents []string, code, signed_code []strin
 		fmt.Println(err)
 		return
 	}
-	os.WriteFile(filepath.Join("src", "docs.json"), jsonBytes, 0644)
+	if err := os.Mkdir("src", 0700); err != nil {
+		if !os.IsExist(err) {
+			fmt.Println(err)
+			return
+		}
+	}
+	if err := os.WriteFile(filepath.Join("src", "docs.json"), jsonBytes, 0644); err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	return
 }
