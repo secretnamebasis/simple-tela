@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 
@@ -43,13 +44,14 @@ func main() {
 		}
 	}
 	if slices.Contains(os.Args, "--compile") {
-		dirs, err := os.ReadDir(base)
+		fp := filepath.Join(base)
+		dirs, err := os.ReadDir(fp)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 		var contents = []string{}
-		cmd.Walk(base, dirs, &contents)
+		cmd.Walk(fp, dirs, &contents)
 		code_files := []string{}
 		for _, each := range contents {
 
@@ -83,7 +85,8 @@ func main() {
 				signed_files = append(signed_files, string(fileBytes))
 			}
 		}
-		cmd.CompileDocs(durl, base, contents, code_files, signed_files)
+		cmd.CompileDocs(durl, fp, contents, code_files, signed_files)
+		return
 	}
 
 	cmd.Run()
