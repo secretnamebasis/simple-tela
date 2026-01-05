@@ -261,8 +261,8 @@ func Run() {
 			doc_check := each.Code[start+2:]
 			doc_check = strings.TrimSpace(strings.TrimSuffix(doc_check, "*/"))
 			// in case of duplicates? //
-			if _, ok := doc_map[each.Code]; !ok {
-				doc_map[each.Code] = each
+			if _, ok := doc_map[doc_check]; !ok {
+				doc_map[doc_check] = each
 			}
 		}
 
@@ -300,6 +300,12 @@ func Run() {
 
 			order = append(order, *doc)
 		}
+
+		if len(order) == 0 {
+			fmt.Println("exited intentionally, no changes made to index")
+			return
+		}
+
 		corrected := []tela.DOC{}
 		cutset := []tela.DOC{}
 		for _, each := range order {
