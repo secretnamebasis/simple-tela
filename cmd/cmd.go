@@ -311,21 +311,33 @@ func Run() {
 			return
 		}
 
+		// always make doubly sure that the index is always first when present.
 		corrected := []tela.DOC{}
 		cutset := []tela.DOC{}
 		for _, each := range order {
-			if !strings.Contains(each.NameHdr, "index") {
+			switch {
+			case strings.Contains(each.NameHdr, "index"):
+				if strings.Contains(each.NameHdr, ".html") || strings.Contains(each.NameHdr, ".php") {
+					corrected = []tela.DOC{each}
+					continue
+				}
+				fallthrough
+			case !strings.Contains(each.NameHdr, "index"):
+				fallthrough
+			default:
 				cutset = append(cutset, each)
-				continue
 			}
-			if !strings.Contains(each.NameHdr, ".html") || !strings.Contains(each.NameHdr, ".php") {
-				cutset = append(cutset, each)
-				continue
-			}
-			corrected = []tela.DOC{each}
 		}
-		corrected = append(corrected, cutset...)
-		order = corrected
+
+		// create order from cutset
+		order = cutset
+
+		// if corrected is present
+		if len(corrected) != 0 {
+			corrected = append(corrected, order...)
+			order = corrected
+		} // now the order should be something like:
+		// ['index.html','main.js','style.css','xyz.svg']
 
 		scids := []string{}
 		for _, each := range order {
