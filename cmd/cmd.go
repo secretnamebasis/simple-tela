@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -342,6 +343,20 @@ func Run() {
 		scids := []string{}
 		for _, each := range order {
 			scids = append(scids, each.SCID)
+		}
+
+		// assume they are the diff scids
+		diff := true
+		for _, scid := range scids {
+			if !slices.Contains(current_index.DOCs, scid) {
+				diff = false
+				break
+			}
+		}
+
+		if !diff { // if they are the same... don't change
+			fmt.Println("exited intentionally, no changes made to index")
+			return
 		}
 
 		index := &tela.INDEX{
