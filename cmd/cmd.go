@@ -16,7 +16,7 @@ import (
 	tela "github.com/secretnamebasis/simple-tela/pkg"
 )
 
-var network string = "simulator"
+var network string
 var mainnet bool = false // the idea here is:
 // deploy under simulation as much and as often as needed
 // and when the time comes, clone a simulated deployment to mainnet
@@ -84,7 +84,10 @@ func Run() {
 		fmt.Println("must provide a valid top level domain name")
 		return
 	}
-
+	if network == "" {
+		fmt.Println(errors.New("network is empty"))
+		return
+	}
 	// because these aren't initialized anywhere
 	fmt.Println(network)
 	switch network {
