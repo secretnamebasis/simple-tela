@@ -157,6 +157,7 @@ func CompileDocs(dURL, base string, contents []string, code, signed_code []strin
 			// remove the final part as it is the base, or filename
 			dirs := parts[:(len(parts) - 1)]
 			subdir = strings.Join(dirs, "/")
+			name = filepath.Base(name)
 		}
 
 		// fileEx := filepath.Ext(name)
