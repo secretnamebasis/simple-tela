@@ -250,6 +250,16 @@ func Run() {
 		// we are trying to find out if any of the current docs satisfy the incoming changes
 		doc_map := make(map[string]tela.DOC, len(docs_on_file))
 		for _, each := range docs_on_file {
+			start := strings.Index(each.Code, "/*")
+			end := strings.Index(each.Code, "*/")
+
+			if start == -1 || end == -1 {
+				fmt.Println("could not parse multiline comment", each)
+				return
+			}
+
+			doc_check := each.Code[start+2:]
+			doc_check = strings.TrimSpace(strings.TrimSuffix(doc_check, "*/"))
 			// in case of duplicates? //
 			if _, ok := doc_map[each.Code]; !ok {
 				doc_map[each.Code] = each
@@ -258,10 +268,6 @@ func Run() {
 
 		order := []tela.DOC{}
 		for _, doc := range docs {
-			if _, ok := doc_map[doc.Code]; ok {
-				order = append(order, *doc)
-				continue
-			}
 
 			args, err := tela.NewInstallArgs(doc)
 			if err != nil {
@@ -272,7 +278,19 @@ func Run() {
 			if code == "" { // which it does
 				continue
 			}
+			start := strings.Index(code, "/*")
+			end := strings.Index(code, "*/")
 
+			if start == -1 || end == -1 {
+				fmt.Println("could not parse multiline comment", doc)
+				return
+			}
+
+			doc_check := code[start+2:]
+			doc_check = strings.TrimSpace(strings.TrimSuffix(doc_check, "*/"))
+			if _, ok := doc_map[doc_check]; ok {
+				continue
+			}
 			// now install the document
 			txid, err := installContract(code, doc.Author, args)
 			if err != nil {
