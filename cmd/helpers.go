@@ -171,36 +171,9 @@ func CompileDocs(dURL, base string, contents []string, code, signed_code []strin
 			fmt.Println(err)
 			return
 		}
+		address, c_value, s_value, err := tela.ParseSignature(b)
 
-		result := string(b)
-
-		sig_parts := strings.Split(result, "\n")
-
-		// begin := sig_parts[0]
-		address := strings.Fields(sig_parts[1])[1]
-		address = strings.TrimSpace(address)
-		addrResult, err := rpc.NewAddress(address)
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-		c_value := sig_parts[2]
-		s_value := sig_parts[3]
-		// empty := sig_parts[4]
-		// end := sig_parts[5]
-
-		// the message is blank when the signature is empty
-		// message := empty
-		// if result != "" {
-		// end = sig_parts[6]
-		// message = sig_parts[5]
-		// }
-
-		// fmt.Println(begin, address, c_value, s_value,
-		// 	empty,
-		// 	message,
-		// 	end,
-		// )
+		// capture the code in question
 		c := code[i]
 		compression := ""
 		value := tela.GetCodeSizeInKB(c)
