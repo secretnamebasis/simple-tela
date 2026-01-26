@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -22,6 +23,7 @@ import (
 	"github.com/deroproject/derohe/dvm"
 	"github.com/deroproject/derohe/globals"
 	"github.com/deroproject/derohe/rpc"
+	"github.com/deroproject/derohe/walletapi/xswd"
 	"github.com/gorilla/websocket"
 	"golang.org/x/time/rate"
 
@@ -530,6 +532,7 @@ func postBytes(xswd_connection *websocket.Conn, jsonBytes []byte) []byte {
 	if err != nil {
 		panic(err)
 	}
+	// fmt.Println(string(msg))
 	return msg
 }
 func getSC(xswd_connection *websocket.Conn, params rpc.GetSC_Params) rpc.GetSC_Result {
@@ -604,7 +607,6 @@ func GetDefaultNetworkAddress() (network, destination string) {
 			network = "simulator"
 		}
 	}
-
 	switch network {
 	case "simulator":
 		destination = "deto1qyvyeyzrcm2fzf6kyq7egkes2ufgny5xn77y6typhfx9s7w3mvyd5qqynr5hx"
@@ -697,7 +699,6 @@ func GetGasEstimate(connection *websocket.Conn, ringsize uint64, transfers []rpc
 
 		gasParams.Signer = r.Result.Address
 	}
-	fmt.Println(gasParams)
 	gasResult := getGasEstimate(connection, map[string]any{
 		"jsonrpc": "2.0",
 		"id":      "GAS ESTIMATE",
@@ -755,11 +756,23 @@ func transfer0(xswd_connection *websocket.Conn, ringsize uint64, args rpc.Argume
 // Transfer is used for executing TELA smart contract actions with DERO walletapi, if nil transfers is passed
 // it initializes a transfer of 0 to a default address for the network using GetDefaultNetworkAddress()
 func Transfer(xswd_connection *websocket.Conn, ringsize uint64, transfers []rpc.Transfer, args rpc.Arguments) (txid string, err error) {
+	if transfers == nil {
+		_, a := GetDefaultNetworkAddress()
+		transfers = []rpc.Transfer{
+			{
+				Destination: a,
+				Amount:      0,
+				Burn:        0,
+			},
+		}
+	}
+
 	var gasFees uint64
 	gasFees, err = GetGasEstimate(xswd_connection, ringsize, transfers, args)
 	if err != nil {
 		return
 	}
+
 	code := ""
 	if args.HasValue(rpc.SCCODE, rpc.DataString) {
 		c, ok := args.Value(rpc.SCCODE, rpc.DataString).(string)
@@ -767,6 +780,7 @@ func Transfer(xswd_connection *websocket.Conn, ringsize uint64, transfers []rpc.
 			code = c
 		}
 	}
+
 	payload := map[string]any{
 		"jsonrpc": "2.0",
 		"id":      "Transfer",
