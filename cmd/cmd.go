@@ -161,24 +161,17 @@ func Run() {
 	switch index_scid {
 	case "":
 		txids := []string{}
-		for _, each := range docs {
-			args, err := tela.NewInstallArgs(each)
-			if err != nil {
-				log.Fatal(err) // I guess I answered my own question
-				// if the file is too large, we have to apply compression... but let's not apply compression at run time
-				// let's do it at compiling
-			}
+		for _, doc := range docs {
 
-			if code := args.Value(rpc.SCCODE, rpc.DataString).(string); code != "" {
-
-				txid, err := installContract(code, each.Author, args)
+			limiter.Wait(context.Background())
+			txid, err := tela.Installer(Xswd_conn, 2, doc)
 				if err != nil {
 					log.Fatal(err)
 				}
-				fmt.Println(txid)
-				each.SCID = txid
+			fmt.Println(doc.NameHdr, txid)
+			doc.SCID = txid
 				txids = append(txids, txid)
-			}
+
 		}
 		// now let's save those...
 		if dst != "" {
@@ -197,25 +190,15 @@ func Run() {
 			fmt.Println(errors.New("headers are invalid"), headers)
 			return
 		}
-		nameHdr := headers[0]
-		descHdr := headers[1]
-		iconHdr := headers[2]
-		index := &tela.INDEX{
-			Author:    docs[0].Author,
-			DURL:      dURL,
-			DOCs:      txids,
-			SCVersion: &tela.GetContractVersions(false)[1],
-			Headers:   tela.Headers{NameHdr: nameHdr, DescrHdr: descHdr, IconHdr: iconHdr},
-		}
-		args, err := tela.NewInstallArgs(index)
-		if err != nil {
-			log.Fatal(err) // I guess I answered my own question
-			// if the file is too large, we have to apply compression... but let's not apply compression at run time
-			// let's do it at compiling
-		}
 
-		if code := args.Value(rpc.SCCODE, rpc.DataString).(string); code != "" {
-			txid, err := installContract(code, index.Author, args)
+		v := &tela.GetContractVersions(false)[1]
+		h := tela.Headers{NameHdr: headers[0], DescrHdr: headers[1], IconHdr: headers[2]}
+
+		index := &tela.INDEX{Author: docs[0].Author, DURL: dURL, DOCs: txids, SCVersion: v, Headers: h}
+
+		// txid, err := installContract(code, index.Author, args)
+		limiter.Wait(context.Background())
+		txid, err := tela.Installer(Xswd_conn, 2, index)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -302,12 +285,19 @@ func Run() {
 
 			// if it isn't on file...
 			// install the document
-			txid, err := installContract(code, doc.Author, args)
+			// txid, err := installContract(code, doc.Author, args)
+			limiter.Wait(context.Background())
+			txid, err := tela.Installer(Xswd_conn, 2, doc)
 			if err != nil {
 				log.Fatal(err)
 			}
+
+			fmt.Println(doc.NameHdr, txid)
+
+			// include its scid
 			doc.SCID = txid
 
+			// and add it to the order
 			order = append(order, *doc)
 		}
 
@@ -343,6 +333,7 @@ func Run() {
 			order = corrected
 		} // now the order should be something like:
 		// ['index.html','main.js','style.css','xyz.svg']
+		// we aren't applying sorting
 
 		scids := []string{}
 		for _, each := range order {
@@ -363,19 +354,9 @@ func Run() {
 			return
 		}
 
-		index := &tela.INDEX{
-			SCID:      index_scid,
-			Author:    docs[0].Author,
-			DURL:      dURL,
-			DOCs:      scids,
-			SCVersion: &tela.GetContractVersions(false)[1],
-			Headers:   tela.Headers{NameHdr: current_index.NameHdr, DescrHdr: current_index.DescrHdr, IconHdr: current_index.IconHdr},
-		}
-
-		// args, err := tela.NewUpdateArgs()
-		// if err != nil {
-		// 	log.Fatal(err)
-		// }
+		v := &tela.GetContractVersions(false)[1]
+		h := tela.Headers{NameHdr: current_index.NameHdr, DescrHdr: current_index.DescrHdr, IconHdr: current_index.IconHdr}
+		index := &tela.INDEX{SCID: index_scid, Author: docs[0].Author, DURL: dURL, DOCs: scids, SCVersion: v, Headers: h}
 
 		txid, err := tela.Updater(Xswd_conn, index)
 
