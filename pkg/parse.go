@@ -185,7 +185,7 @@ func parseAndCloneINDEXForDOCs(xswd_connection *websocket.Conn, sc dvm.SmartCont
 							doc1 = scid
 						}
 
-						parts = strings.TrimPrefix(parts, string(HEADER_DOCUMENT))
+						parts = strings.TrimPrefix(parts, `\"DOC`)
 						parts = strings.TrimPrefix(parts, `\"`)
 						i, err := strconv.Atoi(parts)
 						if err != nil {
