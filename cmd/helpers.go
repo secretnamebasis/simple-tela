@@ -216,7 +216,8 @@ func CompileDocs(dURL, base string, contents []string, code, signed_code []strin
 		}
 		docs = append(docs, doc)
 	}
-	// order matters... the index is a required document
+	}
+	// order matters... the index is a priority document
 	corrected := []tela.DOC{}
 	cutset := []tela.DOC{}
 	for _, each := range docs {
