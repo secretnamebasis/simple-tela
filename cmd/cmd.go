@@ -90,10 +90,12 @@ func Run() {
 		fmt.Println("must provide a valid top level domain name")
 		return
 	}
+
 	if network == "" {
 		fmt.Println(errors.New("network is empty"))
 		return
 	}
+
 	// because these aren't initialized anywhere
 	fmt.Println(network)
 	switch network {
@@ -150,11 +152,11 @@ func Run() {
 	}
 
 	var docs []*tela.DOC
-
 	if err := json.Unmarshal([]byte(docs_json_data_string), &docs); err != nil {
 		fmt.Println(err)
 		return
 	}
+
 	if len(docs) == 0 {
 		fmt.Println(errors.New("doc length is 0"))
 		return
@@ -166,14 +168,15 @@ func Run() {
 
 			limiter.Wait(context.Background())
 			txid, err := tela.Installer(Xswd_conn, 2, doc)
-				if err != nil {
-					log.Fatal(err)
-				}
+			if err != nil {
+				log.Fatal(err)
+			}
 			fmt.Println(doc.NameHdr, txid)
 			doc.SCID = txid
-				txids = append(txids, txid)
+			txids = append(txids, txid)
 
 		}
+
 		// now let's save those...
 		if dst != "" {
 			fileBytes, err := json.MarshalIndent(docs, "", " ")
@@ -200,33 +203,39 @@ func Run() {
 		// txid, err := installContract(code, index.Author, args)
 		limiter.Wait(context.Background())
 		txid, err := tela.Installer(Xswd_conn, 2, index)
-			if err != nil {
-				log.Fatal(err)
-			}
-		fmt.Println("index", txid)
-			index.SCID = txid
+		if err != nil {
+			log.Fatal(err)
 		}
+		fmt.Println("index", txid)
+		index.SCID = txid
 
 		saveIndex(index)
+
 	default:
+
 		fmt.Println("updating:", index_scid)
+
 		// obviously, we are updating something
 		r := getSC(index_scid)
 		if r.Code == "" {
 			fmt.Println(errors.New("code of index is empty"))
 			return
 		}
+
 		_, _, err := tela.ValidINDEXVersion(r.Code, "")
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
+
 		current_index, err := tela.GetINDEXInfo(Xswd_conn, index_scid)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
+
 		docs_on_file := []tela.DOC{}
+
 		for _, each := range current_index.DOCs {
 			doc, err := tela.GetDOCInfo(Xswd_conn, each)
 			if err != nil {
@@ -256,6 +265,7 @@ func Run() {
 		}
 
 		order := []tela.DOC{}
+
 		for _, doc := range docs {
 
 			args, err := tela.NewInstallArgs(doc)
