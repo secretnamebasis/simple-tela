@@ -202,7 +202,7 @@ func Run() {
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Println(txid)
+		fmt.Println("index", txid)
 			index.SCID = txid
 		}
 
