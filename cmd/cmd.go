@@ -23,6 +23,8 @@ var mainnet bool = false // the idea here is:
 // and when the time comes, clone a simulated deployment to mainnet
 // obviously checking to make sure... is the endpoint correct
 
+var ringsize = 2 // anon install will be possible, just not yet
+
 var dURL string
 var dst string
 var index_scid string
@@ -64,6 +66,8 @@ func Run() {
 					src_file = value
 				case "--src-json":
 					src_json = value // should be able to marshal a string at the run
+				case "--anon":
+					ringsize = 16
 				}
 			default:
 				fmt.Println("lol")
