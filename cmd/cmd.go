@@ -22,8 +22,8 @@ var mainnet bool = false // the idea here is:
 // deploy under simulation as much and as often as needed
 // and when the time comes, clone a simulated deployment to mainnet
 // obviously checking to make sure... is the endpoint correct
-var request string = "demo-deployment"
-var dURL string = "demo.tela"
+
+var dURL string
 var dst string
 var index_scid string
 var index_headers string
