@@ -14,6 +14,7 @@ import (
 	"github.com/deroproject/derohe/dvm"
 	"github.com/deroproject/derohe/rpc"
 	"github.com/gorilla/websocket"
+	"github.com/secretnamebasis/simple-tela/pkg/logger"
 )
 
 const (
@@ -164,10 +165,11 @@ func parseINDEXForDOCs(sc dvm.SmartContract) (scids []string) {
 
 func parseAndCloneINDEXForDOCs(xswd_connection *websocket.Conn, sc dvm.SmartContract, height int64, basePath string) (entrypoint, servePath string, err error) {
 	// Parse INDEX SC for valid DOCs
-	contracts := []struct {
+	type doc struct {
 		scid   string
 		docNum string
-	}{}
+	}
+	contracts := []doc{}
 	doc1 := ""
 	for name, function := range sc.Functions {
 		// Find initialize function and parse lines
@@ -184,11 +186,9 @@ func parseAndCloneINDEXForDOCs(xswd_connection *websocket.Conn, sc dvm.SmartCont
 							doc1 = scid
 						}
 
-						contracts = append(contracts, struct {
-							scid   string
-							docNum string
-						}{scid: scid, docNum: docNum})
+						d := doc{scid: scid, docNum: docNum}
 
+						contracts = append(contracts, d)
 					}
 				}
 			}
