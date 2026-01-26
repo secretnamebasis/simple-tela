@@ -206,6 +206,7 @@ func parseAndCloneINDEXForDOCs(xswd_connection *websocket.Conn, sc dvm.SmartCont
 		return val1 < val2
 	})
 	for _, each := range contracts {
+		logger.Printf("[TELA] Parsing %s %s\n", each.docNum, each.scid)
 
 		// Check if scid is INDEX or DOC and handle accordingly
 		var c Cloning

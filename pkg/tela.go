@@ -951,6 +951,8 @@ func cloneINDEX(xswd_connection *websocket.Conn, scid, dURL, path string) (clone
 
 	tagErr := fmt.Sprintf("cloning %s@%s was not successful:", dURL, scid)
 
+	logger.Printf("[TELA] Obtaining INDEX Vars %s\n", dURL)
+
 	hash, err := getContractVar(xswd_connection, scid, "hash")
 	if err != nil {
 		err = fmt.Errorf("%s could not get commit hash: %s", tagErr, err)
@@ -965,23 +967,27 @@ func cloneINDEX(xswd_connection *websocket.Conn, scid, dURL, path string) (clone
 		return
 	}
 
+	logger.Printf("[TELA] Obtaining INDEX Code %s\n", dURL)
 	code, err := getContractCode(xswd_connection, scid)
 	if err != nil {
 		err = fmt.Errorf("%s could not get SC code: %s", tagErr, err)
 		return
 	}
 
+	logger.Printf("[TELA] Obtaining INDEX Mods if present %s\n", dURL)
 	var modTag string // mods store can be empty so don't return error
 	if storedMods, err := getContractVar(xswd_connection, scid, "mods"); err == nil {
 		modTag = storedMods
 	}
 
+	logger.Printf("[TELA] Obtaining INDEX Version %s\n", dURL)
 	// Only clone contracts matching TELA standard
-	sc, _, err := ValidINDEXVersion(code, modTag)
+	sc, version, err := ValidINDEXVersion(code, modTag)
 	if err != nil {
 		err = fmt.Errorf("%s does not parse as TELA-INDEX-1: %s", tagErr, err)
 		return
 	}
+	logger.Printf("[TELA] %s INDEX Version %s\n", dURL, version)
 
 	// TELA-INDEX entrypoint, this will be nameHdr of DOC1
 	entrypoint := ""
@@ -999,6 +1005,7 @@ func cloneINDEX(xswd_connection *websocket.Conn, scid, dURL, path string) (clone
 		}
 	} else {
 		// Parse INDEX SC for valid DOCs
+		logger.Printf("[TELA] Parsing %s and Cloning INDEX Docs %s\n", dURL, version)
 		entrypoint, servePath, err = parseAndCloneINDEXForDOCs(xswd_connection, sc, 0, basePath)
 		if err != nil {
 			// If all of the files were not cloned successfully, any residual files are removed if they did not exist already
@@ -1402,11 +1409,13 @@ func ServeTELA(xswd_connection *websocket.Conn, scid string) (link string, err e
 	tela.Lock()
 	defer tela.Unlock()
 
+	logger.Printf("[TELA] Starting TELA Server %s\n", scid)
+
 	dURL, err := checkIfAbleToServe(xswd_connection, scid)
 	if err != nil {
 		return
 	}
-
+	logger.Printf("[TELA] Cloning INDEX %s\n", scid)
 	clone, err := cloneINDEX(xswd_connection, scid, dURL, tela.path.tela())
 	if err != nil {
 		os.RemoveAll(clone.BasePath)
