@@ -367,7 +367,6 @@ func installContract(code, address string, args rpc.Arguments) (string, error) {
 	if r.Result.(map[string]any)["txid"].(string) == "" {
 		return "", errors.New("txid is blank")
 	}
-	// very important, becomes account_id, bucket_id
 	scid := r.Result.(map[string]any)["txid"].(string)
 	return scid, nil
 	// if !inPool(scid) {
