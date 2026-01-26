@@ -181,7 +181,7 @@ func parseAndCloneINDEXForDOCs(xswd_connection *websocket.Conn, sc dvm.SmartCont
 					if strings.Contains(parts, string(HEADER_DOCUMENT)) {
 						// Line STORE is a DOC#, find scid and get its document data
 						scid := strings.Trim(line[i+2], `"`)
-						docNum := parts
+						docNum := Header(parts).Trim()
 						if Header(parts) == HEADER_DOCUMENT.Number(1) {
 							doc1 = scid
 						}
