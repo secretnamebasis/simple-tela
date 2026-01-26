@@ -784,15 +784,26 @@ func Transfer(xswd_connection *websocket.Conn, ringsize uint64, transfers []rpc.
 		return "", err
 	}
 	msg := postBytes(xswd_connection, jsonBytes)
-	type response struct {
-		Result rpc.Transfer_Result
-	}
-	r := response{}
+
+	var r xswd.RPCResponse
+
 	if err := json.Unmarshal(msg, &r); err != nil {
 		return "", err
 	}
 
-	txid = r.Result.TXID
+	if r.Error != nil {
+		return "", errors.New(r.Error.(map[string]any)["message"].(string))
+	}
+
+	var t struct {
+		Result rpc.Transfer_Result
+	}
+
+	if err := json.Unmarshal(msg, &t); err != nil {
+		return "", err
+	}
+
+	txid = t.Result.TXID
 
 	return
 }
