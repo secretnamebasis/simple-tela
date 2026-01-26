@@ -485,12 +485,11 @@ func getContractVar(xswd_connection *websocket.Conn, scid, key string) (variable
 }
 
 // // Get a TXID as hex from daemon endpoint
-func getTXID(xswd_connection *websocket.Conn, txid string) (txidAsHex string, height int64, err error) {
+func GetPool(xswd_connection *websocket.Conn) (txs []string, err error) {
 	payload := map[string]any{
 		"jsonrpc": "2.0",
-		"id":      "GET SC",
-		"method":  "DERO.GetTXID",
-		"params":  rpc.GetTransaction_Params{Tx_Hashes: []string{txid}},
+		"id":      "GET POOL",
+		"method":  "DERO.GetTxPool",
 	}
 	jsonBytes, err := json.Marshal(payload)
 	if err != nil {
@@ -498,7 +497,7 @@ func getTXID(xswd_connection *websocket.Conn, txid string) (txidAsHex string, he
 	}
 	msg := postBytes(xswd_connection, jsonBytes)
 	type response struct {
-		Result rpc.GetTransaction_Result
+		Result rpc.GetTxPool_Result
 	}
 	r := response{}
 
@@ -506,14 +505,42 @@ func getTXID(xswd_connection *websocket.Conn, txid string) (txidAsHex string, he
 		panic(err)
 	}
 
-	res := r.Result.Txs_as_hex
+	txs = r.Result.Tx_list
+
+	return
+}
+
+// // Get a TXID as hex from daemon endpoint
+func GetTXID(xswd_connection *websocket.Conn, txid string) (txidAsHex string, height int64, err error) {
+	payload := map[string]any{
+		"jsonrpc": "2.0",
+		"id":      "GET TXID",
+		"method":  "DERO.GetTransaction",
+		"params":  rpc.GetTransaction_Params{Tx_Hashes: []string{txid}},
+	}
+	jsonBytes, err := json.Marshal(payload)
+	if err != nil {
+		panic(err)
+	}
+	msg := postBytes(xswd_connection, jsonBytes)
+	var response xswd.RPCResponse
+
+	if err := json.Unmarshal(msg, &response); err != nil {
+		panic(err)
+	}
+	b, err := json.Marshal(response.Result)
+	var r rpc.GetTransaction_Result
+	if err := json.Unmarshal(b, &r); err != nil {
+		panic(err)
+	}
+	res := r.Txs_as_hex
 	if len(res) < 1 || res[0] == "" {
 		err = fmt.Errorf("no data found for TXID %s", txid)
 		return
 	}
 
 	txidAsHex = res[0]
-	height = r.Result.Txs[0].Block_Height
+	height = r.Txs[0].Block_Height
 
 	return
 }
@@ -1192,7 +1219,7 @@ func cloneINDEXAtCommit(xswd_connection *websocket.Conn, height int64, scid, txi
 		modTag = extractModTagFromCode(code)
 	} else {
 		// First INDEX get commit height and code from TXID
-		txidAsHex, commitHeight, errr := getTXID(xswd_connection, txid)
+		txidAsHex, commitHeight, errr := GetTXID(xswd_connection, txid)
 		if errr != nil {
 			err = fmt.Errorf("%s could not get TXID: %s", tagErr, errr)
 			return
