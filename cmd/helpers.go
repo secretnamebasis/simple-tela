@@ -301,7 +301,6 @@ func getRandAddr() string {
 }
 func installContract(code, address string, args rpc.Arguments) (string, error) {
 	addr := getRandAddr()
-	// // network, a := tela.GetDefaultNetworkAddress()
 
 	// // fmt.Println(network, a)
 	// // try_again:
