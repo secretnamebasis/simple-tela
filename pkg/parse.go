@@ -167,7 +167,7 @@ func parseAndCloneINDEXForDOCs(xswd_connection *websocket.Conn, sc dvm.SmartCont
 	// Parse INDEX SC for valid DOCs
 	type doc struct {
 		scid   string
-		docNum string
+		docNum int
 	}
 	contracts := []doc{}
 	doc1 := ""
@@ -181,11 +181,17 @@ func parseAndCloneINDEXForDOCs(xswd_connection *websocket.Conn, sc dvm.SmartCont
 					if strings.Contains(parts, string(HEADER_DOCUMENT)) {
 						// Line STORE is a DOC#, find scid and get its document data
 						scid := strings.Trim(line[i+2], `"`)
-						docNum := Header(parts).Trim()
 						if Header(parts) == HEADER_DOCUMENT.Number(1) {
 							doc1 = scid
 						}
 
+						parts = strings.TrimPrefix(parts, string(HEADER_DOCUMENT))
+						parts = strings.TrimPrefix(parts, `\"`)
+						i, err := strconv.Atoi(parts)
+						if err != nil {
+							log.Fatal(err)
+						}
+						docNum := i
 						d := doc{scid: scid, docNum: docNum}
 
 						contracts = append(contracts, d)
@@ -195,15 +201,7 @@ func parseAndCloneINDEXForDOCs(xswd_connection *websocket.Conn, sc dvm.SmartCont
 		}
 	}
 	sort.Slice(contracts, func(i, j int) bool {
-		val1, err := strconv.Atoi(contracts[i].docNum[3:])
-		if err != nil {
-			log.Fatal(err)
-		}
-		val2, err := strconv.Atoi(contracts[j].docNum[3:])
-		if err != nil {
-			log.Fatal(err)
-		}
-		return val1 < val2
+		return contracts[i].docNum < contracts[j].docNum
 	})
 	for _, each := range contracts {
 		logger.Printf("[TELA] Parsing %s %s\n", each.docNum, each.scid)
