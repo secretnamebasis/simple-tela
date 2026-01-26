@@ -3,7 +3,6 @@ package pkg
 import (
 	"encoding/pem"
 	"fmt"
-	"log"
 	"math/big"
 	"os"
 	"path/filepath"
@@ -189,7 +188,7 @@ func parseAndCloneINDEXForDOCs(xswd_connection *websocket.Conn, sc dvm.SmartCont
 						parts = strings.TrimPrefix(parts, `\"`)
 						i, err := strconv.Atoi(parts)
 						if err != nil {
-							log.Fatal(err)
+							panic(err)
 						}
 						docNum := i
 						d := doc{scid: scid, docNum: docNum}
