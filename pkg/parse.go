@@ -3,6 +3,7 @@ package pkg
 import (
 	"encoding/pem"
 	"fmt"
+	"log"
 	"math/big"
 	"os"
 	"path/filepath"
@@ -163,62 +164,90 @@ func parseINDEXForDOCs(sc dvm.SmartContract) (scids []string) {
 
 func parseAndCloneINDEXForDOCs(xswd_connection *websocket.Conn, sc dvm.SmartContract, height int64, basePath string) (entrypoint, servePath string, err error) {
 	// Parse INDEX SC for valid DOCs
+	contracts := []struct {
+		scid   string
+		docNum string
+	}{}
+	doc1 := ""
 	for name, function := range sc.Functions {
 		// Find initialize function and parse lines
 		if name == DVM_FUNC_INIT_PRIVATE {
 			for _, line := range function.Lines {
 				// Parse the contents of the line
 				for i, parts := range line {
+					// hahahah found it
 					if strings.Contains(parts, string(HEADER_DOCUMENT)) {
 						// Line STORE is a DOC#, find scid and get its document data
 						scid := strings.Trim(line[i+2], `"`)
-						isDOC1 := Header(parts) == HEADER_DOCUMENT.Number(1)
-
-						// Check if scid is INDEX or DOC and handle accordingly
-						var c Cloning
-						_, err = getContractVar(xswd_connection, scid, "telaVersion")
-						if err != nil {
-							c, err = cloneDOC(xswd_connection, scid, parts, basePath)
-							if err != nil {
-								return
-							}
-
-							// If DOC is entrypoint set it, and if serving from subDir point to it
-							if isDOC1 {
-								entrypoint = c.Entrypoint
-								servePath = c.ServePath
-							}
-						} else {
-							if isDOC1 {
-								err = fmt.Errorf("cannot use TELA-INDEX as entrypoint for TELA-INDEX")
-								return
-							}
-
-							var dURL string
-							dURL, err = getContractVar(xswd_connection, scid, HEADER_DURL.Trim())
-							if err != nil {
-								err = fmt.Errorf("could not verify TELA-INDEX dURL: %s", err)
-								return
-							}
-
-							if !strings.HasSuffix(dURL, TAG_LIBRARY) && !strings.HasSuffix(dURL, TAG_DOC_SHARDS) {
-								err = fmt.Errorf("cannot embed TELA-INDEX without %q or %q tag", TAG_LIBRARY, TAG_DOC_SHARDS)
-								return
-							}
-
-							if height > 0 {
-								c, err = cloneINDEXAtCommit(xswd_connection, height, scid, "", basePath)
-								if err != nil {
-									return
-								}
-							} else {
-								c, err = cloneINDEX(xswd_connection, scid, dURL, basePath)
-								if err != nil {
-									return
-								}
-							}
+						docNum := parts
+						if Header(parts) == HEADER_DOCUMENT.Number(1) {
+							doc1 = scid
 						}
+
+						contracts = append(contracts, struct {
+							scid   string
+							docNum string
+						}{scid: scid, docNum: docNum})
+
 					}
+				}
+			}
+		}
+	}
+	sort.Slice(contracts, func(i, j int) bool {
+		val1, err := strconv.Atoi(contracts[i].docNum[3:])
+		if err != nil {
+			log.Fatal(err)
+		}
+		val2, err := strconv.Atoi(contracts[j].docNum[3:])
+		if err != nil {
+			log.Fatal(err)
+		}
+		return val1 < val2
+	})
+	for _, each := range contracts {
+
+		// Check if scid is INDEX or DOC and handle accordingly
+		var c Cloning
+		_, err = getContractVar(xswd_connection, each.scid, "telaVersion")
+		if err != nil {
+			c, err = cloneDOC(xswd_connection, each.scid, each.docNum, basePath)
+			if err != nil {
+				return
+			}
+
+			// If DOC is entrypoint set it, and if serving from subDir point to it
+			if each.scid == doc1 {
+				entrypoint = c.Entrypoint
+				servePath = c.ServePath
+			}
+		} else {
+			if each.scid == doc1 {
+				err = fmt.Errorf("cannot use TELA-INDEX as entrypoint for TELA-INDEX")
+				return
+			}
+
+			var dURL string
+			dURL, err = getContractVar(xswd_connection, each.scid, HEADER_DURL.Trim())
+			if err != nil {
+				err = fmt.Errorf("could not verify TELA-INDEX dURL: %s", err)
+				return
+			}
+
+			if !strings.HasSuffix(dURL, TAG_LIBRARY) && !strings.HasSuffix(dURL, TAG_DOC_SHARDS) {
+				err = fmt.Errorf("cannot embed TELA-INDEX without %q or %q tag", TAG_LIBRARY, TAG_DOC_SHARDS)
+				return
+			}
+
+			if height > 0 {
+				c, err = cloneINDEXAtCommit(xswd_connection, height, each.scid, "", basePath)
+				if err != nil {
+					return
+				}
+			} else {
+				c, err = cloneINDEX(xswd_connection, each.scid, dURL, basePath)
+				if err != nil {
+					return
 				}
 			}
 		}
