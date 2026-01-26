@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/deroproject/derohe/globals"
 	"github.com/deroproject/derohe/rpc"
+	"github.com/deroproject/derohe/transaction"
 
 	tela "github.com/secretnamebasis/simple-tela/pkg"
 )
@@ -172,6 +174,40 @@ func Run() {
 				log.Fatal(err)
 			}
 			fmt.Println(doc.NameHdr, txid)
+			txs, err := tela.GetPool(Xswd_conn)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			fmt.Println("waiting for tx to leave pool")
+			for {
+				txs, err = tela.GetPool(Xswd_conn)
+				if err != nil {
+					log.Fatal(err)
+				}
+				if !slices.Contains(txs, txid) {
+					break
+				}
+				time.Sleep(time.Second)
+			}
+			fmt.Println("verifying transaction")
+
+			x, _, err := tela.GetTXID(Xswd_conn, txid)
+			if err != nil {
+				log.Fatal(err)
+			}
+			b, err := hex.DecodeString(x)
+			if err != nil {
+				log.Fatal(err)
+			}
+			t := transaction.Transaction{}
+			t.Deserialize(b)
+			if t.Version == 0 {
+				log.Fatal(err)
+			}
+			if getSC(txid).Code == "" {
+				log.Fatal("code is empty")
+			}
 			doc.SCID = txid
 			txids = append(txids, txid)
 
