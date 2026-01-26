@@ -230,6 +230,13 @@ func parseAndCloneINDEXForDOCs(xswd_connection *websocket.Conn, sc dvm.SmartCont
 // Parse a TELA-INDEX for DOCs and prepare its content as DocShards to be recreated by ConstructFromShards
 func parseDocShards(xswd_connection *websocket.Conn, sc dvm.SmartContract, path string) (docShards [][]byte, recreate, compression string, err error) {
 	scids := parseINDEXForDOCs(sc)
+	type shardData struct {
+		index int
+		data  []byte
+	}
+
+	var shards []shardData
+
 	for i, scid := range scids {
 		if len(scid) != 64 {
 			err = fmt.Errorf("invalid DOC SCID: %s", scid)
@@ -295,7 +302,36 @@ func parseDocShards(xswd_connection *websocket.Conn, sc dvm.SmartContract, path 
 			return
 		}
 
-		docShards = append(docShards, shard)
+		// Parse shard number from filename
+		baseName := fileName
+		if compression != "" {
+			baseName = strings.TrimSuffix(fileName, compression)
+		}
+		origExt := filepath.Ext(baseName)
+		baseName = strings.TrimSuffix(baseName, origExt)
+		shardSplit := strings.Split(baseName, "-")
+		if len(shardSplit) < 2 {
+			err = fmt.Errorf("invalid shard filename format: %s", fileName)
+			return
+		}
+		shardNumStr := shardSplit[len(shardSplit)-1]
+		shardNum, parseErr := strconv.Atoi(shardNumStr)
+		if parseErr != nil {
+			err = fmt.Errorf("could not parse shard number from %s: %s", fileName, parseErr)
+			return
+		}
+
+		shards = append(shards, shardData{index: shardNum, data: shard})
+	}
+
+	// Sort shards by index
+	sort.Slice(shards, func(i, j int) bool {
+		return shards[i].index < shards[j].index
+	})
+
+	// Extract sorted data
+	for _, s := range shards {
+		docShards = append(docShards, s.data)
 	}
 
 	return
