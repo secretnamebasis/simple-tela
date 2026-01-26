@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/deroproject/derohe/cryptography/crypto"
 	"github.com/deroproject/derohe/rpc"
@@ -55,7 +56,7 @@ var AppData = xswd.ApplicationData{
 	Description: "Creating deployments on must be simple and fun! :)",
 	Url:         "http://localhost:8080",
 	Permissions: map[string]xswd.Permission{
-		"transfer":              xswd.Ask, // ask for every transfer?
+		"transfer":              xswd.AlwaysAllow, // ask for every transfer?
 		"SignData":              xswd.AlwaysAllow,
 		"GetAddress":            xswd.AlwaysAllow,
 		"DERO.GetGasEstimate":   xswd.AlwaysAllow,
@@ -154,13 +155,16 @@ func CompileDocs(dURL, base string, contents []string, code, signed_code []strin
 		// thus, if the name of the contents contains a leading slash, it is a subdir
 		if strings.Contains(name, "/") {
 			parts := strings.Split(name, "/")
+
 			// remove the final part as it is the base, or filename
 			dirs := parts[:(len(parts) - 1)]
+
+			// make the subdirs
 			subdir = strings.Join(dirs, "/")
+
+			// the base is now the name
 			name = filepath.Base(name)
 		}
-
-		// fileEx := filepath.Ext(name)
 
 		docType := tela.ParseDocType(name)
 
@@ -175,47 +179,124 @@ func CompileDocs(dURL, base string, contents []string, code, signed_code []strin
 
 		// capture the code in question
 		c := code[i]
+
+		// let's determine compression
 		compression := ""
-		value := tela.GetCodeSizeInKB(c)
-		if value >= tela.MAX_DOC_CODE_SIZE {
-			// apply compression?
+
+		// we need the size of the code
+		if tela.GetCodeSizeInKB(c) >= tela.MAX_DOC_CODE_SIZE {
+			// there are 2 strategies for dealing with the ceiling:
+			// 	- compress
+			// 	- shard
+
+			// we take an opinionated approach and just compress
+			// but it would seem as though the compression is secondary to sharding
+			// see CreateShardFiles
+			// additionally, CreateShardFiles only compresses if and only if we are reading from file
+			// thus, we must compress or it doesn't happen
+			// again, how would we know that the user wants the files compressed instead of sharding...
+			// we don't - we take an opinionated approach and simply
+			// apply compression
 			c, err = tela.Compress([]byte(c), tela.COMPRESSION_GZIP)
 			if err != nil {
 				fmt.Println(err)
 				continue
 			}
-			if c == "" {
-				fmt.Println(errors.New("code is empty"))
-				continue
-			}
+
+			// maybe this is intentional?
+			// if c == "" {
+			// 	fmt.Println(errors.New("code is empty"))
+			// 	continue
+			// }
+
 			compression = tela.COMPRESSION_GZIP
 			name += tela.COMPRESSION_GZIP
+
 		}
 
-		// I guess we could make a table to input all the data
-		doc := tela.DOC{
-			Code:    c, // this is the contents of the file, but it gets re-written at install
-			DocType: docType,
-			DURL:    dURL, // this is tricky because this is a name-space thing...
-			// in tela, .shards is a valid tld
+		// there is only 1 version of the doc contract at the moment
+		version := &tela.GetContractVersions(true)[0]
 
-			SubDir:      subdir,      // this is tricky as well because it is a routing thing
-			Compression: compression, // this really isn't all that tricky, are we compressing the data?
-			// what makes it tricky is the concept of sharding...
-			Headers: tela.Headers{
-				NameHdr: name, // On-chain name of SC. For TELA-DOCs, they are recreated using this as the file name, it should include the file extension
-				// DescrHdr: , // unfortunately, how are we supposed to get this?
-				// IconHdr: , // and what about this one... how are we supposed to handle this?
-			},
-			Signature: tela.Signature{
-				CheckC: c_value,
-				CheckS: s_value,
-			},
-			SCVersion: &tela.GetContractVersions(true)[0],
-			Author:    addrResult.String(),
+		// if still too big
+		// make docs for each one
+		if tela.GetCodeSizeInKB(c) >= tela.MAX_DOC_CODE_SIZE {
+
+			// the next process would be to shard
+			// if err := tela.CreateShardFiles(name, compression); err != nil {
+			// 	fmt.Println(err)
+			// 	continue
+			// } // but let's not use that entire process, we have no intention of writing files to disc yet.
+			// so let's do some copy pasta magic
+			if !utf8.ValidString(c) {
+				err = fmt.Errorf("cannot shard file %s", name)
+			}
+			content := []byte(c)
+			total, size := tela.GetTotalShards(content)
+			fmt.Println(total, size)
+
+			// at this point, compression is already added
+			newFileName := func(i int, name, ext string) string {
+				return fmt.Sprintf("%s-%d%s", strings.TrimSuffix(name, ext), i, ext)
+			}
+
+			ext := filepath.Ext(name)
+
+			count := 0
+			for start := int64(0); start < size; start += tela.SHARD_SIZE {
+				end := start + tela.SHARD_SIZE
+				if end > size {
+					end = size
+				}
+
+				count++
+				shardName := newFileName(count, name, ext)
+
+				codeShard := string(content[start:end])
+
+				// hold on now... we have to sign all of these?
+				doc := tela.DOC{
+					Code:    codeShard,
+					DocType: docType,
+					DURL:    dURL + tela.TAG_DOC_SHARD, // N.B.
+					// There is no where in TELA where `.shard` is used
+					// There is, however, somewhere where `.shards` is used,
+					//
+					Headers: tela.Headers{
+						NameHdr: shardName,
+						// DescrHdr: ,
+					},
+					SubDir:      subdir,
+					Compression: compression,
+					// we'll just assume it is all apart of the same signature
+					// or should the code go back up for signing?
+					Signature: tela.Signature{CheckC: c_value, CheckS: s_value},
+					SCVersion: version,
+					Author:    address,
+				}
+				docs = append(docs, doc)
+			}
+		} else {
+			// I guess we could make a table to input all the data
+			doc := tela.DOC{
+				Code:    c, // this is the contents of the file, but it gets re-written at install
+				DocType: docType,
+				DURL:    dURL, // this is tricky because this is a name-space thing...
+				// in tela, .shards is a valid tld
+
+				SubDir:      subdir,      // this is tricky as well because it is a routing thing
+				Compression: compression, // this really isn't all that tricky, are we compressing the data?
+				// what makes it tricky is the concept of sharding...
+				Headers: tela.Headers{
+					NameHdr: name, // On-chain name of SC. For TELA-DOCs, they are recreated using this as the file name, it should include the file extension
+					// DescrHdr: , // unfortunately, how are we supposed to get this?
+					// IconHdr: , // and what about this one... how are we supposed to handle this?
+				},
+				Signature: tela.Signature{CheckC: c_value, CheckS: s_value},
+				SCVersion: version,
+				Author:    address,
+			}
+			docs = append(docs, doc)
 		}
-		docs = append(docs, doc)
-	}
 	}
 	// order matters... the index is a priority document
 	corrected := []tela.DOC{}
