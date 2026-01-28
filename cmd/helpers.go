@@ -243,6 +243,7 @@ func CompileDocs(dURL, base string, contents []string, code, signed_code []strin
 
 			count := 0
 			for start := int64(0); start < size; start += tela.SHARD_SIZE {
+
 				end := start + tela.SHARD_SIZE
 				if end > size {
 					end = size
@@ -254,13 +255,12 @@ func CompileDocs(dURL, base string, contents []string, code, signed_code []strin
 				codeShard := string(content[start:end])
 
 				// hold on now... we have to sign all of these?
-				doc := tela.DOC{
+				docs = append(docs, tela.DOC{
 					Code:    codeShard,
 					DocType: docType,
 					DURL:    dURL + tela.TAG_DOC_SHARD, // N.B.
 					// There is no where in TELA where `.shard` is used
-					// There is, however, somewhere where `.shards` is used,
-					//
+					// There is, however, somewhere where `.shards` is used
 					Headers: tela.Headers{
 						NameHdr: shardName,
 						// DescrHdr: ,
@@ -272,17 +272,14 @@ func CompileDocs(dURL, base string, contents []string, code, signed_code []strin
 					Signature: tela.Signature{CheckC: c_value, CheckS: s_value},
 					SCVersion: version,
 					Author:    address,
-				}
-				docs = append(docs, doc)
+				})
 			}
 		} else {
 			// I guess we could make a table to input all the data
-			doc := tela.DOC{
-				Code:    c, // this is the contents of the file, but it gets re-written at install
-				DocType: docType,
-				DURL:    dURL, // this is tricky because this is a name-space thing...
-				// in tela, .shards is a valid tld
-
+			docs = append(docs, tela.DOC{
+				Code:        c, // this is the contents of the file, but it gets re-written at install
+				DocType:     docType,
+				DURL:        dURL,        // this is tricky because this is a name-space thing...
 				SubDir:      subdir,      // this is tricky as well because it is a routing thing
 				Compression: compression, // this really isn't all that tricky, are we compressing the data?
 				// what makes it tricky is the concept of sharding...
@@ -294,8 +291,7 @@ func CompileDocs(dURL, base string, contents []string, code, signed_code []strin
 				Signature: tela.Signature{CheckC: c_value, CheckS: s_value},
 				SCVersion: version,
 				Author:    address,
-			}
-			docs = append(docs, doc)
+			})
 		}
 	}
 	// order matters... the index is a priority document

@@ -125,7 +125,9 @@ func Run() {
 		os.Mkdir("deployment", 0700)
 		// obviously, we'll likely need some kind of xswd connection
 		// typically, we are going to be using some other tool to write code, and test code
-		dst = filepath.Join("deployment", time.Now().Local().Format("2006.01.02.15_04_05")) + "_" + dURL + "_" + network
+		deployment := time.Now().Local().Format("2006.01.02.15_04_05")
+
+		dst = filepath.Join("deployment", (deployment + "_" + dURL + "_" + network))
 		// first we need to create a new deployment
 		if err := os.Mkdir(dst, 0700); err != nil {
 			if !strings.Contains(err.Error(), "no such file or directory") {
@@ -139,7 +141,8 @@ func Run() {
 			fmt.Println(err)
 			return
 		}
-		if err := os.WriteFile(filepath.Join(dst, "docs.json"), fileBytes, 0644); err != nil {
+		fp := filepath.Join(dst, "docs.json")
+		if err := os.WriteFile(fp, fileBytes, 0644); err != nil {
 			fmt.Println(err)
 			return
 		}
@@ -163,6 +166,7 @@ func Run() {
 		fmt.Println(errors.New("doc length is 0"))
 		return
 	}
+
 	switch index_scid {
 	case "":
 		txids := []string{}
@@ -220,7 +224,8 @@ func Run() {
 				fmt.Println(err)
 				return
 			}
-			if err := os.WriteFile(filepath.Join(dst, "docs.json"), fileBytes, 0644); err != nil {
+			fp := filepath.Join(dst, "docs.json")
+			if err := os.WriteFile(fp, fileBytes, 0644); err != nil {
 				fmt.Println(err)
 				return
 			}
@@ -234,9 +239,14 @@ func Run() {
 		v := &tela.GetContractVersions(false)[1]
 		h := tela.Headers{NameHdr: headers[0], DescrHdr: headers[1], IconHdr: headers[2]}
 
-		index := &tela.INDEX{Author: docs[0].Author, DURL: dURL, DOCs: txids, SCVersion: v, Headers: h}
+		index := &tela.INDEX{
+			Author:    docs[0].Author,
+			DURL:      dURL,
+			DOCs:      txids,
+			SCVersion: v,
+			Headers:   h,
+		}
 
-		// txid, err := installContract(code, index.Author, args)
 		limiter.Wait(context.Background())
 		txid, err := tela.Installer(Xswd_conn, 2, index)
 		if err != nil {
@@ -359,7 +369,8 @@ func Run() {
 		for _, each := range order {
 			switch {
 			case strings.Contains(each.NameHdr, "index"):
-				if strings.Contains(each.NameHdr, ".html") || strings.Contains(each.NameHdr, ".php") {
+				if strings.Contains(each.NameHdr, ".html") ||
+					strings.Contains(each.NameHdr, ".php") {
 					corrected = []tela.DOC{each}
 					continue
 				}
@@ -402,8 +413,21 @@ func Run() {
 		}
 
 		v := &tela.GetContractVersions(false)[1]
-		h := tela.Headers{NameHdr: current_index.NameHdr, DescrHdr: current_index.DescrHdr, IconHdr: current_index.IconHdr}
-		index := &tela.INDEX{SCID: index_scid, Author: docs[0].Author, DURL: dURL, DOCs: scids, SCVersion: v, Headers: h}
+
+		h := tela.Headers{
+			NameHdr:  current_index.NameHdr,
+			DescrHdr: current_index.DescrHdr,
+			IconHdr:  current_index.IconHdr,
+		}
+
+		index := &tela.INDEX{
+			SCID:      index_scid,
+			Author:    docs[0].Author,
+			DURL:      dURL,
+			DOCs:      scids,
+			SCVersion: v,
+			Headers:   h,
+		}
 
 		txid, err := tela.Updater(Xswd_conn, index)
 
@@ -433,7 +457,8 @@ func saveIndex(index *tela.INDEX) {
 			fmt.Println(err)
 			return
 		}
-		if err := os.WriteFile(filepath.Join(dst, "index.json"), fileBytes, 0644); err != nil {
+		fp := filepath.Join(dst, "index.json")
+		if err := os.WriteFile(fp, fileBytes, 0644); err != nil {
 			fmt.Println(err)
 			return
 		}
