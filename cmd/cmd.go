@@ -287,11 +287,10 @@ func Run() {
 
 		}
 
-		scids := []string{}
-
 		fmt.Println("installing indices", len(bunches))
 
 		for n, bunch := range bunches {
+			scids := []string{}
 
 			fmt.Println("bunch", n)
 
