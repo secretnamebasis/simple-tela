@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -169,31 +168,25 @@ func Run() {
 
 	switch index_scid {
 	case "":
-		txids := []string{}
-		for _, doc := range docs {
+		for i := range docs {
 
-			limiter.Wait(context.Background())
-			txid, err := tela.Installer(Xswd_conn, 2, doc)
+			txid, err := tela.Installer(Xswd_conn, 2, docs[i])
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Println(doc.NameHdr, txid)
-			txs, err := tela.GetPool(Xswd_conn)
-			if err != nil {
-				log.Fatal(err)
-			}
+			fmt.Println(docs[i].NameHdr, txid)
 
 			fmt.Println("waiting for tx to leave pool")
-			for {
-				txs, err = tela.GetPool(Xswd_conn)
-				if err != nil {
-					log.Fatal(err)
-				}
-				if !slices.Contains(txs, txid) {
-					break
-				}
-				time.Sleep(time.Second)
-			}
+			// for {
+			// 	txs, err := tela.GetPool(Xswd_conn)
+			// 	if err != nil {
+			// 		log.Fatal(err)
+			// 	}
+			// 	if !slices.Contains(txs, txid) {
+			// 		break
+			// 	}
+			time.Sleep(time.Second * 2)
+			// }
 			fmt.Println("verifying transaction")
 
 			x, _, err := tela.GetTXID(Xswd_conn, txid)
@@ -212,14 +205,122 @@ func Run() {
 			if getSC(txid).Code == "" {
 				log.Fatal("code is empty")
 			}
-			doc.SCID = txid
-			txids = append(txids, txid)
+			docs[i].SCID = txid
+
+			// txids = append(txids, txid)
 
 		}
 
+		v := &tela.GetContractVersions(false)[1]
+
+		headers := strings.Split(index_headers, ";")
+		if len(headers) != 3 {
+			fmt.Println(errors.New("headers are invalid"), headers)
+			return
+		}
+		h := tela.Headers{NameHdr: headers[0], DescrHdr: headers[1], IconHdr: headers[2]}
+
+		var procStruct struct {
+			Doc1   string              `json:"doc1"`
+			Shards map[string][]string `json:"shards"`
+			Docs   []string            `json:"docs"` // scids
+		}
+		// now we need to collate all the sharded docs into their separate indices
+		procStruct.Shards = make(map[string][]string)
+
+		// we are pretty sure the docs are in the correct order
+		procStruct.Doc1 = docs[0].SCID
+
+		// now for the rest of them....
+		remaining := docs[1:]
+
+		// we'll use the filename as the key for all of the docs associated with it
+		var bunches = make(map[string][]tela.DOC)
+
+		for _, each := range remaining {
+
+			if !strings.Contains(each.DURL, tela.TAG_DOC_SHARD) {
+				procStruct.Docs = append(procStruct.Docs, each.SCID)
+				continue
+			}
+
+			// guess we'll do this by name now
+			if !strings.Contains(each.NameHdr, "-") {
+				procStruct.Docs = append(procStruct.Docs, each.SCID)
+				continue
+			}
+
+			fmt.Println("is sharded", each.NameHdr)
+
+			// N.B.
+			// if there is any DOC that is sharded,
+			// create a new index file, and load it with docs,
+			// then append .shards to the dURL
+
+			// because we KNOW that compression is applied before sharding
+			// rive.js - 1 .gz || villager - r3.riv - 4 .gz
+			// first strip the compression extension
+			ext := filepath.Ext(each.NameHdr)
+			// fmt.Println("ext", ext)
+			noext := strings.TrimSuffix(each.NameHdr, ext)
+			// fmt.Println("without ext", noext)
+			// and because we know that it is always -
+			// rive.js - 1
+			// villager - r3.riv -4
+
+			parts := strings.Split(noext, "-")
+			numberStr := parts[len(parts)-1]
+
+			shardNum := "-" + numberStr
+			// rive.js -1
+			// villager - r3.riv -4
+
+			name := strings.TrimSuffix(noext, shardNum)
+			// fmt.Println("trimmed name", name)
+
+			// rive.js
+			// villager-r3.riv
+			fmt.Println("loaded into bunches", name)
+			if _, ok := bunches[name]; !ok {
+				bunches[name] = []tela.DOC{}
+			}
+			bunches[name] = append(bunches[name], *each)
+
+		}
+
+		scids := []string{}
+
+		fmt.Println("installing indices", len(bunches))
+
+		for n, bunch := range bunches {
+
+			fmt.Println("bunch", n)
+
+			for i := range bunch {
+				scids = append(scids, bunch[i].SCID)
+			}
+
+			// when the time comes change to hasLeftPool
+			time.Sleep(time.Second * 2)
+			txid, err := tela.Installer(Xswd_conn, 2, &tela.INDEX{
+				Author:    docs[0].Author,
+				DURL:      dURL + tela.TAG_DOC_SHARDS,
+				DOCs:      scids,
+				SCVersion: v,
+				Headers:   h,
+			})
+
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			fmt.Println("shard", txid)
+
+			procStruct.Shards[txid] = scids
+		}
 		// now let's save those...
 		if dst != "" {
-			fileBytes, err := json.MarshalIndent(docs, "", " ")
+			fileBytes, err := json.MarshalIndent(procStruct, "", " ")
 			if err != nil {
 				fmt.Println(err)
 				return
@@ -230,14 +331,19 @@ func Run() {
 				return
 			}
 		}
-		headers := strings.Split(index_headers, ";")
-		if len(headers) != 3 {
-			fmt.Println(errors.New("headers are invalid"), headers)
-			return
+
+		// place the doc1 first
+		txids := []string{procStruct.Doc1}
+
+		if len(procStruct.Docs) != 0 { // load all of the sharded docs next
+			txids = append(txids, procStruct.Docs...)
 		}
 
-		v := &tela.GetContractVersions(false)[1]
-		h := tela.Headers{NameHdr: headers[0], DescrHdr: headers[1], IconHdr: headers[2]}
+		if len(procStruct.Shards) != 0 { // load all of the sharded indexes last (if any)
+			for shard := range procStruct.Shards {
+				txids = append(txids, shard)
+			}
+		}
 
 		index := &tela.INDEX{
 			Author:    docs[0].Author,
@@ -247,7 +353,8 @@ func Run() {
 			Headers:   h,
 		}
 
-		limiter.Wait(context.Background())
+		// when the time comes change to hasLeftPool
+		time.Sleep(time.Second * 2)
 		txid, err := tela.Installer(Xswd_conn, 2, index)
 		if err != nil {
 			log.Fatal(err)
@@ -343,7 +450,7 @@ func Run() {
 			// if it isn't on file...
 			// install the document
 			// txid, err := installContract(code, doc.Author, args)
-			limiter.Wait(context.Background())
+
 			txid, err := tela.Installer(Xswd_conn, 2, doc)
 			if err != nil {
 				log.Fatal(err)
