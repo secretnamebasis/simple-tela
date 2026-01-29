@@ -264,13 +264,12 @@ func Run() {
 			// fmt.Println("ext", ext)
 			noext := strings.TrimSuffix(each.NameHdr, ext)
 			// fmt.Println("without ext", noext)
+
 			// and because we know that it is always -
-			// rive.js - 1
-			// villager - r3.riv -4
-
 			parts := strings.Split(noext, "-")
+			// rive.js - 1
+			// villager - r3.riv - 4
 			numberStr := parts[len(parts)-1]
-
 			shardNum := "-" + numberStr
 			// rive.js -1
 			// villager - r3.riv -4
