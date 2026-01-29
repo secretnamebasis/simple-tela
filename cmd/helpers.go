@@ -235,12 +235,13 @@ func CompileDocs(dURL, base string, contents []string, code, signed_code []strin
 			fmt.Println(total, size)
 
 			// at this point, compression is already added
-			newFileName := func(i int, name, ext string) string {
-				return fmt.Sprintf("%s-%d%s", strings.TrimSuffix(name, ext), i, ext)
+			newFileName := func(i int, name, ext, comp string) string {
+				return fmt.Sprintf("%s-%d%s%s", strings.TrimSuffix(name, ext), i, ext, comp)
 			}
 
-			ext := filepath.Ext(name)
-
+			comp := filepath.Ext(name)
+			noComp := strings.TrimSuffix(name, comp)
+			ext := filepath.Ext(noComp)
 			count := 0
 			for start := int64(0); start < size; start += tela.SHARD_SIZE {
 
@@ -250,7 +251,7 @@ func CompileDocs(dURL, base string, contents []string, code, signed_code []strin
 				}
 
 				count++
-				shardName := newFileName(count, name, ext)
+				shardName := newFileName(count, noComp, ext, comp)
 
 				codeShard := string(content[start:end])
 
