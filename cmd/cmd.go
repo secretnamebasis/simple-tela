@@ -258,27 +258,17 @@ func Run() {
 			// then append .shards to the dURL
 
 			// because we KNOW that compression is applied before sharding
-			// rive.js - 1 .gz || villager - r3.riv - 4 .gz
 			// first strip the compression extension
 			ext := filepath.Ext(each.NameHdr)
-			// fmt.Println("ext", ext)
 			noext := strings.TrimSuffix(each.NameHdr, ext)
-			// fmt.Println("without ext", noext)
 
-			// and because we know that it is always -
 			parts := strings.Split(noext, "-")
-			// rive.js - 1
-			// villager - r3.riv - 4
+
 			numberStr := parts[len(parts)-1]
 			shardNum := "-" + numberStr
-			// rive.js -1
-			// villager - r3.riv -4
 
 			name := strings.TrimSuffix(noext, shardNum)
-			// fmt.Println("trimmed name", name)
 
-			// rive.js
-			// villager-r3.riv
 			fmt.Println("loaded into bunches", name)
 			if _, ok := bunches[name]; !ok {
 				bunches[name] = []tela.DOC{}
