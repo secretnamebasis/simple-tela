@@ -850,7 +850,7 @@ func Transfer(xswd_connection *websocket.Conn, ringsize uint64, transfers []rpc.
 }
 
 // Clone a TELA-DOC SCID to path from endpoint
-func cloneDOC(xswd_connection *websocket.Conn, scid string, docNum int, path string) (clone Cloning, err error) {
+func cloneDOC(xswd_connection *websocket.Conn, scid, docNum, path string) (clone Cloning, err error) {
 	if len(scid) != 64 {
 		err = fmt.Errorf("invalid DOC SCID: %s", scid)
 		return
@@ -895,7 +895,8 @@ func cloneDOC(xswd_connection *websocket.Conn, scid string, docNum int, path str
 	recreate := strings.TrimSuffix(fileName, compression)
 
 	// Set entrypoint DOC
-	if docNum == 1 {
+	isDOC1 := Header(docNum) == HEADER_DOCUMENT.Number(1)
+	if isDOC1 {
 		clone.Entrypoint = recreate
 	}
 
@@ -916,7 +917,7 @@ func cloneDOC(xswd_connection *websocket.Conn, scid string, docNum int, path str
 		}
 
 		// If serving from subDir point to it
-		if docNum == 1 {
+		if isDOC1 {
 			clone.ServePath = fmt.Sprintf("/%s", subDir)
 		}
 	}
@@ -1312,7 +1313,7 @@ func Clone(xswd_connection *websocket.Conn, scid string) (err error) {
 		_, err = cloneINDEX(xswd_connection, scid, dURL, path)
 	case "DOC":
 		// Store DOCs in respective dURL directories
-		_, err = cloneDOC(xswd_connection, scid, 0, filepath.Join(path, dURL))
+		_, err = cloneDOC(xswd_connection, scid, "", filepath.Join(path, dURL))
 	default:
 		err = fmt.Errorf("could not validate %s as TELA INDEX or DOC", scid)
 	}
